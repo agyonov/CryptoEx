@@ -1,6 +1,4 @@
 using EdDSA.Utils;
-using Xunit;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EdDSA.Tests;
 
@@ -59,5 +57,38 @@ MCowBQYDK2VwAyEAYB9j6C7v99UHOnUiLPvepXHTALVTJNWlpRrV0xqe1Zo=
         bool res = PemEncodeDecode.TryReadEd25519PublicKey(pemPubOpenSSL, pubKey);
         Assert.True(res, "Not valid Ed25519PublicKey encoded in PEM");
         Assert.Equal(thePubKeyOpenSSL, BitConverter.ToString(pubKey.ToArray()).Replace("-", "").ToUpper());
+    }
+
+
+    // private key from OpenSSL ED448
+    public const string pem448OpenSSL = @"-----BEGIN PRIVATE KEY-----
+MEcCAQAwBQYDK2VxBDsEOZdokyyjkd8Yrn/bDqDXAsA4X9eztBe68+Y0LT5Mq4DQ
+zKdppo+EnMKTi7RKJCae8T6/6it3nLY07A==
+-----END PRIVATE KEY-----";
+    public const string thePrKey448OpenSSL = "9768932CA391DF18AE7FDB0EA0D702C0385FD7B3B417BAF3E6342D3E4CAB80D0CCA769A68F849CC2938BB44A24269EF13EBFEA2B779CB634EC";
+
+    [Fact(DisplayName = "Test private Ed448 key read from PEM from OpenSSL")]
+    public void TestReadPrivateKeyEd448_OpenSSL()
+    {
+        Span<byte> prKey = stackalloc byte[57];
+        bool res = PemEncodeDecode.TryReadEd4489PrivateKey(pem448OpenSSL, prKey);
+        Assert.True(res, "Not valid Ed448PrivateKey encoded in PEM");
+        Assert.Equal(thePrKey448OpenSSL, BitConverter.ToString(prKey.ToArray()).Replace("-", "").ToUpper());
+    }
+
+    // public key from OpenSSL ED448
+    public const string pem448PubOpenSSL = @"-----BEGIN PUBLIC KEY-----
+MEMwBQYDK2VxAzoA2VP5XGb1GIycuVbcZatr7bnm9zhNEeAvC+FSWOPrvT2R6Ibz
+GE/AQbi/fJdyNpe9quTAVILPhQkA
+-----END PUBLIC KEY-----";
+    public const string thePub448KeyOpenSSL = "D953F95C66F5188C9CB956DC65AB6BEDB9E6F7384D11E02F0BE15258E3EBBD3D91E886F3184FC041B8BF7C97723697BDAAE4C05482CF850900";
+
+    [Fact(DisplayName = "Test public Ed448 key read from PEM from OpenSSL")]
+    public void TestReadPublicKeyEd448_OpenSSL()
+    {
+        Span<byte> pubKey = stackalloc byte[57];
+        bool res = PemEncodeDecode.TryReadEd4489PublicKey(pem448PubOpenSSL, pubKey);
+        Assert.True(res, "Not valid Ed448PublicKey encoded in PEM");
+        Assert.Equal(thePub448KeyOpenSSL, BitConverter.ToString(pubKey.ToArray()).Replace("-", "").ToUpper());
     }
 }

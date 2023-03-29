@@ -37,7 +37,8 @@ public class Ed25519 : ECAlgorithm
     /// <summary>
     /// Gets or sets the size, in bits, of the key modulus used by the asymmetric algorithm.
     /// </summary>
-    public override int KeySize {
+    public override int KeySize
+    {
         get => curve25519KeyModulusSize;
         set {
             // Do nothing key size is fxed

@@ -1,7 +1,6 @@
 ﻿
 
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Utilities.IO.Pem;
+using System.Formats.Asn1;
 using System.Security.Cryptography;
 
 namespace EdDSA.Utils;
@@ -25,54 +24,60 @@ public static class PemEncodeDecode
     /// <returns>True / false depending of result</returns>
     public static bool TryReadEd25519PrivateKey(string pem, Span<byte> result)
     {
-        using (StringReader reader = new StringReader(pem))
-        using (PemReader pemReader = new PemReader(reader)) {
+        using (StringReader reader = new StringReader(pem)) {
             // Read PEM object
-            PemObject pemObject = pemReader.ReadPemObject();
+            ICollection<PEMObject> readRes = PEMReaderWriter.ReadPEM(reader);
+            PEMObject? pemObject = readRes.FirstOrDefault();
 
             // Check
-            if (pemObject.Type != "PRIVATE KEY") {
+            if (pemObject == null || pemObject.Type != "PRIVATE KEY") {
                 return false;
             }
 
             // Try parse ASN
-            using (Asn1InputStream asn = new Asn1InputStream(pemObject.Content)) {
-                // Cycle
-                var asn1Object = asn.ReadObject() as Asn1Sequence;
-                if (asn1Object == null) {
+            try {
+                // Get as span
+                Span<byte> source = pemObject.Content.AsSpan();
+
+                // Some helpers
+                int offset, len, bytes;
+
+                // Read top sequence
+                AsnDecoder.ReadSequence(source, AsnEncodingRules.DER, out offset, out len, out bytes);
+                source = source[offset..];
+
+                // Read version & check
+                ReadOnlySpan<byte> version = AsnDecoder.ReadIntegerBytes(source, AsnEncodingRules.DER, out bytes);
+                if (version.Length != 1 && version[0] != 0) {
                     return false;
                 }
 
-                // Parse further down
-                foreach (var obj in asn1Object) {
-                    switch (obj) {
-                        case Asn1Sequence:
-                            // Check algorithm
-                            var seqOid = obj as Asn1Sequence;
-                            if (seqOid == null || seqOid.Count != 1) {
-                                return false;
-                            }
-                            DerObjectIdentifier? oid = seqOid[0] as DerObjectIdentifier;
-                            if (oid == null || oid.Id != OidEd25519.Value) {
-                                return false;
-                            }
-                            break;
-                        case Asn1OctetString:
-                            // Check key
-                            var keyOcted = obj as Asn1OctetString;
-                            byte[]? bytes = keyOcted?.GetOctets();
-                            if (bytes == null || bytes.Length != 34) {
-                                return false;
-                            }
-                            bytes[2..].CopyTo(result);
-                            return true;
-                    }
+                // Go further
+                source = source[bytes..];
+
+                // Read algorithm
+                AsnDecoder.ReadSequence(source, AsnEncodingRules.DER, out offset, out len, out bytes);
+
+                // Go Further
+                var oidSeq = source[offset..(offset + len)];
+                source = source[bytes..];
+
+                // Parse OID
+                Oid oid = new Oid(AsnDecoder.ReadObjectIdentifier(oidSeq, AsnEncodingRules.DER, out bytes));
+                if (oid.Value != OidEd25519.Value) {
+                    return false;
                 }
+
+                // read key
+                byte[] resKey = AsnDecoder.ReadOctetString(source, AsnEncodingRules.DER, out bytes);
+                resKey[2..].CopyTo(result);
+
+                return true;
+            } catch {
+                // No no man
+                return false;
             }
         }
-
-        // Get me out of here
-        return true;
     }
 
 
@@ -84,54 +89,174 @@ public static class PemEncodeDecode
     /// <returns>True / false depending of result</returns>
     public static bool TryReadEd25519PublicKey(string pem, Span<byte> result)
     {
-        using (StringReader reader = new StringReader(pem))
-        using (PemReader pemReader = new PemReader(reader)) {
+        using (StringReader reader = new StringReader(pem)) {
+
             // Read PEM object
-            PemObject pemObject = pemReader.ReadPemObject();
+            ICollection<PEMObject> readRes = PEMReaderWriter.ReadPEM(reader);
+            PEMObject? pemObject = readRes.FirstOrDefault();
 
             // Check
-            if (pemObject.Type != "PUBLIC KEY") {
+            if (pemObject == null || pemObject.Type != "PUBLIC KEY") {
                 return false;
             }
 
             // Try parse ASN
-            using (Asn1InputStream asn = new Asn1InputStream(pemObject.Content)) {
-                // Cycle
-                var asn1Object = asn.ReadObject() as Asn1Sequence;
-                if (asn1Object == null) {
+            try {
+                // Get as span
+                Span<byte> source = pemObject.Content.AsSpan();
+
+                // Some helpers
+                int offset, len, bytes;
+
+                // Read top sequence
+                AsnDecoder.ReadSequence(source, AsnEncodingRules.DER, out offset, out len, out bytes);
+                source = source[offset..];
+
+                // Read algorithm
+                AsnDecoder.ReadSequence(source, AsnEncodingRules.DER, out offset, out len, out bytes);
+
+                // Go Further
+                var oidSeq = source[offset..(offset + len)];
+                source = source[bytes..];
+
+                // Parse OID
+                Oid oid = new Oid(AsnDecoder.ReadObjectIdentifier(oidSeq, AsnEncodingRules.DER, out bytes));
+                if (oid.Value != OidEd25519.Value) {
                     return false;
                 }
 
-                // Parse further down
-                foreach (var obj in asn1Object) {
-                    switch (obj) {
-                        case Asn1Sequence:
-                            // Check algorithm
-                            var seqOid = obj as Asn1Sequence;
-                            if (seqOid == null || seqOid.Count != 1) {
-                                return false;
-                            }
-                            DerObjectIdentifier? oid = seqOid[0] as DerObjectIdentifier;
-                            if (oid == null || oid.Id != OidEd25519.Value) {
-                                return false;
-                            }
-                            break;
-                        case DerBitString:
-                            // Check key
-                            var keyOcted = obj as DerBitString;
-                            byte[]? bytes = keyOcted?.GetOctets();
-                            if (bytes == null || bytes.Length != 32) {
-                                return false;
-                            }
-                            bytes.CopyTo(result);
-                            return true;
-                    }
-                }
+                // read key
+                byte[] resKey = AsnDecoder.ReadBitString(source, AsnEncodingRules.DER, out len, out bytes);
+                resKey.CopyTo(result);
+
+                // return
+                return true;
+            } catch {
+                // No no man
+                return false;
             }
         }
-
-        // Get me out of here
-        return true;
     }
 
+
+    /// <summary>
+    /// Decode a Ed448 private key from a PEM
+    /// </summary>
+    /// <param name="pem">The PEM source</param>
+    /// <param name="result">The Ed448 private key</param>
+    /// <returns>True / false depending of result</returns>
+    public static bool TryReadEd4489PrivateKey(string pem, Span<byte> result)
+    {
+        using (StringReader reader = new StringReader(pem)) {
+            // Read PEM object
+            ICollection<PEMObject> readRes = PEMReaderWriter.ReadPEM(reader);
+            PEMObject? pemObject = readRes.FirstOrDefault();
+
+            // Check
+            if (pemObject == null || pemObject.Type != "PRIVATE KEY") {
+                return false;
+            }
+
+            // Try parse ASN
+            try {
+                // Get as span
+                Span<byte> source = pemObject.Content.AsSpan();
+
+                // Some helpers
+                int offset, len, bytes;
+
+                // Read top sequence
+                AsnDecoder.ReadSequence(source, AsnEncodingRules.DER, out offset, out len, out bytes);
+                source = source[offset..];
+
+                // Read version & check
+                ReadOnlySpan<byte> version = AsnDecoder.ReadIntegerBytes(source, AsnEncodingRules.DER, out bytes);
+                if (version.Length != 1 && version[0] != 0) {
+                    return false;
+                }
+
+                // Go further
+                source = source[bytes..];
+
+                // Read algorithm
+                AsnDecoder.ReadSequence(source, AsnEncodingRules.DER, out offset, out len, out bytes);
+
+                // Go Further
+                var oidSeq = source[offset..(offset + len)];
+                source = source[bytes..];
+
+                // Parse OID
+                Oid oid = new Oid(AsnDecoder.ReadObjectIdentifier(oidSeq, AsnEncodingRules.DER, out bytes));
+                if (oid.Value != OidEd448.Value) {
+                    return false;
+                }
+
+                // read key
+                byte[] resKey = AsnDecoder.ReadOctetString(source, AsnEncodingRules.DER, out bytes);
+                resKey[2..].CopyTo(result);
+
+                return true;
+            } catch {
+                // No no man
+                return false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Decode a Ed448 public key from a PEM
+    /// </summary>
+    /// <param name="pem">The PEM source</param>
+    /// <param name="result">The Ed448 public key</param>
+    /// <returns>True / false depending of result</returns>
+    public static bool TryReadEd4489PublicKey(string pem, Span<byte> result)
+    {
+        using (StringReader reader = new StringReader(pem)) {
+
+            // Read PEM object
+            ICollection<PEMObject> readRes = PEMReaderWriter.ReadPEM(reader);
+            PEMObject? pemObject = readRes.FirstOrDefault();
+
+            // Check
+            if (pemObject == null || pemObject.Type != "PUBLIC KEY") {
+                return false;
+            }
+
+            // Try parse ASN
+            try {
+                // Get as span
+                Span<byte> source = pemObject.Content.AsSpan();
+
+                // Some helpers
+                int offset, len, bytes;
+
+                // Read top sequence
+                AsnDecoder.ReadSequence(source, AsnEncodingRules.DER, out offset, out len, out bytes);
+                source = source[offset..];
+
+                // Read algorithm
+                AsnDecoder.ReadSequence(source, AsnEncodingRules.DER, out offset, out len, out bytes);
+
+                // Go Further
+                var oidSeq = source[offset..(offset + len)];
+                source = source[bytes..];
+
+                // Parse OID
+                Oid oid = new Oid(AsnDecoder.ReadObjectIdentifier(oidSeq, AsnEncodingRules.DER, out bytes));
+                if (oid.Value != OidEd448.Value) {
+                    return false;
+                }
+
+                // read key
+                byte[] resKey = AsnDecoder.ReadBitString(source, AsnEncodingRules.DER, out len, out bytes);
+                resKey.CopyTo(result);
+
+                // return
+                return true;
+            } catch {
+                // No no man
+                return false;
+            }
+        }
+    }
 }

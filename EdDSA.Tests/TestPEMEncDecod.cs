@@ -107,4 +107,20 @@ GE/AQbi/fJdyNpe9quTAVILPhQkA
         string resKey = PemEd.WriteEd25519PublicKey(pubKey);
         Assert.Equal(pemPubOpenSSL, resKey);
     }
+
+    [Fact(DisplayName = "Test private Ed448 key write to PEM from OpenSSL")]
+    public void TestWritePrivateKeyEd448_OpenSSL()
+    {
+        byte[] prKey = PemEd.HexToByte(thePrKey448OpenSSL);
+        string resKey = PemEd.WriteEd448PrivateKey(prKey);
+        Assert.Equal(pem448OpenSSL, resKey);
+    }
+
+    [Fact(DisplayName = "Test public Ed448 key write to PEM from OpenSSL")]
+    public void TestWritePublicKeyEd448_OpenSSL()
+    {
+        byte[] pubKey = PemEd.HexToByte(thePub448KeyOpenSSL);
+        string resKey = PemEd.WriteEd448PublicKey(pubKey);
+        Assert.Equal(pem448PubOpenSSL, resKey);
+    }
 }

@@ -16,7 +16,9 @@ public static class PEMReaderWriter
         StringBuilder sb = new StringBuilder();
         foreach (var pemObject in pemObjects) {
             sb.AppendLine($"-----BEGIN {pemObject.Type}-----");
-            sb.AppendLine(Convert.ToBase64String(pemObject.Content, Base64FormattingOptions.InsertLineBreaks));
+            sb.AppendLine(Convert.ToBase64String(pemObject.Content)
+                                 .AsSpan()
+                                 .To64LineBreak());
             sb.AppendLine($"-----END {pemObject.Type}-----");
             sb.AppendLine();
         }
@@ -82,6 +84,19 @@ public static class PEMReaderWriter
                 return result;
             }
         }
+    }
+
+    private static string To64LineBreak(this ReadOnlySpan<char> src) 
+    {
+        StringBuilder sb = new StringBuilder();
+        for (int loop = 0; loop < src.Length; loop += 64) {
+            if (loop + 64 < src.Length) {
+                sb.AppendLine(src[loop..(loop + 64)].ToString());
+            } else {
+                sb.AppendLine(src[loop..].ToString());
+            }
+        }
+        return sb.ToString().TrimEnd(Environment.NewLine.ToCharArray());
     }
 
     // Move to first dash

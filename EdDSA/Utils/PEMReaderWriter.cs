@@ -99,7 +99,6 @@ public static class PEMReaderWriter
         return sb.ToString().TrimEnd(Environment.NewLine.ToCharArray());
     }
 
-    // Move to first dash
     private static int ReadToDash(TextReader textReader)
     {
         int ch = textReader.Peek();

@@ -1,4 +1,5 @@
 using EdDSA.Utils;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EdDSA.Tests;
 
@@ -71,7 +72,7 @@ zKdppo+EnMKTi7RKJCae8T6/6it3nLY07A==
     public void TestReadPrivateKeyEd448_OpenSSL()
     {
         Span<byte> prKey = stackalloc byte[57];
-        bool res = PemEd.TryReadEd4489PrivateKey(pem448OpenSSL, prKey);
+        bool res = PemEd.TryReadEd448PrivateKey(pem448OpenSSL, prKey);
         Assert.True(res, "Not valid Ed448PrivateKey encoded in PEM");
         Assert.Equal(thePrKey448OpenSSL, BitConverter.ToString(prKey.ToArray()).Replace("-", "").ToUpper());
     }
@@ -87,7 +88,7 @@ GE/AQbi/fJdyNpe9quTAVILPhQkA
     public void TestReadPublicKeyEd448_OpenSSL()
     {
         Span<byte> pubKey = stackalloc byte[57];
-        bool res = PemEd.TryReadEd4489PublicKey(pem448PubOpenSSL, pubKey);
+        bool res = PemEd.TryReadEd448PublicKey(pem448PubOpenSSL, pubKey);
         Assert.True(res, "Not valid Ed448PublicKey encoded in PEM");
         Assert.Equal(thePub448KeyOpenSSL, BitConverter.ToString(pubKey.ToArray()).Replace("-", "").ToUpper());
     }
@@ -122,5 +123,57 @@ GE/AQbi/fJdyNpe9quTAVILPhQkA
         byte[] pubKey = PemEd.HexToByte(thePub448KeyOpenSSL);
         string resKey = PemEd.WriteEd448PublicKey(pubKey);
         Assert.Equal(pem448PubOpenSSL, resKey);
+    }
+
+    string encr25519key = @"-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIGbMFcGCSqGSIb3DQEFDTBKMCkGCSqGSIb3DQEFDDAcBAiXNWKyZ7uuyAICCAAw
+DAYIKoZIhvcNAgkFADAdBglghkgBZQMEASoEEPlK4tupeoNLagxqY1HLhREEQGYa
+nhXuHYgPJKAfuf+3h+xEVHUHW5lYsZr25lu/WSUPeAXXgW390Wzo5EA8XiBiMTdM
+ci71wSr1f1kUzr7fnmU =
+-----END ENCRYPTED PRIVATE KEY-----";
+
+    [Fact(DisplayName = "Test encrypted private Ed25519 key read from PEM from OpenSSL")]
+    public void TestReadEncryptedPrivateKeyEd25519_OpenSSL()
+    {
+        Span<byte> prKey = stackalloc byte[32];
+        bool res = PemEd.TryReadEd25519PrivateKey(encr25519key, "pass.123", prKey);
+        Assert.True(res, "Not valid Ed25519PrivateKey encrypted and encoded in PEM");
+        Assert.Equal(thePrKeyOpenSSL, BitConverter.ToString(prKey.ToArray()).Replace("-", "").ToUpper());
+    }
+
+    string encr488key = @"-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIGrMFcGCSqGSIb3DQEFDTBKMCkGCSqGSIb3DQEFDDAcBAjpqQGgsPxvCwICCAAw
+DAYIKoZIhvcNAgkFADAdBglghkgBZQMEASoEENq+bDRl+IGXaqZet2ZW4vEEUE9N
+i22+ZLONkrHaQ86wIUXqxHjvQnIJhsZm+mXiKFBsuqSWlybWLnNPMDhEKtMRR+VD
+TxLxeODNBJr2jm1NPG38jWiw+IrlZXwr45AAoYlK
+-----END ENCRYPTED PRIVATE KEY-----";
+
+    [Fact(DisplayName = "Test encrypted private Ed448 key read from PEM from OpenSSL")]
+    public void TestReadEncryptedPrivateKeyEd448_OpenSSL()
+    {
+        Span<byte> prKey = stackalloc byte[57];
+        bool res = PemEd.TryReadEd448PrivateKey(encr488key, "pass.123", prKey);
+        Assert.True(res, "Not valid Ed448PrivateKey encrypted AND encoded in PEM");
+        Assert.Equal(thePrKey448OpenSSL, BitConverter.ToString(prKey.ToArray()).Replace("-", "").ToUpper());
+    }
+
+    [Fact(DisplayName = "Test private Ed25519 key write to encrypted PEM from OpenSSL")]
+    public void TestEncryptedWritePrivateKeyEd25519_OpenSSL()
+    {
+        byte[] prKey = PemEd.HexToByte(thePrKeyOpenSSL);
+        string resKey = PemEd.WriteEd25519PrivateKey(prKey, "pass.123");
+        Span<byte> prKeyTwo = stackalloc byte[32];
+        bool res = PemEd.TryReadEd25519PrivateKey(resKey, "pass.123", prKeyTwo);
+        Assert.Equal(thePrKeyOpenSSL, BitConverter.ToString(prKeyTwo.ToArray()).Replace("-", "").ToUpper());
+    }
+
+    [Fact(DisplayName = "Test private Ed448 key write to encrypted PEM from OpenSSL")]
+    public void TestEncryptedWritePrivateKeyEd448_OpenSSL()
+    {
+        byte[] prKey = PemEd.HexToByte(thePrKey448OpenSSL);
+        string resKey = PemEd.WriteEd448PrivateKey(prKey, "pass.123");
+        Span<byte> prKeyTwo = stackalloc byte[57];
+        bool res = PemEd.TryReadEd448PrivateKey(resKey, "pass.123", prKeyTwo);
+        Assert.Equal(thePrKey448OpenSSL, BitConverter.ToString(prKeyTwo.ToArray()).Replace("-", "").ToUpper());
     }
 }

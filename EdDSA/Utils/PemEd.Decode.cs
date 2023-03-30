@@ -2,6 +2,7 @@
 
 using System.Formats.Asn1;
 using System.Security.Cryptography;
+using System.Security.Cryptography.Pkcs;
 
 namespace EdDSA.Utils;
 
@@ -19,6 +20,7 @@ public static partial class PemEd
     // Some string comparison constants
     private const string PUBLIC_KEY = "PUBLIC KEY";
     private const string PRIVATE_KEY = "PRIVATE KEY";
+    private const string ENCRYPTED_PRIVATE_KEY = "ENCRYPTED PRIVATE KEY";
 
     /// <summary>
     /// Decode a Ed25519 private key from a PEM
@@ -76,6 +78,49 @@ public static partial class PemEd
                 byte[] resKey = AsnDecoder.ReadOctetString(source, AsnEncodingRules.DER, out bytes);
                 resKey[2..].CopyTo(result);
 
+                // return 
+                return true;
+            } catch {
+                // No no man
+                return false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Decode a Ed25519 private key from an encrypted PEM - PKCS 8
+    /// </summary>
+    /// <param name="pem">The PEM source</param>
+    /// <param name="password">The password used to encrypt the key</param>
+    /// <param name="result">The Ed25519 private key</param>
+    /// <returns>True / false depending of result</returns>
+    public static bool TryReadEd25519PrivateKey(string pem, string password, Span<byte> result)
+    {
+        using (StringReader reader = new StringReader(pem)) {
+            // Read PEM object
+            ICollection<PEMObject> readRes = PEMReaderWriter.ReadPEM(reader);
+            PEMObject? pemObject = readRes.FirstOrDefault();
+
+            // Check
+            if (pemObject == null || pemObject.Type != ENCRYPTED_PRIVATE_KEY) {
+                return false;
+            }
+
+            // Try parse ASN
+            try {
+                // Try to decrypt
+                int bytesRead;
+                Pkcs8PrivateKeyInfo dcr = Pkcs8PrivateKeyInfo.DecryptAndDecode(password, pemObject.Content, out bytesRead);
+
+                // Check
+                if (dcr.AlgorithmId.Value != OidEd25519.Value) {
+                    return false;
+                }
+
+                // read key
+                dcr.PrivateKeyBytes.Span[2..].CopyTo(result);
+
+                // return 
                 return true;
             } catch {
                 // No no man
@@ -147,7 +192,7 @@ public static partial class PemEd
     /// <param name="pem">The PEM source</param>
     /// <param name="result">The Ed448 private key</param>
     /// <returns>True / false depending of result</returns>
-    public static bool TryReadEd4489PrivateKey(string pem, Span<byte> result)
+    public static bool TryReadEd448PrivateKey(string pem, Span<byte> result)
     {
         using (StringReader reader = new StringReader(pem)) {
             // Read PEM object
@@ -206,12 +251,54 @@ public static partial class PemEd
     }
 
     /// <summary>
+    /// Decode a Ed448 private key from an encrypted PEM - PKCS 8
+    /// </summary>
+    /// <param name="pem">The PEM source</param>
+    /// <param name="password">The password used to encrypt the key</param>
+    /// <param name="result">The Ed448 private key</param>
+    /// <returns>True / false depending of result</returns>
+    public static bool TryReadEd448PrivateKey(string pem, string password, Span<byte> result)
+    {
+        using (StringReader reader = new StringReader(pem)) {
+            // Read PEM object
+            ICollection<PEMObject> readRes = PEMReaderWriter.ReadPEM(reader);
+            PEMObject? pemObject = readRes.FirstOrDefault();
+
+            // Check
+            if (pemObject == null || pemObject.Type != ENCRYPTED_PRIVATE_KEY) {
+                return false;
+            }
+
+            // Try parse ASN
+            try {
+                // Try to decrypt
+                int bytesRead;
+                Pkcs8PrivateKeyInfo dcr = Pkcs8PrivateKeyInfo.DecryptAndDecode(password, pemObject.Content, out bytesRead);
+
+                // Check
+                if (dcr.AlgorithmId.Value != OidEd448.Value) {
+                    return false;
+                }
+
+                // read key
+                dcr.PrivateKeyBytes.Span[2..].CopyTo(result);
+
+                // return 
+                return true;
+            } catch {
+                // No no man
+                return false;
+            }
+        }
+    }
+
+    /// <summary>
     /// Decode a Ed448 public key from a PEM
     /// </summary>
     /// <param name="pem">The PEM source</param>
     /// <param name="result">The Ed448 public key</param>
     /// <returns>True / false depending of result</returns>
-    public static bool TryReadEd4489PublicKey(string pem, Span<byte> result)
+    public static bool TryReadEd448PublicKey(string pem, Span<byte> result)
     {
         using (StringReader reader = new StringReader(pem)) {
 

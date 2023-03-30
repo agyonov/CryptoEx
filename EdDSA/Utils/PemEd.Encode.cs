@@ -1,4 +1,6 @@
 ﻿using System.Formats.Asn1;
+using System.Security.Cryptography.Pkcs;
+using System.Security.Cryptography;
 
 namespace EdDSA.Utils;
 public static partial class PemEd
@@ -36,6 +38,47 @@ public static partial class PemEd
         {
             Type = PRIVATE_KEY,
             Content = writer.Encode()
+        };
+
+        // Write in PEM format
+        using (TextWriter textWriter = new StringWriter()) {
+            // Write in PEM
+            PEMReaderWriter.WritePEM(new PEMObject[] { pEM }, textWriter);
+
+            // Set result
+            textWriter.Flush();
+            pemResult = textWriter.ToString() ?? string.Empty;
+        }
+
+        // return
+        return pemResult;
+    }
+
+    /// <summary>
+    /// Encode a Ed25519 private key to an encrypted PEM - PKCS8
+    /// </summary>
+    /// <param name="prKey">The Ed25519 private key</param>
+    /// <param name="password">The password to use for encryption of the key</param>
+    /// <returns>The PEM Encoded private key </returns>
+    public static string WriteEd25519PrivateKey(ReadOnlySpan<byte> prKey, string password)
+    {
+        // local res
+        string pemResult = string.Empty;
+
+        // Create writer
+        AsnWriter writer = new AsnWriter(AsnEncodingRules.DER);
+
+        // PrivateKey
+        writer.WriteOctetString(prKey);
+
+        // Define some packaging
+        Pkcs8PrivateKeyInfo pkcs8 = new Pkcs8PrivateKeyInfo(OidEd25519, null, writer.Encode());
+
+        // Encode
+        PEMObject pEM = new PEMObject()
+        {
+            Type = ENCRYPTED_PRIVATE_KEY,
+            Content = pkcs8.Encrypt(password, new PbeParameters(PbeEncryptionAlgorithm.Aes256Cbc, HashAlgorithmName.SHA256, 2048))
         };
 
         // Write in PEM format
@@ -130,6 +173,47 @@ public static partial class PemEd
         {
             Type = PRIVATE_KEY,
             Content = writer.Encode()
+        };
+
+        // Write in PEM format
+        using (TextWriter textWriter = new StringWriter()) {
+            // Write in PEM
+            PEMReaderWriter.WritePEM(new PEMObject[] { pEM }, textWriter);
+
+            // Set result
+            textWriter.Flush();
+            pemResult = textWriter.ToString() ?? string.Empty;
+        }
+
+        // return
+        return pemResult;
+    }
+
+    /// <summary>
+    /// Encode a Ed448 private key to an encrypted PEM - PKCS 8
+    /// </summary>
+    /// <param name="prKey">The Ed448 private key</param>
+    /// <param name="password">The password to use for encryption of the key</param>
+    /// <returns>The PEM Encoded private key </returns>
+    public static string WriteEd448PrivateKey(ReadOnlySpan<byte> prKey, string password)
+    {
+        // local res
+        string pemResult = string.Empty;
+
+        // Create writer
+        AsnWriter writer = new AsnWriter(AsnEncodingRules.DER);
+
+        // PrivateKey
+        writer.WriteOctetString(prKey);
+
+        // Define some packaging
+        Pkcs8PrivateKeyInfo pkcs8 = new Pkcs8PrivateKeyInfo(OidEd448, null, writer.Encode());
+
+        // Encode
+        PEMObject pEM = new PEMObject()
+        {
+            Type = ENCRYPTED_PRIVATE_KEY,
+            Content = pkcs8.Encrypt(password, new PbeParameters(PbeEncryptionAlgorithm.Aes256Cbc, HashAlgorithmName.SHA256, 2048))
         };
 
         // Write in PEM format

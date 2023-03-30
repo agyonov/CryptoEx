@@ -8,13 +8,17 @@ namespace EdDSA.Utils;
 /// <summary>
 /// Help class to encode and decode EcDSA keys in PEM files
 /// </summary>
-public static class PemEncodeDecode
+public static partial class PemEd
 {
     // Ed25519 OID
     public static readonly Oid OidEd25519 = new Oid("1.3.101.112");
 
     // Ed448 OID
     public static readonly Oid OidEd448 = new Oid("1.3.101.113");
+
+    // Some string comparison constants
+    private const string PUBLIC_KEY = "PUBLIC KEY";
+    private const string PRIVATE_KEY = "PRIVATE KEY";
 
     /// <summary>
     /// Decode a Ed25519 private key from a PEM
@@ -30,7 +34,7 @@ public static class PemEncodeDecode
             PEMObject? pemObject = readRes.FirstOrDefault();
 
             // Check
-            if (pemObject == null || pemObject.Type != "PRIVATE KEY") {
+            if (pemObject == null || pemObject.Type != PRIVATE_KEY) {
                 return false;
             }
 
@@ -80,7 +84,6 @@ public static class PemEncodeDecode
         }
     }
 
-
     /// <summary>
     /// Decode a Ed25519 public key from a PEM
     /// </summary>
@@ -96,7 +99,7 @@ public static class PemEncodeDecode
             PEMObject? pemObject = readRes.FirstOrDefault();
 
             // Check
-            if (pemObject == null || pemObject.Type != "PUBLIC KEY") {
+            if (pemObject == null || pemObject.Type != PUBLIC_KEY) {
                 return false;
             }
 
@@ -138,7 +141,6 @@ public static class PemEncodeDecode
         }
     }
 
-
     /// <summary>
     /// Decode a Ed448 private key from a PEM
     /// </summary>
@@ -153,7 +155,7 @@ public static class PemEncodeDecode
             PEMObject? pemObject = readRes.FirstOrDefault();
 
             // Check
-            if (pemObject == null || pemObject.Type != "PRIVATE KEY") {
+            if (pemObject == null || pemObject.Type != PRIVATE_KEY) {
                 return false;
             }
 
@@ -218,7 +220,7 @@ public static class PemEncodeDecode
             PEMObject? pemObject = readRes.FirstOrDefault();
 
             // Check
-            if (pemObject == null || pemObject.Type != "PUBLIC KEY") {
+            if (pemObject == null || pemObject.Type != PUBLIC_KEY) {
                 return false;
             }
 

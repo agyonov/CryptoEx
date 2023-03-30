@@ -23,7 +23,7 @@ Z9w7lshQhqowtrbLDFw4rXAxZuE=
     public void TestReadPrivateKeyEd25519_RFC(string pem)
     {
         Span<byte> prKey = stackalloc byte[32];
-        bool res = PemEncodeDecode.TryReadEd25519PrivateKey(pem, prKey);
+        bool res = PemEd.TryReadEd25519PrivateKey(pem, prKey);
         Assert.True(res, "Not valid Ed25519PrivateKey encoded in PEM");
         Assert.Equal(thePrKeyOne, BitConverter.ToString(prKey.ToArray()).Replace("-", "").ToUpper());
     }
@@ -38,7 +38,7 @@ MC4CAQAwBQYDK2VwBCIEIPkoRs4hG3UT5f/emUfAjinONvJI3SOArEUdZ6mVA2Pi
     public void TestReadPrivateKeyEd25519_OpenSSL()
     {
         Span<byte> prKey = stackalloc byte[32];
-        bool res = PemEncodeDecode.TryReadEd25519PrivateKey(pemOpenSSL, prKey);
+        bool res = PemEd.TryReadEd25519PrivateKey(pemOpenSSL, prKey);
         Assert.True(res, "Not valid Ed25519PrivateKey encoded in PEM");
         Assert.Equal(thePrKeyOpenSSL, BitConverter.ToString(prKey.ToArray()).Replace("-", "").ToUpper());
     }
@@ -54,7 +54,7 @@ MCowBQYDK2VwAyEAYB9j6C7v99UHOnUiLPvepXHTALVTJNWlpRrV0xqe1Zo=
     public void TestReadPublicKeyEd25519_OpenSSL()
     {
         Span<byte> pubKey = stackalloc byte[32];
-        bool res = PemEncodeDecode.TryReadEd25519PublicKey(pemPubOpenSSL, pubKey);
+        bool res = PemEd.TryReadEd25519PublicKey(pemPubOpenSSL, pubKey);
         Assert.True(res, "Not valid Ed25519PublicKey encoded in PEM");
         Assert.Equal(thePubKeyOpenSSL, BitConverter.ToString(pubKey.ToArray()).Replace("-", "").ToUpper());
     }
@@ -71,7 +71,7 @@ zKdppo+EnMKTi7RKJCae8T6/6it3nLY07A==
     public void TestReadPrivateKeyEd448_OpenSSL()
     {
         Span<byte> prKey = stackalloc byte[57];
-        bool res = PemEncodeDecode.TryReadEd4489PrivateKey(pem448OpenSSL, prKey);
+        bool res = PemEd.TryReadEd4489PrivateKey(pem448OpenSSL, prKey);
         Assert.True(res, "Not valid Ed448PrivateKey encoded in PEM");
         Assert.Equal(thePrKey448OpenSSL, BitConverter.ToString(prKey.ToArray()).Replace("-", "").ToUpper());
     }
@@ -87,8 +87,24 @@ GE/AQbi/fJdyNpe9quTAVILPhQkA
     public void TestReadPublicKeyEd448_OpenSSL()
     {
         Span<byte> pubKey = stackalloc byte[57];
-        bool res = PemEncodeDecode.TryReadEd4489PublicKey(pem448PubOpenSSL, pubKey);
+        bool res = PemEd.TryReadEd4489PublicKey(pem448PubOpenSSL, pubKey);
         Assert.True(res, "Not valid Ed448PublicKey encoded in PEM");
         Assert.Equal(thePub448KeyOpenSSL, BitConverter.ToString(pubKey.ToArray()).Replace("-", "").ToUpper());
+    }
+
+    [Fact(DisplayName = "Test private Ed25519 key write to PEM from OpenSSL")]
+    public void TestWritePrivateKeyEd25519_OpenSSL()
+    {
+        byte[] prKey = PemEd.HexToByte(thePrKeyOpenSSL);
+        string resKey = PemEd.WriteEd25519PrivateKey(prKey);
+        Assert.Equal(pemOpenSSL, resKey);
+    }
+
+    [Fact(DisplayName = "Test public Ed25519 key write to PEM from OpenSSL")]
+    public void TestWritePublicKeyEd25519_OpenSSL()
+    {
+        byte[] pubKey = PemEd.HexToByte(thePubKeyOpenSSL);
+        string resKey = PemEd.WriteEd25519PublicKey(pubKey);
+        Assert.Equal(pemPubOpenSSL, resKey);
     }
 }

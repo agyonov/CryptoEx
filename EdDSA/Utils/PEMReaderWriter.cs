@@ -22,7 +22,7 @@ public static class PEMReaderWriter
         }
 
         // Write it
-        textWriter.Write(sb.ToString());
+        textWriter.Write(sb.ToString().TrimEnd(Environment.NewLine.ToCharArray()));
         textWriter.Flush();
 
         // Return length
@@ -120,9 +120,10 @@ public static class PEMReaderWriter
         // Check 
         if (sb.Length > 0) {
             Label = sb.ToString();
-            Label = Label.Replace("BEGIN", "")
-                         .Replace("END", "")
-                         .Trim();
+            Label = Label.Replace("BEGIN", "", StringComparison.InvariantCultureIgnoreCase)
+                         .Replace("END", "", StringComparison.InvariantCultureIgnoreCase)
+                         .Trim()
+                         .ToUpper();
         } else {
             Label = string.Empty;
         }

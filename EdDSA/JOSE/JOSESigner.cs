@@ -118,6 +118,16 @@ public class JOSESigner
         }
     }
 
+    // Clear signature data
+    public void Clear() 
+    {
+        _certificate = null;
+        _header = null;
+        _protected = string.Empty;
+        _payload = null;
+        _signature = Array.Empty<byte>();
+    }
+
     // Attach the signer's certificate to the JWS
     public void AttachSignersCertificate(X509Certificate2 cert)
     {

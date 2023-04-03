@@ -88,6 +88,55 @@ public class TestETSI
         }
     }
 
+
+    [Fact(DisplayName = "Test JOSE ECDSA with enveloped data")]
+    public void Test_JOSE_ECDSA_Enveloped()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.EC);
+        if (cert == null) {
+            Assert.Fail("NO ECDSA certificate available");
+        }
+
+        // Get RSA private key
+        ECDsa? ecKey = cert.GetECDsaPrivateKey();
+        if (ecKey != null) {
+            // Create signer 
+            JOSESigner signer = new JOSESigner(ecKey, HashAlgorithmName.SHA512);
+
+            // Get payload 
+            signer.AttachSignersCertificate(cert);
+            signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
+            Assert.True(signer.EncodeSimple().Length > 0);
+        } else {
+            Assert.Fail("NO ECDSA certificate available");
+        }
+    }
+
+    [Fact(DisplayName = "Test ETSI ECDSA with enveloped data")]
+    public void Test_ETSI_ECDSA_Enveloped()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.EC);
+        if (cert == null) {
+            Assert.Fail("NO ECDSA certificate available");
+        }
+
+        // Get RSA private key
+        ECDsa? ecKey = cert.GetECDsaPrivateKey();
+        if (ecKey != null) {
+            // Create signer 
+            JOSESigner signer = new ETSISigner(ecKey, HashAlgorithmName.SHA512);
+
+            // Get payload 
+            signer.AttachSignersCertificate(cert);
+            signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
+            Assert.True(signer.Encode().Length > 0);
+        } else {
+            Assert.Fail("NO ECDSA certificate available");
+        }
+    }
+
     // Get some certificate from the store for testing
     private static X509Certificate2? GetCertificate(CertType certType)
     {

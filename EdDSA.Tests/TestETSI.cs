@@ -1,0 +1,134 @@
+﻿using EdDSA.JOSE;
+using EdDSA.JOSE.ETSI;
+using EdDSA.Utils;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace EdDSA.Tests;
+public class TestETSI
+{
+    public static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        WriteIndented = false,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+
+    // Some test data for JADES
+    public static string message = """
+    {
+        "Разрешение": 2413413241243,
+        "Име Латиница": "John Doe",
+        "Име": "Джон Доу",
+        "ЕГН/ЛНЧ": "1234567890",
+        "Оръжия": [
+            {
+                "Сериен №": "98965049Ф769",
+                "Модел": "AK-47"
+            },
+            {
+                "Сериен №": "8984-3245",
+                "Модел": "Барета"
+            }
+        ]
+    }
+    """;
+
+    [Fact(DisplayName = "Test JOSE RSA with enveloped data")]
+    public void Test_JOSE_RSA_Enveloped()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey != null) {
+            // Create signer 
+            JOSESigner signer = new JOSESigner(rsaKey, HashAlgorithmName.SHA512);
+
+            // Get payload 
+            signer.AttachSignersCertificate(cert);
+            signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
+            Assert.True(signer.EncodeSimple().Length > 0);
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
+    [Fact(DisplayName = "Test ETSI RSA with enveloped data")]
+    public void Test_ETSI_RSA_Enveloped()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey != null) {
+            // Create signer 
+            JOSESigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
+
+            // Get payload 
+            signer.AttachSignersCertificate(cert);
+            signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
+            Assert.True(signer.Encode().Length > 0);
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
+    // Get some certificate from the store for testing
+    private static X509Certificate2? GetCertificate(CertType certType)
+    {
+        var now = DateTime.Now;
+        using (X509Store store = new X509Store(StoreLocation.CurrentUser)) {
+            store.Open(OpenFlags.ReadOnly);
+
+            var coll = store.Certificates
+                            .Where(cert => cert.HasPrivateKey && cert.NotBefore < now && cert.NotAfter > now)
+                            .ToList();
+
+            List<X509Certificate2> valColl = new List<X509Certificate2>();
+
+            foreach (var c in coll) {
+                using (var chain = new X509Chain()) {
+
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                    chain.ChainPolicy.DisableCertificateDownloads = true;
+                    if (chain.Build(c)) {
+                        valColl.Add(c);
+                    } else {
+                        c.Dispose();
+                    }
+
+                    for (int i = 0; i < chain.ChainElements.Count; i++) {
+                        chain.ChainElements[i].Certificate.Dispose();
+                    }
+                }
+            }
+
+            return valColl.Where(c =>
+            {
+                string frName = certType switch
+                {
+                    CertType.RSA => "RSA",
+                    CertType.EC => "ECC",
+                    _ => "Ed"
+                };
+                return c.PublicKey.Oid.FriendlyName == frName;
+            })
+            .FirstOrDefault();
+        }
+    }
+}

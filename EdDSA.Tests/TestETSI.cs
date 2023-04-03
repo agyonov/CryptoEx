@@ -1,6 +1,8 @@
 ﻿using EdDSA.JOSE;
 using EdDSA.JOSE.ETSI;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
+using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -132,6 +134,52 @@ public class TestETSI
             Assert.True(signer.Encode().Length > 0);
         } else {
             Assert.Fail("NO ECDSA certificate available");
+        }
+    }
+
+    [Fact(DisplayName = "Test ETSI RSA Timestamp with enveloped data")]
+    public async Task Test_ETSI_RSA_Timestamp_Enveloped()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey != null) {
+            // Create signer 
+            ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
+
+            // Get payload 
+            signer.AttachSignersCertificate(cert);
+            signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
+            await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
+            Assert.True(signer.Encode().Length > 0);
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
+    public async Task<byte[]> CreateRfc3161RequestAsync(byte[] data)
+    {
+        Rfc3161TimestampRequest req = Rfc3161TimestampRequest.CreateFromData(data, HashAlgorithmName.SHA512, null, null, true, null);
+
+        using (HttpClient client = new HttpClient()) {
+            client.DefaultRequestHeaders.Accept.Clear();
+
+            HttpContent content = new ByteArrayContent(req.Encode());
+
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/timestamp-query");
+
+            // "http://timestamp.sectigo.com/qualified"
+            // "http://tsa.esign.bg"
+            // "http://timestamp.digicert.com"
+            var res = await client.PostAsync("http://timestamp.sectigo.com/qualified", content);
+
+
+            return (await res.Content.ReadAsByteArrayAsync())[9..]; // 9 // 27 // 9
         }
     }
 

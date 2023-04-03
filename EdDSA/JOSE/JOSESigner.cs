@@ -114,7 +114,7 @@ public class JOSESigner
     }
 
     // Clear signature data
-    public void Clear()
+    public virtual void Clear()
     {
         _certificate = null;
         _header = null;
@@ -129,6 +129,7 @@ public class JOSESigner
         _certificate = cert;
     }
 
+    // Sign the bloody thing
     public virtual void Sign(ReadOnlySpan<byte> payload, string? mimeType = null)
     {
         // Prepare header
@@ -147,6 +148,7 @@ public class JOSESigner
 
     public virtual void SignDetached(ReadOnlyMemory<byte> payload, string? mimeType = null) { }
 
+    // Encode as JWS full
     public virtual string Encode()
         => JsonSerializer.Serialize(new JWS
         {
@@ -161,6 +163,7 @@ public class JOSESigner
             }
         }, JOSEConstants.jsonOptions);
 
+    // Encode as JSW as simpe string
     public virtual string EncodeSimple()
         => $"{_protected}.{_payload}.{Base64UrlEncoder.Encode(_signature)}";
 

@@ -1,12 +1,6 @@
 ﻿using EdDSA.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace EdDSA.JOSE.ETSI;
 public class ETSISigner : JOSESigner
@@ -26,7 +20,7 @@ public class ETSISigner : JOSESigner
             throw new Exception("Certificate can not be null");
         }
 
-        ETSIHeader etsHeader =  new ETSIHeader
+        ETSIHeader etsHeader = new ETSIHeader
         {
             Alg = _algorithmNameJws,
             Cty = mimeType,

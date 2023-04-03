@@ -1,7 +1,5 @@
 ﻿using EdDSA.JOSE;
 using EdDSA.JOSE.ETSI;
-using EdDSA.Utils;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;

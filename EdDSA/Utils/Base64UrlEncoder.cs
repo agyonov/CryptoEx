@@ -1,6 +1,4 @@
-﻿using Org.BouncyCastle.Tls;
-using System;
-using System.Text;
+﻿using System.Text;
 
 
 namespace EdDSA.Utils;
@@ -45,11 +43,11 @@ public static class Base64UrlEncoder
     /// Converts the specified string, base-64-url encoded to  bytes.</summary>
     /// <param name="str">base64Url encoded string.</param>
     /// <returns>UTF8 bytes.</returns>
-    public static byte[] Decode(string str) 
+    public static byte[] Decode(string str)
     {
         StringBuilder sb = new StringBuilder(str.Length);
 
-        for (int loop=0; loop<str.Length; loop++) {
+        for (int loop = 0; loop < str.Length; loop++) {
             sb.Append(str[loop] switch
             {
                 '-' => '+',
@@ -60,7 +58,7 @@ public static class Base64UrlEncoder
         int rem = sb.Length % 3;
         if (rem == 1) {
             sb.Append("==");
-        }else if (rem == 2) {
+        } else if (rem == 2) {
             sb.Append('=');
         }
 

@@ -86,7 +86,7 @@ public static class PEMReaderWriter
         }
     }
 
-    private static string To64LineBreak(this ReadOnlySpan<char> src) 
+    private static string To64LineBreak(this ReadOnlySpan<char> src)
     {
         StringBuilder sb = new StringBuilder();
         for (int loop = 0; loop < src.Length; loop += 64) {

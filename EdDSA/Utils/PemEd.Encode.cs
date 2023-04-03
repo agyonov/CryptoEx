@@ -1,6 +1,6 @@
 ﻿using System.Formats.Asn1;
-using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography;
+using System.Security.Cryptography.Pkcs;
 
 namespace EdDSA.Utils;
 public static partial class PemEd

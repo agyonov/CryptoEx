@@ -1,5 +1,6 @@
 ﻿using EdDSA.JOSE;
 using EdDSA.JOSE.ETSI;
+using Org.BouncyCastle.Crypto;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;

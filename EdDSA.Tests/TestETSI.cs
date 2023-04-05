@@ -42,6 +42,11 @@ public class TestETSI
     }
     """;
 
+    public static string testFile = """
+    This is a test
+    This is a test again
+    """;
+
     [Fact(DisplayName = "Test JOSE RSA with enveloped data")]
     public void Test_JOSE_RSA_Enveloped()
     {
@@ -90,6 +95,30 @@ public class TestETSI
         }
     }
 
+    [Fact(DisplayName = "Test ETSI RSA with detached data")]
+    public void Test_ETSI_RSA_Detached()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey != null) {
+            // Create signer 
+            ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
+
+            // Get payload 
+            signer.AttachSignersCertificate(cert);
+            signer.SignDetached(Encoding.UTF8.GetBytes(testFile.Trim()), "text/plain");
+            Assert.True(signer.Encode().Length > 0);
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
     [Fact(DisplayName = "Test ETSI RSA Timestamp with enveloped data")]
     public async Task Test_ETSI_RSA_Timestamp_Enveloped()
     {
@@ -108,6 +137,31 @@ public class TestETSI
             // Get payload 
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
+            await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
+            Assert.True(signer.Encode().Length > 0);
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
+    [Fact(DisplayName = "Test ETSI RSA Timestamp with detached data")]
+    public async Task Test_ETSI_RSA_Timestamp_Detached()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey != null) {
+            // Create signer 
+            ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
+
+            // Get payload 
+            signer.AttachSignersCertificate(cert);
+            signer.SignDetached(Encoding.UTF8.GetBytes(testFile.Trim()), "text/plain");
             await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
             Assert.True(signer.Encode().Length > 0);
         } else {

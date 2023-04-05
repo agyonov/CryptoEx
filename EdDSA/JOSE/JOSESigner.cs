@@ -117,7 +117,6 @@ public class JOSESigner
     /// Clear some data.
     /// Every thing except the signer and the HashAlgorithmName!
     /// </summary>
-    // Clear signature data
     public virtual void Clear()
     {
         _certificate = null;
@@ -146,7 +145,7 @@ public class JOSESigner
     public virtual void Sign(ReadOnlySpan<byte> payload, string? mimeType = null)
     {
         // Prepare header
-        PrepareHeader();
+        PrepareHeader(mimeType);
 
         // Form JOSE protected data - clear
         _payload = Base64UrlEncoder.Encode(payload);

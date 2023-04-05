@@ -20,16 +20,31 @@ public class TestBase64Url
     [Fact(DisplayName = "Test Base64Url encode data")]
     public void Test_Base64UrlEncode()
     {
-        var hh = Base64UrlEncoder.Encode(inByteFix);
-        hh = Base64UrlEncoder.Encode(inByteOne);
-        hh = Base64UrlEncoder.Encode(inByteTwo);
+        Assert.False(string.Compare(Base64UrlEncoder.Encode(inByteFix), inStrFix) != 0);
+        Assert.False(string.Compare(Base64UrlEncoder.Encode(inByteOne), inStrOne) != 0);
+        Assert.False(string.Compare(Base64UrlEncoder.Encode(inByteTwo), inStrTwo) != 0);
     }
 
     [Fact(DisplayName = "Test Base64Url decode data")]
     public void Test_Base64UrlDecode()
     {
-        var hh = Base64UrlEncoder.Decode(inStrFix);
-        hh = Base64UrlEncoder.Decode(inStrOne);
-        hh = Base64UrlEncoder.Decode(inStrTwo);
+        Assert.False(!compareArrays(Base64UrlEncoder.Decode(inStrFix), inByteFix));
+        Assert.False(!compareArrays(Base64UrlEncoder.Decode(inStrOne), inByteOne));
+        Assert.False(!compareArrays(Base64UrlEncoder.Decode(inStrTwo), inByteTwo));
+    }
+
+    private bool compareArrays(byte[] arrS, byte[] arrT) 
+    {
+        if (arrS.Length != arrT.Length) { 
+            return false;
+        }
+
+        for (int i = 0; i < arrS.Length; i++) {
+            if (arrS[i] != arrT[i]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

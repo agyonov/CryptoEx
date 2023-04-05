@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

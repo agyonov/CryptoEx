@@ -2,6 +2,7 @@
 using EdDSA.JOSE.ETSI;
 using Org.BouncyCastle.Crypto;
 using System.Net.Http.Headers;
+using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
@@ -59,7 +60,7 @@ public class TestETSI
             // Get payload 
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
-            Assert.True(signer.EncodeSimple().Length > 0);
+            Assert.True(signer.EncodeCompact().Length > 0);
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -89,6 +90,30 @@ public class TestETSI
         }
     }
 
+    [Fact(DisplayName = "Test ETSI RSA Timestamp with enveloped data")]
+    public async Task Test_ETSI_RSA_Timestamp_Enveloped()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey != null) {
+            // Create signer 
+            ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
+
+            // Get payload 
+            signer.AttachSignersCertificate(cert);
+            signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
+            await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
+            Assert.True(signer.Encode().Length > 0);
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
 
     [Fact(DisplayName = "Test JOSE ECDSA with enveloped data")]
     public void Test_JOSE_ECDSA_Enveloped()
@@ -108,7 +133,7 @@ public class TestETSI
             // Get payload 
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
-            Assert.True(signer.EncodeSimple().Length > 0);
+            Assert.True(signer.EncodeCompact().Length > 0);
         } else {
             Assert.Fail("NO ECDSA certificate available");
         }
@@ -138,20 +163,20 @@ public class TestETSI
         }
     }
 
-    [Fact(DisplayName = "Test ETSI RSA Timestamp with enveloped data")]
-    public async Task Test_ETSI_RSA_Timestamp_Enveloped()
+    [Fact(DisplayName = "Test ETSI ECDSA Timestamp with enveloped data")]
+    public async Task Test_ETSI_ECDSA_Timestamp_Enveloped()
     {
         // Try get certificate
-        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        X509Certificate2? cert = GetCertificate(CertType.EC);
         if (cert == null) {
-            Assert.Fail("NO RSA certificate available");
+            Assert.Fail("NO ECDSA certificate available");
         }
 
         // Get RSA private key
-        RSA? rsaKey = cert.GetRSAPrivateKey();
-        if (rsaKey != null) {
+        ECDsa? ecKey = cert.GetECDsaPrivateKey();
+        if (ecKey != null) {
             // Create signer 
-            ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
+            ETSISigner signer = new ETSISigner(ecKey, HashAlgorithmName.SHA512);
 
             // Get payload 
             signer.AttachSignersCertificate(cert);
@@ -159,11 +184,11 @@ public class TestETSI
             await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
             Assert.True(signer.Encode().Length > 0);
         } else {
-            Assert.Fail("NO RSA certificate available");
+            Assert.Fail("NO ECDSA certificate available");
         }
     }
 
-    public async Task<byte[]> CreateRfc3161RequestAsync(byte[] data)
+    private async Task<byte[]> CreateRfc3161RequestAsync(byte[] data)
     {
         Rfc3161TimestampRequest req = Rfc3161TimestampRequest.CreateFromData(data, HashAlgorithmName.SHA512, null, null, true, null);
 

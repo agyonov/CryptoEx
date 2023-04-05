@@ -7,7 +7,7 @@ using System.Text.Json;
 namespace EdDSA.JOSE.ETSI;
 public class ETSISigner : JOSESigner
 {
-    protected ETSIUnprotectedHeader? etsiUnprotected = null;
+    // protected ETSIUnprotectedHeader? etsiUnprotected = null;
 
     public ETSISigner(AsymmetricAlgorithm signer) : base(signer)
     {
@@ -17,35 +17,10 @@ public class ETSISigner : JOSESigner
     {
     }
 
-    public override void Clear()
-    {
-        // Clear the base
-        base.Clear();
-
-        // Clear this
-        etsiUnprotected = null;
-    }
-
-    // Encode as JWS full
-    public override string Encode()
-        => JsonSerializer.Serialize(new JWS
-        {
-            Payload = _payload,
-            Signatures = new JWSSignature[]
-            {
-                new JWSSignature
-                {
-                    Protected = _protected,
-                    Header = etsiUnprotected,
-                    Signature = Base64UrlEncoder.Encode(_signature)
-                }
-            }
-        }, JOSEConstants.jsonOptions);
-
     // Add timestamping
     public async Task AddTimestampAsync(Func<byte[], Task<byte[]>> funcAsync) 
     {
-        byte[] prepSign = Encoding.ASCII.GetBytes(Base64UrlEncoder.Encode(_signature));
+        byte[] prepSign = Encoding.ASCII.GetBytes(Base64UrlEncoder.Encode(_signatures.FirstOrDefault() ?? Array.Empty<byte>()));
         byte[] tStamp = await funcAsync(prepSign);
 
         // Create the timestamp
@@ -62,7 +37,7 @@ public class ETSISigner : JOSESigner
         };
 
         // Construct unprotected header
-        etsiUnprotected = new ETSIUnprotectedHeader
+        _unprotectedHeader = new ETSIUnprotectedHeader
         {
             EtsiU = new string[] { Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JOSEConstants.jsonOptions))) }
         };

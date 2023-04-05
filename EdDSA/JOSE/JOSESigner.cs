@@ -22,19 +22,29 @@ public class JOSESigner
     // Some header 
     protected string? _header = null;
 
+    // Some unprotected header 
+    protected object? _unprotectedHeader = null;
+
     // JOSE protected data
-    protected string _protected = string.Empty;
+    protected readonly List<string> _protecteds;
 
     // JOSE payload
     protected string? _payload = null;
 
     // The calculate signature
-    protected byte[] _signature = Array.Empty<byte>();
+    protected readonly List<byte[]> _signatures;
 
+    /// <summary>
+    /// A constructiror with an private key - RSA or ECDSA, used for signing
+    /// </summary>
+    /// <param name="signer">The private key</param>
+    /// <exception cref="ArgumentException">Invalid private key type</exception>
     public JOSESigner(AsymmetricAlgorithm signer)
     {
         // Store
         _signer = signer;
+        _signatures = new List<byte[]>();
+        _protecteds = new List<string>();
 
         // Determine the algorithm
         switch (signer) {
@@ -75,14 +85,18 @@ public class JOSESigner
         }
     }
 
-    public JOSESigner(AsymmetricAlgorithm signer, HashAlgorithmName hashAlgorithm)
+    /// <summary>
+    /// A constructiror with an private key - RSA or ECDSA, used for signing and hash algorithm
+    /// </summary>
+    /// <param name="signer">The private key</param>
+    /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
+    /// <exception cref="ArgumentException">Invalid private key type</exception>
+    public JOSESigner(AsymmetricAlgorithm signer, HashAlgorithmName hashAlgorithm) : this(signer)
     {
-        // Store
-        _signer = signer;
-
         // Determine the algorithm
         switch (signer) {
             case RSA:
+                // Allow set of hash algorithm
                 _algorithmNameJws = hashAlgorithm.Name switch
                 {
                     "SHA256" => JOSEConstants.RS256,
@@ -92,44 +106,43 @@ public class JOSESigner
                 };
                 _algorithmName = hashAlgorithm;
                 break;
-            case ECDsa ecdsa:
-                _algorithmNameJws = ecdsa.KeySize switch
-                {
-                    256 => JOSEConstants.ES256,
-                    384 => JOSEConstants.ES384,
-                    521 => JOSEConstants.ES512,
-                    _ => throw new ArgumentException("Invalid ECDSA key size")
-                };
-                _algorithmName = ecdsa.KeySize switch
-                {
-                    256 => HashAlgorithmName.SHA256,
-                    384 => HashAlgorithmName.SHA384,
-                    521 => HashAlgorithmName.SHA512,
-                    _ => throw new ArgumentException("Invalid ECDSA key size")
-                };
+            case ECDsa:
                 break;
             default:
                 throw new ArgumentException("Invalid key type");
         }
     }
 
+    /// <summary>
+    /// Clear some data.
+    /// Every thing except the signer and the HashAlgorithmName!
+    /// </summary>
     // Clear signature data
     public virtual void Clear()
     {
         _certificate = null;
         _header = null;
-        _protected = string.Empty;
+        _protecteds.Clear();
         _payload = null;
-        _signature = Array.Empty<byte>();
+        _signatures.Clear();
+        _unprotectedHeader = null;
     }
 
-    // Attach the signer's certificate to the JWS
+    /// <summary>
+    /// Attach the signer's certificate to the JWS. ONLY public part of the certificate is used.
+    /// This is optional and is only used to add the x5c, x5t header
+    /// </summary>
+    /// <param name="cert">The certificate</param>
     public void AttachSignersCertificate(X509Certificate2 cert)
     {
         _certificate = cert;
     }
 
-    // Sign the bloody thing
+    /// <summary>
+    /// Digitally sign the payload and protected header
+    /// </summary>
+    /// <param name="payload">The payload</param>
+    /// <param name="mimeType">Optionally the mime type of the header</param>
     public virtual void Sign(ReadOnlySpan<byte> payload, string? mimeType = null)
     {
         // Prepare header
@@ -137,36 +150,55 @@ public class JOSESigner
 
         // Form JOSE protected data - clear
         _payload = Base64UrlEncoder.Encode(payload);
-        _protected = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(_header ?? string.Empty));
+        string _protected = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(_header ?? string.Empty));
+        _protecteds.Add(_protected);
         string calc = $"{_protected}.{_payload}";
         if (_signer is RSA) {
-            _signature = ((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, RSASignaturePadding.Pkcs1);
+            _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, RSASignaturePadding.Pkcs1));
         } else if (_signer is ECDsa) {
-            _signature = ((ECDsa)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName);
+            _signatures.Add(((ECDsa)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName));
         }
     }
 
-    public virtual void SignDetached(ReadOnlyMemory<byte> payload, string? mimeType = null) { }
-
-    // Encode as JWS full
-    public virtual string Encode()
-        => JsonSerializer.Serialize(new JWS
-        {
-            Payload = _payload,
-            Signatures = new JWSSignature[]
+    /// <summary>
+    /// Encode JWS full or JWS flattened
+    /// </summary>
+    /// <param name="flattened">Set True for flattened, false - for full. Default is true</param>
+    /// <returns>The encoded JWS</returns>
+    public string Encode(bool flattened = true)
+    {
+        // Chec if flattened
+        if (flattened) {
+            return JsonSerializer.Serialize(new JWSFlattened
             {
-                new JWSSignature
-                {
-                    Protected = _protected,
-                    Signature = Base64UrlEncoder.Encode(_signature)
-                }
-            }
-        }, JOSEConstants.jsonOptions);
+                Payload = _payload,
+                Protected = _protecteds.FirstOrDefault() ?? string.Empty,
+                Header = _unprotectedHeader,
+                Signature = Base64UrlEncoder.Encode(_signatures.FirstOrDefault() ?? Array.Empty<byte>())
+            }, JOSEConstants.jsonOptions);
+        } else {
+            return JsonSerializer.Serialize(new JWS
+            {
+                Payload = _payload,
+                Signatures = _signatures.Select((sigItem, index) =>
+                    new JWSSignature
+                    {
+                        Protected = _protecteds[index],
+                        Header = _unprotectedHeader,
+                        Signature = Base64UrlEncoder.Encode(sigItem)
+                    }).ToArray(),
+            }, JOSEConstants.jsonOptions);
+        }
+    }
 
-    // Encode as JSW as simpe string
-    public virtual string EncodeSimple()
-        => $"{_protected}.{_payload}.{Base64UrlEncoder.Encode(_signature)}";
+    /// <summary>
+    /// Encode JWS in compact serialization
+    /// </summary>
+    /// <returns>The encoded JWS</returns>
+    public string EncodeCompact()
+        => $"{_protecteds.FirstOrDefault() ?? string.Empty}.{_payload}.{Base64UrlEncoder.Encode(_signatures.FirstOrDefault() ?? Array.Empty<byte>())}";
 
+    // Prepare header values
     protected virtual void PrepareHeader(string? mimeType = null)
     {
         JWSHeader? jWSHeader;

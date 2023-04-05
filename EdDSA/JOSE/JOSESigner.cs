@@ -191,7 +191,7 @@ public class JOSESigner
     }
 
     /// <summary>
-    /// Encode JWS in compact serialization
+    /// Encode JWS in compact serialization. Shall not be used with Etsi!
     /// </summary>
     /// <returns>The encoded JWS</returns>
     public string EncodeCompact()

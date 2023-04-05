@@ -1,9 +1,4 @@
 ﻿using EdDSA.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EdDSA.Tests;
 public class TestBase64Url
@@ -33,9 +28,9 @@ public class TestBase64Url
         Assert.False(!compareArrays(Base64UrlEncoder.Decode(inStrTwo), inByteTwo));
     }
 
-    private bool compareArrays(byte[] arrS, byte[] arrT) 
+    private bool compareArrays(byte[] arrS, byte[] arrT)
     {
-        if (arrS.Length != arrT.Length) { 
+        if (arrS.Length != arrT.Length) {
             return false;
         }
 

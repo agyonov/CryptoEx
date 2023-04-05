@@ -1,8 +1,6 @@
 ﻿using EdDSA.JOSE;
 using EdDSA.JOSE.ETSI;
-using Org.BouncyCastle.Crypto;
 using System.Net.Http.Headers;
-using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;

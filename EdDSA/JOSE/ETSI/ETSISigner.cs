@@ -73,24 +73,28 @@ public class ETSISigner : JOSESigner
     }
 
     /// <summary>
-    /// Digitally sign the payload and protected header in detached mode
+    /// Digitally sign the attachement, optional payload and protected header in detached mode
     /// </summary>
-    /// <param name="payload">The payload</param>
-    /// <param name="mimeType">Optionally mimeType. Defaults to "octet-stream"</param>
-    public virtual void SignDetached(ReadOnlySpan<byte> payload, string mimeType = "octet-stream")
+    /// <param name="attachement">The attached data (file) </param>
+    /// <param name="optionalPayload">The optional payload. SHOUD BE JSON STRING.</param>
+    /// <param name="mimeTypeAttachement">Optionally mimeType. Defaults to "octet-stream"</param>
+    public virtual void SignDetached(ReadOnlySpan<byte> attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream")
     {
         // Hash attachemnt
         using (HashAlgorithm hAlg = SHA512.Create()) {
             // Hash attachemnt
-            hashedData = hAlg.ComputeHash(Encoding.ASCII.GetBytes(Base64UrlEncoder.Encode(payload)));
+            hashedData = hAlg.ComputeHash(Encoding.ASCII.GetBytes(Base64UrlEncoder.Encode(attachement)));
 
             // Prepare header
-            PrepareHeader(mimeType);
+            PrepareHeader(mimeTypeAttachement);
 
-            // Form JOSE protected data - clear
+            // Form JOSE protected data 
+            if (optionalPayload != null) {
+                _payload = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(optionalPayload));
+            }
             string _protected = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(_header ?? string.Empty));
             _protecteds.Add(_protected);
-            string calc = $"{_protected}.";
+            string calc = optionalPayload == null ? $"{_protected}." : $"{_protected}.{_payload}";
             if (_signer is RSA) {
                 _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, RSASignaturePadding.Pkcs1));
             } else if (_signer is ECDsa) {

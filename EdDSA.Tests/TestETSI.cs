@@ -110,7 +110,7 @@ public class TestETSI
 
             // Get payload 
             signer.AttachSignersCertificate(cert);
-            signer.SignDetached(Encoding.UTF8.GetBytes(testFile.Trim()), "text/plain");
+            signer.SignDetached(Encoding.UTF8.GetBytes(testFile.Trim()), mimeTypeAttachement: "text/plain");
             Assert.True(signer.Encode().Length > 0);
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -159,7 +159,7 @@ public class TestETSI
 
             // Get payload 
             signer.AttachSignersCertificate(cert);
-            signer.SignDetached(Encoding.UTF8.GetBytes(testFile.Trim()), "text/plain");
+            signer.SignDetached(Encoding.UTF8.GetBytes(testFile.Trim()), message, "text/plain");
             await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
             Assert.True(signer.Encode().Length > 0);
         } else {

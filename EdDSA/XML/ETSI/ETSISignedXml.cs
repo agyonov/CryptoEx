@@ -1,16 +1,22 @@
-﻿using System.Security.Cryptography;
+﻿using EdDSA.Utils;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
 using System.Xml;
+using System.Xml.Linq;
 
 namespace EdDSA.XML.ETSI;
 public class ETSISignedXml
 {
-    // some constants on signed XML
-    protected internal const string IdSignature = "id-sig-etsi-signed-xml";
-    protected internal const string IdReferenceSignature = "id-ref-sig-etsi-signed-xml";
-    protected internal const string IdXadesSignedProperties = "id-xades-signed-properties";
-    protected internal const string ETSISignedPropertiesType = "http://uri.etsi.org/01903#SignedProperties";
+    // XADES namespace
+    protected const string XadesNamespaceUrl = "http://uri.etsi.org/01903/v1.3.2#";
+    protected const string XadesNamespaceName = "xades";
+    protected const string ETSISignedPropertiesType = "http://uri.etsi.org/01903#SignedProperties";
+
+    // Some constants on signed XML
+    private const string IdSignature = "id-sig-etsi-signed-xml";
+    private const string IdReferenceSignature = "id-ref-sig-etsi-signed-xml";
+    private const string IdXadesSignedProperties = "id-xades-signed-properties";
 
     // The signing key
     protected readonly AsymmetricAlgorithm _signer;
@@ -23,6 +29,9 @@ public class ETSISignedXml
 
     // DOTNET Hash algorithm name
     protected readonly HashAlgorithmName _hashAlgorithm;
+
+    // last qualifying properties
+    protected XmlNodeList? _qualifyingPropetries;
 
     /// <summary>
     /// A constructiror with an private key - RSA or ECDSA, used for signing
@@ -120,8 +129,8 @@ public class ETSISignedXml
     /// <returns>The Xml Signature element</returns>
     public virtual XmlElement Sign(XmlDocument payload, X509Certificate2 cert)
     {
-        // Create a SignedXml object.
-        SignedXmlExt signedXml = new SignedXmlExt(payload);
+        // Create a SignedXml object & provide GetIdElement method
+        SignedXmlExt signedXml = new SignedXmlExt(payload, GetIdElement);
         signedXml.Signature.Id = IdSignature;
         signedXml.SignedInfo.SignatureMethod = _algorithmNameSignatureXML;
 
@@ -141,7 +150,7 @@ public class ETSISignedXml
 
         // Create a data object to hold the data for the ETSI qualifying properties.
         DataObject dataObject = new DataObject();
-        dataObject.Data = SignedXmlExt.CreateQualifyingPropertiesXML(cert, _hashAlgorithm);
+        dataObject.Data = CreateQualifyingPropertiesXML(cert, _hashAlgorithm);
         signedXml.AddObject(dataObject);
 
         // Create a reference to be able to sign ETSI qualifying properties.
@@ -158,11 +167,102 @@ public class ETSISignedXml
             ((Reference)r).DigestMethod = _algorithmNameDigestXML;
         }
 
-        // Compute the signature.
+        // Compute the signature
         signedXml.SigningKey = _signer;
         signedXml.ComputeSignature();
 
         return signedXml.GetXml();
     }
 
+    /// <summary>
+    /// Helper method to create XADES qualifiying properties to be added as DataObject to the signature
+    /// </summary>
+    /// <param name="certificate">The signing certificate - public part</param>
+    /// <param name="mimeType">Mime type - default is text/xml</param>
+    /// <returns>The XmlNodeList that hold the qualifing parameters to be added to a DataObject</returns>
+    protected virtual XmlNodeList CreateQualifyingPropertiesXML(X509Certificate2 certificate, HashAlgorithmName hashAlgorithm, string mimeType = "text/xml")
+    {
+        XNamespace xades = XadesNamespaceUrl;
+        XNamespace ds = SignedXml.XmlDsigNamespaceUrl;
+
+        // Allow set of hash algorithm
+        string algorithmNameDigestXML = hashAlgorithm.Name switch
+        {
+            "SHA256" => SignedXml.XmlDsigSHA256Url,
+            "SHA384" => SignedXml.XmlDsigSHA384Url,
+            "SHA512" => SignedXml.XmlDsigSHA512Url,
+            _ => throw new ArgumentException("Invalid hash algorithm")
+        };
+        byte[] certHash = certificate.GetCertHash(hashAlgorithm);
+
+        XElement obj =
+            new XElement(ds + "Object",
+                new XAttribute("xmlns", SignedXml.XmlDsigNamespaceUrl),
+                new XElement(xades + "QualifyingProperties",
+                    new XAttribute(XNamespace.Xmlns + XadesNamespaceName, XadesNamespaceUrl),
+                    new XAttribute("Target", $"#{IdSignature}"),
+                    new XElement(xades + "SignedProperties",
+                        new XAttribute("Id", IdXadesSignedProperties),
+                        new XElement(xades + "SignedSignatureProperties",
+                            new XElement(xades + "SigningTime", $"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH:mm:ssZ}"),
+                            new XElement(xades + "SigningCertificateV2",
+                                new XElement(xades + "Cert",
+                                    new XElement(xades + "CertDigest",
+                                        new XElement(ds + "DigestMethod", new XAttribute("Algorithm", algorithmNameDigestXML)),
+                                        new XElement(ds + "DigestValue", Convert.ToBase64String(certHash))
+                                    )
+                                )
+                            )
+                        ),
+                        new XElement(xades + "SignedDataObjectProperties",
+                            new XElement(xades + "DataObjectFormat",
+                                new XAttribute("ObjectReference", $"#{IdReferenceSignature}"),
+                                new XElement(xades + "MimeType", mimeType)
+                            )
+                        )
+                    )
+                )
+           );
+
+        // calc
+        _qualifyingPropetries = obj.ToXmlElement()!.ChildNodes;
+        return _qualifyingPropetries;
+    }
+
+    /// <summary>
+    /// Provide GetIdElementDelegate to find the element with the specified ID attribute value
+    /// in the additional data objects (Qualifiyng properties)
+    /// </summary>
+    /// <param name="idValue">The id value being searched/param>
+    /// <returns>The XML element with given searchId value if found</returns>
+    protected XmlElement? GetIdElement(string idValue)
+    {
+        // Check
+        if (_qualifyingPropetries == null) {
+            return null;
+        }
+
+        var xNode = _qualifyingPropetries[0];
+        if (xNode == null || xNode.ChildNodes.Count < 1) {
+            return null;
+        }
+
+        // Maybe we have found it
+        xNode = xNode.ChildNodes[0];
+        if (xNode == null || xNode is not XmlElement) {
+            return null;
+        } else {
+            // Confirm that we have found it
+            XElement? xEl = ((XmlElement)xNode).ToXElement();
+            if (xEl != null) {
+                // Check it
+                if (xEl.Attributes().Where(atr => atr.Name == "Id" && atr.Value == idValue).Any()) {
+                    return (XmlElement)xNode;
+                }
+            }
+        }
+
+        // General
+        return null;
+    }
 }

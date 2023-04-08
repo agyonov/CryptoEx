@@ -105,13 +105,16 @@ public class TestETSI
         // Get RSA private key
         RSA? rsaKey = cert.GetRSAPrivateKey();
         if (rsaKey != null) {
-            // Create signer 
-            ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
-
             // Get payload 
-            signer.AttachSignersCertificate(cert);
-            signer.SignDetached(Encoding.UTF8.GetBytes(testFile.Trim()), mimeTypeAttachement: "text/plain");
-            Assert.True(signer.Encode().Length > 0);
+            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim()))) {
+                // Create signer 
+                ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
+
+                // Sign
+                signer.AttachSignersCertificate(cert);
+                signer.SignDetached(ms, mimeTypeAttachement: "text/plain");
+                Assert.True(signer.Encode().Length > 0);
+            }
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -154,14 +157,17 @@ public class TestETSI
         // Get RSA private key
         RSA? rsaKey = cert.GetRSAPrivateKey();
         if (rsaKey != null) {
-            // Create signer 
-            ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
-
             // Get payload 
-            signer.AttachSignersCertificate(cert);
-            signer.SignDetached(Encoding.UTF8.GetBytes(testFile.Trim()), message, "text/plain");
-            await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
-            Assert.True(signer.Encode().Length > 0);
+            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim()))) {
+                // Create signer 
+                ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
+
+                // Sign 
+                signer.AttachSignersCertificate(cert);
+                signer.SignDetached(ms, message, "text/plain");
+                await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
+                Assert.True(signer.Encode().Length > 0);
+            }
         } else {
             Assert.Fail("NO RSA certificate available");
         }

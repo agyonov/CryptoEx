@@ -1,4 +1,5 @@
 ﻿using CryptoEx.Utils;
+using System.IO.Pipes;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -78,28 +79,30 @@ public class ETSISigner : JOSESigner
     /// <param name="attachement">The attached data (file) </param>
     /// <param name="optionalPayload">The optional payload. SHOUD BE JSON STRING.</param>
     /// <param name="mimeTypeAttachement">Optionally mimeType. Defaults to "octet-stream"</param>
-    public virtual void SignDetached(ReadOnlySpan<byte> attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream")
+    public virtual void SignDetached(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream")
     {
         // Hash attachemnt
-        using (HashAlgorithm hAlg = SHA512.Create()) {
-            // Hash attachemnt
-            hashedData = hAlg.ComputeHash(Encoding.ASCII.GetBytes(Base64UrlEncoder.Encode(attachement)));
+        using (HashAlgorithm hAlg = SHA512.Create())
+        using (AnonymousPipeServerStream apss = new(PipeDirection.In))
+        using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
+            _ = Task.Run(() => Base64UrlEncoder.Encode(attachement, apcs));
+            hashedData = hAlg.ComputeHash(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+        }
 
-            // Prepare header
-            PrepareHeader(mimeTypeAttachement);
+        // Prepare header
+        PrepareHeader(mimeTypeAttachement);
 
-            // Form JOSE protected data 
-            if (optionalPayload != null) {
-                _payload = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(optionalPayload));
-            }
-            string _protected = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(_header ?? string.Empty));
-            _protecteds.Add(_protected);
-            string calc = optionalPayload == null ? $"{_protected}." : $"{_protected}.{_payload}";
-            if (_signer is RSA) {
-                _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, RSASignaturePadding.Pkcs1));
-            } else if (_signer is ECDsa) {
-                _signatures.Add(((ECDsa)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName));
-            }
+        // Form JOSE protected data 
+        if (optionalPayload != null) {
+            _payload = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(optionalPayload));
+        }
+        string _protected = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(_header ?? string.Empty));
+        _protecteds.Add(_protected);
+        string calc = optionalPayload == null ? $"{_protected}." : $"{_protected}.{_payload}";
+        if (_signer is RSA) {
+            _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, RSASignaturePadding.Pkcs1));
+        } else if (_signer is ECDsa) {
+            _signatures.Add(((ECDsa)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName));
         }
     }
 

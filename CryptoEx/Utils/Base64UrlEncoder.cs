@@ -1,4 +1,5 @@
 ﻿using System.Buffers.Text;
+using System.IO.Pipes;
 
 namespace CryptoEx.Utils;
 
@@ -101,7 +102,7 @@ public static class Base64UrlEncoder
     /// <summary>
     /// Converts the specified string, base-64-url encoded to  bytes.</summary>
     /// <param name="str">base64Url encoded string.</param>
-    /// <returns>UTF8 bytes.</returns>
+    /// <param name="result">The Stream to write the bytes to.</param>
     public static void Decode(TextReader str, Stream result)
     {
         //locals 
@@ -195,9 +196,111 @@ public static class Base64UrlEncoder
     }
 
     /// <summary>
+    /// Converts the specified string, base-64-url encoded to bytes.
+    /// CLOSES THE PIPE STEAM ON END
+    /// </summary>
+    /// <param name="str">base64Url encoded string.</param>
+    /// <param name="result">The PipeStream to write the bytes to.</param>
+    public static void Decode(TextReader str, PipeStream result)
+    {
+        try {
+            //locals 
+            int consumed, written;
+
+            // Create the buffer
+            Span<char> nextChar = stackalloc char[4];
+            Span<byte> resOver = stackalloc byte[3];
+            Span<byte> buffer = stackalloc byte[4];
+
+            // Cycle through the string
+            while (true) {
+                // Read 4 chars
+                consumed = str.Read(nextChar);
+
+                // See what we got
+                switch (consumed) {
+                    case 0:
+                        // flush
+                        result.Flush();
+
+                        return;
+                    case 2:
+                        buffer[0] = nextChar[0] switch
+                        {
+                            '_' => byteUnder,
+                            '-' => byteMinus,
+                            _ => Convert.ToByte(nextChar[0])
+                        };
+                        buffer[1] = nextChar[1] switch
+                        {
+                            '_' => byteUnder,
+                            '-' => byteMinus,
+                            _ => Convert.ToByte(nextChar[1])
+                        };
+                        buffer[2] = byteEqual;
+                        buffer[3] = byteEqual;
+
+                        Base64.DecodeFromUtf8(buffer, resOver, out consumed, out written);
+
+                        // Write
+                        result.Write(resOver[..1]);
+
+                        break;
+                    case 3:
+                        buffer[0] = nextChar[0] switch
+                        {
+                            '_' => byteUnder,
+                            '-' => byteMinus,
+                            _ => Convert.ToByte(nextChar[0])
+                        };
+                        buffer[1] = nextChar[1] switch
+                        {
+                            '_' => byteUnder,
+                            '-' => byteMinus,
+                            _ => Convert.ToByte(nextChar[1])
+                        };
+                        buffer[2] = nextChar[2] switch
+                        {
+                            '_' => byteUnder,
+                            '-' => byteMinus,
+                            _ => Convert.ToByte(nextChar[2])
+                        };
+                        buffer[3] = byteEqual;
+
+                        Base64.DecodeFromUtf8(buffer, resOver, out consumed, out written);
+
+                        // Write
+                        result.Write(resOver[..2]);
+                        break;
+                    case 4:
+                        for (int rep = 0; rep < 4; rep++) {
+                            buffer[rep] = nextChar[rep] switch
+                            {
+                                '_' => byteUnder,
+                                '-' => byteMinus,
+                                _ => Convert.ToByte(nextChar[rep])
+                            };
+                        }
+
+                        // Decode
+                        Base64.DecodeFromUtf8(buffer, resOver, out consumed, out written);
+                        // Write
+                        result.Write(resOver);
+
+                        break;
+                    default:
+                        throw new Exception("Invalid Base64Url string");
+                }
+            }
+        } finally {
+            result.Close();
+        }
+    }
+
+    /// <summary>
     /// Converts the specified string, base-64-url encoded to  bytes.</summary>
     /// <param name="str">base64Url encoded string.</param>
-    /// <returns>UTF8 bytes.</returns>
+    /// <param name="result">The Stream to write the bytes to.</param>
     public async static Task DecodeAsync(TextReader str, Stream result, CancellationToken ct = default)
     {
         //locals 
@@ -294,6 +397,115 @@ public static class Base64UrlEncoder
             if (ct.IsCancellationRequested) {
                 return;
             }
+        }
+    }
+
+    /// <summary>
+    /// Converts the specified string, base-64-url encoded to  bytes.
+    /// CLOSES THE PIPE STEAM ON END
+    /// </summary>
+    /// <param name="str">base64Url encoded string.</param>
+    /// <param name="result">The PipeStream to write the bytes to.</param>
+    public async static Task DecodeAsync(TextReader str, PipeStream result, CancellationToken ct = default)
+    {
+        try {
+            //locals 
+            int consumed;
+
+            // Create the buffer
+            char[] nextChar = new char[4];
+            byte[] resOver = new byte[3];
+            byte[] buffer = new byte[4];
+
+            // Cycle through the string
+            while (true) {
+                // Read 4 chars
+                consumed = await str.ReadAsync(nextChar, ct);
+
+                // See what we got
+                switch (consumed) {
+                    case 0:
+                        // flush
+                        await result.FlushAsync(ct);
+
+                        return;
+                    case 2:
+                        buffer[0] = nextChar[0] switch
+                        {
+                            '_' => byteUnder,
+                            '-' => byteMinus,
+                            _ => Convert.ToByte(nextChar[0])
+                        };
+                        buffer[1] = nextChar[1] switch
+                        {
+                            '_' => byteUnder,
+                            '-' => byteMinus,
+                            _ => Convert.ToByte(nextChar[1])
+                        };
+                        buffer[2] = byteEqual;
+                        buffer[3] = byteEqual;
+
+                        _ = Base64.DecodeFromUtf8(buffer, resOver, out _, out _);
+
+                        // Write
+                        await result.WriteAsync(resOver[..1], ct);
+
+                        break;
+                    case 3:
+                        buffer[0] = nextChar[0] switch
+                        {
+                            '_' => byteUnder,
+                            '-' => byteMinus,
+                            _ => Convert.ToByte(nextChar[0])
+                        };
+                        buffer[1] = nextChar[1] switch
+                        {
+                            '_' => byteUnder,
+                            '-' => byteMinus,
+                            _ => Convert.ToByte(nextChar[1])
+                        };
+                        buffer[2] = nextChar[2] switch
+                        {
+                            '_' => byteUnder,
+                            '-' => byteMinus,
+                            _ => Convert.ToByte(nextChar[2])
+                        };
+                        buffer[3] = byteEqual;
+
+                        _ = Base64.DecodeFromUtf8(buffer, resOver, out _, out _);
+
+                        // Write
+                        await result.WriteAsync(resOver[..2], ct);
+
+                        break;
+                    case 4:
+                        for (int rep = 0; rep < 4; rep++) {
+                            buffer[rep] = nextChar[rep] switch
+                            {
+                                '_' => byteUnder,
+                                '-' => byteMinus,
+                                _ => Convert.ToByte(nextChar[rep])
+                            };
+                        }
+
+                        // Decode
+                        _ = Base64.DecodeFromUtf8(buffer, resOver, out _, out _);
+
+                        // Write
+                        await result.WriteAsync(resOver, ct);
+
+                        break;
+                    default:
+                        throw new Exception("Invalid Base64Url string");
+                }
+
+                // Check
+                if (ct.IsCancellationRequested) {
+                    return;
+                }
+            }
+        } finally {
+            result.Close();
         }
     }
 
@@ -420,9 +632,73 @@ public static class Base64UrlEncoder
         }
     }
 
+    /// <summary>
+    /// The following functions perform base64url encoding. Writes to a PIPE stream of bytes.
+    /// CLOSES THE PIPE STEAM ON END
+    /// </summary>
+    /// <param name="arg">The stream to encode</param>
+    /// <param name="result">The PipeStream to write the Base64Url to, as ASCII bytes</param>
+    public static void Encode(Stream arg, PipeStream result)
+    {
+        try {
+            // bytes read
+            int consumed;
+
+            // Define string holder
+            Span<byte> wrkBuffer = stackalloc byte[4];
+            Span<byte> src = stackalloc byte[3];
+
+            // Cycle
+            while (true) {
+                // Get some
+                consumed = arg.Read(src);
+
+                // Check
+                switch (consumed) {
+
+                    case 0:
+                        // flush
+                        result.Flush();
+
+                        return;
+                    case 1:
+                        // Encode
+                        wrkBuffer[0] = (byte)_base64UrlTable[src[0] >> 2];
+                        wrkBuffer[1] = (byte)_base64UrlTable[(src[0] & 0x03) << 4];
+
+                        // Write
+                        result.Write(wrkBuffer[..2]);
+                        break;
+                    case 2:
+                        // Encode
+                        wrkBuffer[0] = (byte)_base64UrlTable[src[0] >> 2];
+                        wrkBuffer[1] = (byte)_base64UrlTable[((src[0] & 0x03) << 4) | (src[1] >> 4)];
+                        wrkBuffer[2] = (byte)_base64UrlTable[(src[1] & 0x0f) << 2];
+
+                        // Write
+                        result.Write(wrkBuffer[..3]);
+                        break;
+                    case 3:
+                        // Encode
+                        wrkBuffer[0] = (byte)_base64UrlTable[src[0] >> 2];
+                        wrkBuffer[1] = (byte)_base64UrlTable[((src[0] & 0x03) << 4) | (src[1] >> 4)];
+                        wrkBuffer[2] = (byte)_base64UrlTable[((src[1] & 0x0f) << 2) | (src[2] >> 6)];
+                        wrkBuffer[3] = (byte)_base64UrlTable[src[2] & 0x3f];
+
+                        // Write
+                        result.Write(wrkBuffer);
+                        break;
+                    default:
+                        throw new Exception("Invalid Base64Url string");
+                }
+            }
+        } finally {
+            result.Close();
+        }
+    }
 
     /// <summary>
-    /// The following functions perform base64url encoding .
+    /// The following functions perform base64url encoding.
     /// </summary>
     /// <param name="arg">The stream to encode</param>
     /// <param name="result">The stream to write the Base64Url to</param>
@@ -483,6 +759,76 @@ public static class Base64UrlEncoder
             if (ct.IsCancellationRequested) {
                 return;
             }
+        }
+    }
+
+    /// <summary>
+    /// The following functions perform base64url encoding. Writes to a PIPE stream of bytes.
+    /// CLOSES THE PIPE STEAM ON END
+    /// </summary>
+    /// <param name="arg">The stream to encode</param>
+    /// <param name="result">The PipeStream to write the Base64Url to, as ASCII bytes</param>
+    public async static Task EncodeAsync(Stream arg, PipeStream result, CancellationToken ct = default)
+    {
+        try {
+            // bytes read
+            int consumed;
+
+            // Define string holder
+            byte[] wrkBuffer = new byte[4];
+            byte[] src = new byte[3];
+
+            // Cycle
+            while (true) {
+                // Get some
+                consumed = await arg.ReadAsync(src, ct);
+
+                // Check
+                switch (consumed) {
+
+                    case 0:
+                        // flush
+                        await result.FlushAsync();
+
+                        return;
+                    case 1:
+                        // Encode
+                        wrkBuffer[0] = (byte)_base64UrlTable[src[0] >> 2];
+                        wrkBuffer[1] = (byte)_base64UrlTable[(src[0] & 0x03) << 4];
+
+                        // Write
+                        await result.WriteAsync(wrkBuffer[..2], ct);
+                        break;
+                    case 2:
+                        // Encode
+                        wrkBuffer[0] = (byte)_base64UrlTable[src[0] >> 2];
+                        wrkBuffer[1] = (byte)_base64UrlTable[((src[0] & 0x03) << 4) | (src[1] >> 4)];
+                        wrkBuffer[2] = (byte)_base64UrlTable[(src[1] & 0x0f) << 2];
+
+                        // Write
+                        await result.WriteAsync(wrkBuffer[..3], ct);
+                        break;
+                    case 3:
+                        // Encode
+                        wrkBuffer[0] = (byte)_base64UrlTable[src[0] >> 2];
+                        wrkBuffer[1] = (byte)_base64UrlTable[((src[0] & 0x03) << 4) | (src[1] >> 4)];
+                        wrkBuffer[2] = (byte)_base64UrlTable[((src[1] & 0x0f) << 2) | (src[2] >> 6)];
+                        wrkBuffer[3] = (byte)_base64UrlTable[src[2] & 0x3f];
+
+                        // Write
+                        await result.WriteAsync(wrkBuffer, ct);
+                        break;
+                    default:
+                        throw new Exception("Invalid Base64Url string");
+                }
+
+                // Check
+                if (ct.IsCancellationRequested) {
+                    return;
+                }
+            }
+        } finally {
+            result.Close();
         }
     }
 

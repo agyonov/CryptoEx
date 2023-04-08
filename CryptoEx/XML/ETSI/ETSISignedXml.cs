@@ -1,5 +1,4 @@
 ﻿using CryptoEx.Utils;
-using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
@@ -202,7 +201,7 @@ public class ETSISignedXml
             Reference referenceXML = new()
             {
                 Uri = "",
-                Id = IdReferenceSignatureXML 
+                Id = IdReferenceSignatureXML
             };
             referenceXML.AddTransform(new XmlDsigEnvelopedSignatureTransform());
             signedXml.AddReference(referenceXML);

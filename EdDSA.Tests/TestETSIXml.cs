@@ -1,10 +1,8 @@
-﻿using CryptoEx.JOSE.ETSI;
-using CryptoEx.XML.ETSI;
+﻿using CryptoEx.XML.ETSI;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Xml;
-using Xunit.Sdk;
 
 namespace CryptoEx.Tests;
 public class TestETSIXml

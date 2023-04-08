@@ -239,6 +239,67 @@ public class ETSISignedXml
     }
 
     /// <summary>
+    /// Verify the signature of an enveloped XML document
+    /// </summary>
+    /// <param name="payload">The XML signature document</param>
+    /// <param name="cert">returns the signing certificate</param>
+    /// <returns>True signature is valid. False - no it is invalid</returns>
+    public virtual bool Verify(XmlDocument payload, out X509Certificate2? cert)
+    {
+        // set initially
+        cert = null;
+
+        // Create a SignedXml object & provide GetIdElement method
+        SignedXmlExt signedXml = new SignedXmlExt(payload);
+
+        // Load the signature node
+        XmlNodeList nodeList = payload.GetElementsByTagName("Signature");
+        XmlElement? sigantureNode = nodeList[0] as XmlElement;
+        if (sigantureNode == null) {
+            return false;
+        }
+
+        // Load the signature
+        signedXml.LoadXml(sigantureNode);
+
+        // Try get certificate
+        if (signedXml.KeyInfo.Count < 0) {
+            return false;
+        }
+        foreach (var ki in signedXml.KeyInfo) {
+            if (ki is KeyInfoX509Data) {
+                if (((KeyInfoX509Data)ki).Certificates.Count < 0) {
+                    continue;
+                }
+                cert = ((KeyInfoX509Data)ki).Certificates[0] as X509Certificate2;
+                if (cert != null) {
+                    break;
+                } else {
+                    continue;
+                }
+            }
+        }
+
+        // Check if certificate is present
+        if (cert == null) {
+            return false;
+        }
+
+        // Verify the signature
+        RSA? rsa = cert.GetRSAPublicKey();
+        if (rsa != null) {
+            return signedXml.CheckSignature(rsa);
+        }
+        ECDsa? ecdsa = cert.GetECDsaPublicKey();
+        if (ecdsa != null) {
+            return signedXml.CheckSignature(ecdsa);
+        }
+
+        // No baby no
+        return false;
+    }
+
+    /// <summary>
     /// Helper method to create XADES qualifiying properties to be added as DataObject to the signature
     /// </summary>
     /// <param name="certificate">The signing certificate - public part</param>

@@ -1,7 +1,10 @@
-﻿using CryptoEx.XML.ETSI;
+﻿using CryptoEx.JOSE.ETSI;
+using CryptoEx.XML.ETSI;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Xml;
+using Xunit.Sdk;
 
 namespace CryptoEx.Tests;
 public class TestETSIXml
@@ -48,6 +51,11 @@ public class TestETSIXml
     </Tests>
     """;
 
+    public static string testFile = """
+    This is a test
+    This is a test again
+    """;
+
     [Fact(DisplayName = "Test XML RSA with enveloped data")]
     public void Test_XML_RSA_Enveloped()
     {
@@ -73,6 +81,67 @@ public class TestETSIXml
             // Prepare enveloped data
             doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
             Assert.True(doc.OuterXml.Length > 0);
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
+    [Fact(DisplayName = "Test XML RSA with detached data")]
+    public void Test_XML_RSA_Detached()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey != null) {
+            // Get payload 
+            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim()))) {
+                // Create signer 
+                ETSISignedXml signer = new ETSISignedXml(rsaKey, HashAlgorithmName.SHA512);
+
+                // Sign payload
+                XmlElement signature = signer.SignDetached(ms, cert);
+
+                // Prepare enveloped data
+                Assert.True(signature.OuterXml.Length > 0);
+            }
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
+    [Fact(DisplayName = "Test XML RSA with detached data and enveloped XML")]
+    public void Test_XML_RSA_Detached_And_Eveloped()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey != null) {
+            // Get payload 
+            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim()))) {
+                // Get XML payload 
+                var doc = new XmlDocument();
+                doc.LoadXml(message.Trim());
+
+                // Create signer 
+                ETSISignedXml signer = new ETSISignedXml(rsaKey, HashAlgorithmName.SHA512);
+
+                // Sign payload
+                XmlElement signature = signer.SignDetached(ms, cert, doc);
+
+                // Prepare enveloped data
+                doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
+                Assert.True(doc.OuterXml.Length > 0);
+            }
         } else {
             Assert.Fail("NO RSA certificate available");
         }

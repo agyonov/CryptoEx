@@ -1,4 +1,5 @@
 ﻿using CryptoEx.Utils;
+using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
@@ -15,7 +16,8 @@ public class ETSISignedXml
 
     // Some constants on signed XML
     private const string IdSignature = "id-sig-etsi-signed-xml";
-    private const string IdReferenceSignature = "id-ref-sig-etsi-signed-xml";
+    private const string IdReferenceSignature = "id-ref-sig-etsi-signed-signature";
+    private const string IdReferenceSignatureXML = "id-ref-sig-etsi-signed-signature-xml";
     private const string IdXadesSignedProperties = "id-xades-signed-properties";
 
     // The signing key
@@ -124,7 +126,7 @@ public class ETSISignedXml
     /// <summary>
     /// Digitally sign the xml document as enveloped
     /// </summary>
-    /// <param name="payload">The payload</param>
+    /// <param name="payload">The payload - original XML file</param>
     /// <param name="cert">The certificate. ONLY Public part is used! The PrivateKey is proided in constructor!</param>
     /// <returns>The Xml Signature element</returns>
     public virtual XmlElement Sign(XmlDocument payload, X509Certificate2 cert)
@@ -175,12 +177,75 @@ public class ETSISignedXml
     }
 
     /// <summary>
+    /// Digitally sign the attachement as XML signature.
+    ///     If no payload is provided, the signature is detached.
+    ///     if payload is provided, the signature is datached and provided XML is enveloped.
+    /// </summary>
+    /// <param name="attachement">The external, attached content - file, picture, etc...</param>
+    /// <param name="cert">The certificate. ONLY Public part is used! The PrivateKey is proided in constructor!</param>
+    /// <param name="payload">OPTIONAL payload - XML file</param>
+    /// <returns>The Xml Signature element</returns>
+    public virtual XmlElement SignDetached(Stream attachement, X509Certificate2 cert, XmlDocument? payload = null)
+    {
+        // Create a SignedXml object & provide GetIdElement method
+        SignedXmlExt signedXml = payload == null ? new SignedXmlExt(GetIdElement) : new SignedXmlExt(payload, GetIdElement);
+        signedXml.Signature.Id = IdSignature;
+        signedXml.SignedInfo.SignatureMethod = _algorithmNameSignatureXML;
+
+        // Create a reference to be able to sign hash of the attachement.
+        Reference reference = new(attachement);
+        reference.Id = IdReferenceSignature;
+        signedXml.AddReference(reference);
+
+        // Create a reference to be able to sign everything into the message.
+        if (payload != null) {
+            Reference referenceXML = new()
+            {
+                Uri = "",
+                Id = IdReferenceSignatureXML 
+            };
+            referenceXML.AddTransform(new XmlDsigEnvelopedSignatureTransform());
+            signedXml.AddReference(referenceXML);
+        }
+
+        // Create a new KeyInfo object & add signing certificate
+        KeyInfo keyInfo = new KeyInfo();
+        keyInfo.AddClause(new KeyInfoX509Data(cert.RawData));
+        signedXml.KeyInfo = keyInfo;
+
+        // Create a data object to hold the data for the ETSI qualifying properties.
+        DataObject dataObject = new DataObject();
+        dataObject.Data = CreateQualifyingPropertiesXML(cert, _hashAlgorithm, "application/octet-stream", payload != null);
+        signedXml.AddObject(dataObject);
+
+        // Create a reference to be able to sign ETSI qualifying properties.
+        var parametersSignature = new Reference
+        {
+            Uri = $"#{IdXadesSignedProperties}",
+            Type = ETSISignedPropertiesType
+        };
+        parametersSignature.AddTransform(new XmlDsigExcC14NTransform());
+        signedXml.AddReference(parametersSignature);
+
+        // Set hash algorithm
+        foreach (var r in signedXml.SignedInfo.References) {
+            ((Reference)r).DigestMethod = _algorithmNameDigestXML;
+        }
+
+        // Compute the signature
+        signedXml.SigningKey = _signer;
+        signedXml.ComputeSignature();
+
+        return signedXml.GetXml();
+    }
+
+    /// <summary>
     /// Helper method to create XADES qualifiying properties to be added as DataObject to the signature
     /// </summary>
     /// <param name="certificate">The signing certificate - public part</param>
     /// <param name="mimeType">Mime type - default is text/xml</param>
     /// <returns>The XmlNodeList that hold the qualifing parameters to be added to a DataObject</returns>
-    protected virtual XmlNodeList CreateQualifyingPropertiesXML(X509Certificate2 certificate, HashAlgorithmName hashAlgorithm, string mimeType = "text/xml")
+    protected virtual XmlNodeList CreateQualifyingPropertiesXML(X509Certificate2 certificate, HashAlgorithmName hashAlgorithm, string mimeType = "text/xml", bool hasDetachedAndXML = false)
     {
         XNamespace xades = XadesNamespaceUrl;
         XNamespace ds = SignedXml.XmlDsigNamespaceUrl;
@@ -194,6 +259,20 @@ public class ETSISignedXml
             _ => throw new ArgumentException("Invalid hash algorithm")
         };
         byte[] certHash = certificate.GetCertHash(hashAlgorithm);
+
+        object[] dataObjects =  {
+            new XElement(xades + "DataObjectFormat",
+                new XAttribute("ObjectReference", $"#{IdReferenceSignature}"),
+                new XElement(xades + "MimeType", mimeType)
+            ),
+            new XElement(xades + "DataObjectFormat",
+                new XAttribute("ObjectReference", $"#{IdReferenceSignatureXML}"),
+                new XElement(xades + "MimeType", "text/xml")
+            )
+        };
+        if (!hasDetachedAndXML) {
+            dataObjects = dataObjects[..1];
+        }
 
         XElement obj =
             new XElement(ds + "Object",
@@ -215,10 +294,7 @@ public class ETSISignedXml
                             )
                         ),
                         new XElement(xades + "SignedDataObjectProperties",
-                            new XElement(xades + "DataObjectFormat",
-                                new XAttribute("ObjectReference", $"#{IdReferenceSignature}"),
-                                new XElement(xades + "MimeType", mimeType)
-                            )
+                            dataObjects
                         )
                     )
                 )

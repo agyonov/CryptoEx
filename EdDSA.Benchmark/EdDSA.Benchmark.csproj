@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EdDSA\EdDSA.csproj" />
+    <ProjectReference Include="..\CryptoEx\CryptoEx.csproj" />
   </ItemGroup>
 
 </Project>

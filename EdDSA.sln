@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EdDSA", "EdDSA\EdDSA.csproj", "{C26C3C3C-4260-4FE1-9364-F852EBD90AEB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoEx", "CryptoEx\CryptoEx.csproj", "{C26C3C3C-4260-4FE1-9364-F852EBD90AEB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EdDSA.Tests", "EdDSA.Tests\EdDSA.Tests.csproj", "{F24CBF92-3FC7-48C1-A360-710D775571B5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EdDSA.Tests", "EdDSA.Tests\EdDSA.Tests.csproj", "{F24CBF92-3FC7-48C1-A360-710D775571B5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EdDSA.Benchmark", "EdDSA.Benchmark\EdDSA.Benchmark.csproj", "{72959546-C4A1-4938-AE72-F27F77539F97}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EdDSA.Benchmark", "EdDSA.Benchmark\EdDSA.Benchmark.csproj", "{72959546-C4A1-4938-AE72-F27F77539F97}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

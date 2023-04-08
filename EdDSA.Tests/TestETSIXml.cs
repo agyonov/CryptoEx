@@ -1,9 +1,9 @@
-﻿using EdDSA.XML.ETSI;
+﻿using CryptoEx.XML.ETSI;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Xml;
 
-namespace EdDSA.Tests;
+namespace CryptoEx.Tests;
 public class TestETSIXml
 {
     // Some test data for XADES

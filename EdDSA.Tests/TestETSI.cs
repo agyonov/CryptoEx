@@ -1,5 +1,5 @@
-﻿using EdDSA.JOSE;
-using EdDSA.JOSE.ETSI;
+﻿using CryptoEx.JOSE;
+using CryptoEx.JOSE.ETSI;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
@@ -9,7 +9,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace EdDSA.Tests;
+namespace CryptoEx.Tests;
 public class TestETSI
 {
     public static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions

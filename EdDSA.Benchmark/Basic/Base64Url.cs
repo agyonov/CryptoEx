@@ -1,7 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
-using EdDSA.Utils;
+using CryptoEx.Utils;
 
-namespace EdDSA.Benchmark.Basic;
+namespace CryptoEx.Benchmark.Basic;
 
 [MemoryDiagnoser]
 public class Base64Url

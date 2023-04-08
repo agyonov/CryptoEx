@@ -1,6 +1,6 @@
-﻿using EdDSA.Utils;
+﻿using CryptoEx.Utils;
 
-namespace EdDSA.Tests;
+namespace CryptoEx.Tests;
 public class TestBase64Url
 {
 

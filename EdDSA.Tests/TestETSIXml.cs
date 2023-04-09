@@ -1,6 +1,4 @@
 ﻿using CryptoEx.XML.ETSI;
-using System.Diagnostics;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -181,11 +179,80 @@ public class TestETSIXml
 
             // Prepare enveloped data
             doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
-            
+
             // Verify signature
             Assert.True(signer.Verify(doc, out cert) && cert != null);
         } else {
             Assert.Fail("NO ECDSA certificate available");
+        }
+    }
+
+    [Fact(DisplayName = "Test XML ECDSA with detached data")]
+    public void Test_XML_ECDSA_Detached()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.EC);
+        if (cert == null) {
+            Assert.Fail("NO ECDSA certificate available");
+        }
+
+        // Get  private key
+        ECDsa? ecKey = cert.GetECDsaPrivateKey();
+        if (ecKey != null) {
+            // Get payload 
+            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim()), false))
+            using (MemoryStream msCheck = new(Encoding.UTF8.GetBytes(testFile.Trim()), false)) {
+                // Create signer 
+                ETSISignedXml signer = new ETSISignedXml(ecKey);
+
+                // Sign payload
+                XmlElement signature = signer.SignDetached(ms, cert);
+
+                // Prepare enveloped data
+                var doc = new XmlDocument();
+                doc.LoadXml(signature.OuterXml);
+
+                // Verify signature
+                Assert.True(signer.VerifyDetached(msCheck, doc, out cert) && cert != null);
+            }
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
+    [Fact(DisplayName = "Test XML ECDSA with detached data and enveloped XML")]
+    public void Test_XML_ECDSA_Detached_And_Eveloped()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.EC);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get private key
+        ECDsa? ecKey = cert.GetECDsaPrivateKey();
+        if (ecKey != null) {
+            // Get payload 
+            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim())))
+            using (MemoryStream msCheck = new(Encoding.UTF8.GetBytes(testFile.Trim()))) {
+                // Get XML payload 
+                var doc = new XmlDocument();
+                doc.LoadXml(message.Trim());
+
+                // Create signer 
+                ETSISignedXml signer = new ETSISignedXml(ecKey);
+
+                // Sign payload
+                XmlElement signature = signer.SignDetached(ms, cert, doc);
+
+                // Prepare enveloped data
+                doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
+
+                // Verify signature
+                Assert.True(signer.VerifyDetached(msCheck, doc, out cert) && cert != null);
+            }
+        } else {
+            Assert.Fail("NO RSA certificate available");
         }
     }
 

@@ -1,7 +1,4 @@
 ﻿using CryptoEx.Utils;
-using System.Diagnostics;
-using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
@@ -488,10 +485,11 @@ public class ETSISignedXml
     /// <param name="r">The reference object for the attachement in the signature</param>
     /// <returns>True if digests are equal</returns>
     /// <exception cref="Exception">Unsupported hashing algorithm</exception>
-    protected bool CheckDigest(Stream attachement, Reference r) 
+    protected bool CheckDigest(Stream attachement, Reference r)
     {
         // Get hash algorithm
-        HashAlgorithm hash = r.DigestMethod switch {
+        HashAlgorithm hash = r.DigestMethod switch
+        {
             SignedXml.XmlDsigSHA256Url => SHA256.Create(),
             SignedXml.XmlDsigSHA384Url => SHA384.Create(),
             SignedXml.XmlDsigSHA512Url => SHA512.Create(),
@@ -510,7 +508,7 @@ public class ETSISignedXml
         }
 
         for (int loop = 0; loop < computed.Length; loop++) {
-            if (origHash[loop] != computed[loop]) { 
+            if (origHash[loop] != computed[loop]) {
                 return false;
             }
         }

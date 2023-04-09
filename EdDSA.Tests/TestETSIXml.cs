@@ -90,7 +90,7 @@ public class TestETSIXml
             doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
 
             // Verify signature
-            Assert.True(signer.Verify(doc, out cert) && cert != null);
+            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo));
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -122,7 +122,7 @@ public class TestETSIXml
                 doc.LoadXml(signature.OuterXml);
 
                 // Verify signature
-                Assert.True(signer.VerifyDetached(msCheck, doc, out cert) && cert != null);
+                Assert.True(signer.VerifyDetached(msCheck, doc, out ETSIContextInfo cInfo));
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -158,7 +158,7 @@ public class TestETSIXml
                 doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
 
                 // Verify signature
-                Assert.True(signer.VerifyDetached(msCheck, doc, out cert) && cert != null);
+                Assert.True(signer.VerifyDetached(msCheck, doc, out ETSIContextInfo cInfo));
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -194,7 +194,7 @@ public class TestETSIXml
             await signer.AddTimestampAsync(CreateRfc3161RequestAsync, doc);
 
             // Verify signature
-            Assert.True(signer.Verify(doc, out cert) && cert != null);
+            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo));
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -226,7 +226,7 @@ public class TestETSIXml
             doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
 
             // Verify signature
-            Assert.True(signer.Verify(doc, out cert) && cert != null);
+            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo));
         } else {
             Assert.Fail("NO ECDSA certificate available");
         }
@@ -258,7 +258,7 @@ public class TestETSIXml
                 doc.LoadXml(signature.OuterXml);
 
                 // Verify signature
-                Assert.True(signer.VerifyDetached(msCheck, doc, out cert) && cert != null);
+                Assert.True(signer.VerifyDetached(msCheck, doc, out ETSIContextInfo cInfo));
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -294,7 +294,7 @@ public class TestETSIXml
                 doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
 
                 // Verify signature
-                Assert.True(signer.VerifyDetached(msCheck, doc, out cert) && cert != null);
+                Assert.True(signer.VerifyDetached(msCheck, doc, out ETSIContextInfo cInfo));
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -332,7 +332,7 @@ public class TestETSIXml
                 doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
 
                 // Verify signature
-                Assert.False(signer.VerifyDetached(msCheck, docTwo, out cert));
+                Assert.False(signer.VerifyDetached(msCheck, docTwo, out ETSIContextInfo cInfo));
             }
         } else {
             Assert.Fail("NO RSA certificate available");

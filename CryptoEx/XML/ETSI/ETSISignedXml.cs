@@ -1,4 +1,5 @@
 ﻿using CryptoEx.Utils;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
@@ -242,12 +243,12 @@ public class ETSISignedXml
     /// Verify the signature of an enveloped XML document
     /// </summary>
     /// <param name="payload">The XML signature document</param>
-    /// <param name="cert">returns the signing certificate</param>
+    /// <param name="cInfo">returns the context info about the signature</param>
     /// <returns>True signature is valid. False - no it is invalid</returns>
-    public virtual bool Verify(XmlDocument payload, out X509Certificate2? cert)
+    public virtual bool Verify(XmlDocument payload, out ETSIContextInfo cInfo)
     {
         // set initially
-        cert = null;
+        cInfo = new ETSIContextInfo();
 
         // Create a SignedXml object & provide GetIdElement method
         SignedXmlExt signedXml = new SignedXmlExt(payload);
@@ -271,8 +272,8 @@ public class ETSISignedXml
                 if (((KeyInfoX509Data)ki).Certificates.Count < 0) {
                     continue;
                 }
-                cert = ((KeyInfoX509Data)ki).Certificates[0] as X509Certificate2;
-                if (cert != null) {
+                cInfo.SigningCertificate = ((KeyInfoX509Data)ki).Certificates[0] as X509Certificate2;
+                if (cInfo.SigningCertificate != null) {
                     break;
                 } else {
                     continue;
@@ -281,16 +282,19 @@ public class ETSISignedXml
         }
 
         // Check if certificate is present
-        if (cert == null) {
+        if (cInfo.SigningCertificate == null) {
             return false;
         }
 
+        // Try load some more info
+        ExtractQualifyingProperties(sigantureNode, cInfo);
+
         // Verify the signature
-        RSA? rsa = cert.GetRSAPublicKey();
+        RSA? rsa = cInfo.SigningCertificate.GetRSAPublicKey();
         if (rsa != null) {
             return signedXml.CheckSignature(rsa);
         }
-        ECDsa? ecdsa = cert.GetECDsaPublicKey();
+        ECDsa? ecdsa = cInfo.SigningCertificate.GetECDsaPublicKey();
         if (ecdsa != null) {
             return signedXml.CheckSignature(ecdsa);
         }
@@ -305,10 +309,10 @@ public class ETSISignedXml
     /// <param name="payload">The XML signature document</param>
     /// <param name="cert">returns the signing certificate</param>
     /// <returns>True signature is valid. False - no it is invalid</returns>
-    public virtual bool VerifyDetached(Stream attachement, XmlDocument payload, out X509Certificate2? cert)
+    public virtual bool VerifyDetached(Stream attachement, XmlDocument payload, out ETSIContextInfo cInfo)
     {
         // set initially
-        cert = null;
+        cInfo = new ETSIContextInfo();
 
         // Create a SignedXml object & provide GetIdElement method
         SignedXmlExt signedXml = new SignedXmlExt(payload);
@@ -332,8 +336,8 @@ public class ETSISignedXml
                 if (((KeyInfoX509Data)ki).Certificates.Count < 0) {
                     continue;
                 }
-                cert = ((KeyInfoX509Data)ki).Certificates[0] as X509Certificate2;
-                if (cert != null) {
+                cInfo.SigningCertificate = ((KeyInfoX509Data)ki).Certificates[0] as X509Certificate2;
+                if (cInfo.SigningCertificate != null) {
                     break;
                 } else {
                     continue;
@@ -342,9 +346,12 @@ public class ETSISignedXml
         }
 
         // Check if certificate is present
-        if (cert == null) {
+        if (cInfo.SigningCertificate == null) {
             return false;
         }
+
+        // Try load some more info
+        ExtractQualifyingProperties(sigantureNode, cInfo);
 
         // cycle
         for (int loop = 0; loop < signedXml.SignedInfo.References.Count; loop++) {
@@ -364,11 +371,11 @@ public class ETSISignedXml
         }
 
         // Verify the signature
-        RSA? rsa = cert.GetRSAPublicKey();
+        RSA? rsa = cInfo.SigningCertificate.GetRSAPublicKey();
         if (rsa != null) {
             return signedXml.CheckSignature(rsa);
         }
-        ECDsa? ecdsa = cert.GetECDsaPublicKey();
+        ECDsa? ecdsa = cInfo.SigningCertificate.GetECDsaPublicKey();
         if (ecdsa != null) {
             return signedXml.CheckSignature(ecdsa);
         }
@@ -547,7 +554,6 @@ public class ETSISignedXml
         return null;
     }
 
-
     /// <summary>
     /// Checks digest of the attachement
     /// </summary>
@@ -585,5 +591,67 @@ public class ETSISignedXml
 
         // return 
         return true;
+    }
+
+    /// <summary>
+    /// Try to extract some of the qualifying properties from the signature
+    /// </summary>
+    /// <param name="signature">The signature</param>
+    /// <param name="info">The info to hold the properties</param>
+    protected virtual void ExtractQualifyingProperties(XmlElement signature, ETSIContextInfo info)
+    {
+        // Some namespaces
+        XNamespace xades = XadesNamespaceUrl;
+        XNamespace ds = SignedXml.XmlDsigNamespaceUrl;
+
+        // Find the qualifying properties
+        XmlNodeList? qProperties = signature.GetElementsByTagName("QualifyingProperties", XadesNamespaceUrl);
+
+        // Check
+        if (qProperties == null || qProperties.Count < 1 || qProperties[0] is not XmlElement) {
+            return;
+        }
+
+        // Get as XElement
+        XElement? qProps = ((XmlElement)qProperties[0]!).ToXElement();
+        if (qProps == null) {
+            return;
+        }
+
+        // Get the signed properties
+        XElement? sigProps = (from seg in qProps.Descendants(xades + "SignedSignatureProperties")
+                              select seg).FirstOrDefault();
+        if (sigProps == null) {
+            return;
+        }
+
+        // Get the signing time
+        string? sigTime = (from seg in sigProps.Descendants(xades + "SigningTime")
+                           select seg.Value).FirstOrDefault();
+        string? certDigestValue = (from seg in sigProps.Descendants(ds + "DigestValue")
+                                   select seg.Value).FirstOrDefault();
+        string? certDigestMethod = (from seg in sigProps.Descendants(ds + "DigestMethod")
+                                    select seg.Attribute("Algorithm")?.Value).FirstOrDefault();
+
+        // Check
+        if (!string.IsNullOrEmpty(sigTime)) {
+            if (DateTimeOffset.TryParseExact(sigTime, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTimeOffset dt)) {
+                info.SigningDateTime = dt;
+            }
+        }
+        if (!string.IsNullOrEmpty(certDigestValue)) {
+            try {
+                info.SigningCertificateDigestValue = Convert.FromBase64String(certDigestValue);
+            } catch { }
+        }
+        if (!string.IsNullOrEmpty(certDigestMethod)) {
+            info.SigningCertificateDagestMethod = certDigestMethod switch
+            {
+                SignedXml.XmlDsigSHA256Url => HashAlgorithmName.SHA256,
+                SignedXml.XmlDsigSHA384Url => HashAlgorithmName.SHA384,
+                SignedXml.XmlDsigSHA512Url => HashAlgorithmName.SHA512,
+                _ => null
+            };
+        }
     }
 }

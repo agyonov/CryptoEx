@@ -346,9 +346,12 @@ public class ETSISignedXml
             return false;
         }
 
-        // Find the reference for the attachement
+        // cycle
         for (int loop = 0; loop < signedXml.SignedInfo.References.Count; loop++) {
+            // Get the reference
             Reference? r = signedXml.SignedInfo.References[loop] as Reference;
+
+            // Find the reference for the attachement
             if (r != null && (r.Uri == null || r.TransformChain.Count < 1)) {
                 // Remove the reference
                 signedXml.SignedInfo.References.Remove(r);
@@ -488,28 +491,28 @@ public class ETSISignedXml
     protected bool CheckDigest(Stream attachement, Reference r)
     {
         // Get hash algorithm
-        HashAlgorithm hash = r.DigestMethod switch
+        using (HashAlgorithm hash = r.DigestMethod switch
         {
             SignedXml.XmlDsigSHA256Url => SHA256.Create(),
             SignedXml.XmlDsigSHA384Url => SHA384.Create(),
             SignedXml.XmlDsigSHA512Url => SHA512.Create(),
             _ => throw new Exception($"Unsuported digest method {r.DigestMethod}")
-        };
+        }) {
+            // Original hash
+            byte[] origHash = r.DigestValue;
 
-        // Original hash
-        byte[] origHash = r.DigestValue;
+            // Calc new one
+            byte[] computed = hash.ComputeHash(attachement);
 
-        // Calc new one
-        byte[] computed = hash.ComputeHash(attachement);
-
-        // Compare
-        if (origHash.Length != computed.Length) {
-            return false;
-        }
-
-        for (int loop = 0; loop < computed.Length; loop++) {
-            if (origHash[loop] != computed[loop]) {
+            // Compare
+            if (origHash.Length != computed.Length) {
                 return false;
+            }
+
+            for (int loop = 0; loop < computed.Length; loop++) {
+                if (origHash[loop] != computed[loop]) {
+                    return false;
+                }
             }
         }
 

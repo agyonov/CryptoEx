@@ -85,7 +85,16 @@ public class ETSISigner : JOSESigner
         using (HashAlgorithm hAlg = SHA512.Create())
         using (AnonymousPipeServerStream apss = new(PipeDirection.In))
         using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
-            _ = Task.Run(() => Base64UrlEncoder.Encode(attachement, apcs));
+            _ = Task.Run(() =>
+            {
+                try {
+                    // Encode
+                    Base64UrlEncoder.Encode(attachement, apcs);
+                } finally {
+                    // Close the pipe
+                    apcs.Close(); // To avoid blocking of the pipe.
+                }
+            });
             hashedData = hAlg.ComputeHash(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
         }
 

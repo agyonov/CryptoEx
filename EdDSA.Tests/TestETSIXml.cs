@@ -1,4 +1,6 @@
 ﻿using CryptoEx.XML.ETSI;
+using System.Diagnostics;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -78,7 +80,9 @@ public class TestETSIXml
 
             // Prepare enveloped data
             doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
-            Assert.True(doc.OuterXml.Length > 0);
+
+            // Verify signature
+            Assert.True(signer.Verify(doc, out cert) && cert != null);
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -97,7 +101,8 @@ public class TestETSIXml
         RSA? rsaKey = cert.GetRSAPrivateKey();
         if (rsaKey != null) {
             // Get payload 
-            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim()))) {
+            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim()), false))
+            using (MemoryStream msCheck = new(Encoding.UTF8.GetBytes(testFile.Trim()), false)) {
                 // Create signer 
                 ETSISignedXml signer = new ETSISignedXml(rsaKey, HashAlgorithmName.SHA512);
 
@@ -105,7 +110,11 @@ public class TestETSIXml
                 XmlElement signature = signer.SignDetached(ms, cert);
 
                 // Prepare enveloped data
-                Assert.True(signature.OuterXml.Length > 0);
+                var doc = new XmlDocument();
+                doc.LoadXml(signature.OuterXml);
+
+                // Verify signature
+                Assert.True(signer.VerifyDetached(msCheck, doc, out cert) && cert != null);
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -125,7 +134,8 @@ public class TestETSIXml
         RSA? rsaKey = cert.GetRSAPrivateKey();
         if (rsaKey != null) {
             // Get payload 
-            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim()))) {
+            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim())))
+            using (MemoryStream msCheck = new(Encoding.UTF8.GetBytes(testFile.Trim()))) {
                 // Get XML payload 
                 var doc = new XmlDocument();
                 doc.LoadXml(message.Trim());
@@ -138,7 +148,9 @@ public class TestETSIXml
 
                 // Prepare enveloped data
                 doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
-                Assert.True(doc.OuterXml.Length > 0);
+
+                // Verify signature
+                Assert.True(signer.VerifyDetached(msCheck, doc, out cert) && cert != null);
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -169,7 +181,9 @@ public class TestETSIXml
 
             // Prepare enveloped data
             doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
-            Assert.True(doc.OuterXml.Length > 0);
+            
+            // Verify signature
+            Assert.True(signer.Verify(doc, out cert) && cert != null);
         } else {
             Assert.Fail("NO ECDSA certificate available");
         }
@@ -218,4 +232,6 @@ public class TestETSIXml
             .FirstOrDefault();
         }
     }
+
+
 }

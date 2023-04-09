@@ -378,6 +378,73 @@ public class ETSISignedXml
     }
 
     /// <summary>
+    /// Add timestamping
+    /// </summary>
+    /// <param name="funcAsync">Async function that calls Timestamping server, with input data and returns 
+    /// response from the server
+    /// </param>
+    /// <param name="signedDoc">The signed document</param>
+    public virtual async Task AddTimestampAsync(Func<byte[], Task<byte[]>> funcAsync, XmlDocument signedDoc)
+    {
+        // locals
+        byte[] timeStamp;
+        XNamespace xades = XadesNamespaceUrl;
+        XNamespace ds = SignedXml.XmlDsigNamespaceUrl;
+
+        var qProperties = signedDoc.DocumentElement?.GetElementsByTagName("QualifyingProperties", XadesNamespaceUrl);
+        var sigValue = signedDoc.DocumentElement?.GetElementsByTagName("SignatureValue", SignedXml.XmlDsigNamespaceUrl);
+
+        // Check
+        if (qProperties == null || qProperties.Count < 1 || sigValue == null || sigValue.Count < 1) {
+            return;
+        }
+
+        //Initialise the stream to read the node list
+        using (MemoryStream nodeStream = new MemoryStream())
+        using (XmlWriter xw = XmlWriter.Create(nodeStream)) {
+            // Write the signature value to the stream
+            sigValue[0]!.WriteTo(xw);
+            xw.Flush();
+            nodeStream.Position = 0;
+
+            // Perform the C14N transform on the nodes in the stream
+            XmlDsigExcC14NTransform transform = new("#default");
+            transform.LoadInput(nodeStream);
+            using (MemoryStream outputStream = (MemoryStream)transform.GetOutput(typeof(Stream))) {
+                // Get the timestamp
+                timeStamp = await funcAsync(outputStream.ToArray());
+            }
+        }
+
+        // Build the timestamp XML
+        XElement obj =
+           new XElement(ds + "Object",
+               new XAttribute("xmlns", SignedXml.XmlDsigNamespaceUrl),
+               new XElement(xades + "QualifyingProperties",
+                    new XAttribute(XNamespace.Xmlns + XadesNamespaceName, XadesNamespaceUrl),
+                    new XAttribute("Target", $"#{IdSignature}"),
+                    new XElement(xades + "UnsignedProperties",
+                        new XElement(xades + "UnsignedSignatureProperties",
+                            new XElement(xades + "SignatureTimeStamp",
+                                new XElement(ds + "CanonicalizationMethod", new XAttribute("Algorithm", SignedXml.XmlDsigExcC14NTransformUrl)),
+                                new XElement(xades + "EncapsulatedTimeStamp", Convert.ToBase64String(timeStamp))
+                            )
+                        )
+                    )
+                )
+            );
+
+        // Extract the unsigned properties
+        var unsProps = obj.ToXmlElement()?.GetElementsByTagName("UnsignedProperties", XadesNamespaceUrl)[0];
+        if (unsProps == null) {
+            return;
+        }
+
+        // Append
+        qProperties[0]!.AppendChild(signedDoc.ImportNode(unsProps, true));
+    }
+
+    /// <summary>
     /// Helper method to create XADES qualifiying properties to be added as DataObject to the signature
     /// </summary>
     /// <param name="certificate">The signing certificate - public part</param>

@@ -1,5 +1,7 @@
 ﻿using CryptoEx.XML.ETSI;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
+using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Xml;
@@ -158,6 +160,41 @@ public class TestETSIXml
                 // Verify signature
                 Assert.True(signer.VerifyDetached(msCheck, doc, out cert) && cert != null);
             }
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
+    [Fact(DisplayName = "Test XML RSA with enveloped data and TimeStamp")]
+    public async Task Test_XML_RSA_Enveloped_Timestamped()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey != null) {
+            // Get payload 
+            var doc = new XmlDocument();
+            doc.LoadXml(message.Trim());
+
+            // Create signer 
+            ETSISignedXml signer = new ETSISignedXml(rsaKey, HashAlgorithmName.SHA512);
+
+            // Sign payload
+            XmlElement signature = signer.Sign(doc, cert);
+
+            // Prepare enveloped data
+            doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
+
+            // Add timestamp
+            await signer.AddTimestampAsync(CreateRfc3161RequestAsync, doc);
+
+            // Verify signature
+            Assert.True(signer.Verify(doc, out cert) && cert != null);
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -346,5 +383,24 @@ public class TestETSIXml
         }
     }
 
+    private async Task<byte[]> CreateRfc3161RequestAsync(byte[] data)
+    {
+        Rfc3161TimestampRequest req = Rfc3161TimestampRequest.CreateFromData(data, HashAlgorithmName.SHA512, null, null, true, null);
 
+        using (HttpClient client = new HttpClient()) {
+            client.DefaultRequestHeaders.Accept.Clear();
+
+            HttpContent content = new ByteArrayContent(req.Encode());
+
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/timestamp-query");
+
+            // "http://timestamp.sectigo.com/qualified"
+            // "http://tsa.esign.bg"
+            // "http://timestamp.digicert.com"
+            var res = await client.PostAsync("http://timestamp.sectigo.com/qualified", content);
+
+
+            return (await res.Content.ReadAsByteArrayAsync())[9..]; // 9 // 27 // 9
+        }
+    }
 }

@@ -1,5 +1,4 @@
 ﻿using System.Buffers.Text;
-using System.IO.Pipes;
 
 namespace CryptoEx.Utils;
 

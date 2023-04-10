@@ -246,7 +246,7 @@ public class TestETSI
         }
     }
 
-    private async Task<byte[]> CreateRfc3161RequestAsync(byte[] data)
+    private async Task<byte[]> CreateRfc3161RequestAsync(byte[] data, CancellationToken ct = default)
     {
         Rfc3161TimestampRequest req = Rfc3161TimestampRequest.CreateFromData(data, HashAlgorithmName.SHA512, null, null, true, null);
 
@@ -260,10 +260,10 @@ public class TestETSI
             // "http://timestamp.sectigo.com/qualified"
             // "http://tsa.esign.bg"
             // "http://timestamp.digicert.com"
-            var res = await client.PostAsync("http://timestamp.sectigo.com/qualified", content);
+            var res = await client.PostAsync("http://timestamp.sectigo.com/qualified", content, ct);
 
 
-            return (await res.Content.ReadAsByteArrayAsync())[9..]; // 9 // 27 // 9
+            return (await res.Content.ReadAsByteArrayAsync(ct))[9..]; // 9 // 27 // 9
         }
     }
 

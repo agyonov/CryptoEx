@@ -391,7 +391,7 @@ public class ETSISignedXml
     /// response from the server
     /// </param>
     /// <param name="signedDoc">The signed document</param>
-    public virtual async Task AddTimestampAsync(Func<byte[], Task<byte[]>> funcAsync, XmlDocument signedDoc)
+    public virtual async Task AddTimestampAsync(Func<byte[], CancellationToken, Task<byte[]>> funcAsync, XmlDocument signedDoc, CancellationToken ct = default)
     {
         // locals
         byte[] timeStamp;
@@ -419,7 +419,10 @@ public class ETSISignedXml
             transform.LoadInput(nodeStream);
             using (MemoryStream outputStream = (MemoryStream)transform.GetOutput(typeof(Stream))) {
                 // Get the timestamp
-                timeStamp = await funcAsync(outputStream.ToArray());
+                timeStamp = await funcAsync(outputStream.ToArray(), ct);
+                if (ct.IsCancellationRequested) {
+                    return;
+                }
             }
         }
 
@@ -530,6 +533,7 @@ public class ETSISignedXml
             return null;
         }
 
+        // Get the first node of the qualifying properties
         var xNode = _qualifyingPropetries[0];
         if (xNode == null || xNode.ChildNodes.Count < 1) {
             return null;
@@ -581,7 +585,6 @@ public class ETSISignedXml
             if (origHash.Length != computed.Length) {
                 return false;
             }
-
             for (int loop = 0; loop < computed.Length; loop++) {
                 if (origHash[loop] != computed[loop]) {
                     return false;
@@ -625,7 +628,7 @@ public class ETSISignedXml
             return;
         }
 
-        // Get the signing time
+        // Get the signing time and the rest values
         string? sigTime = (from seg in sigProps.Descendants(xades + "SigningTime")
                            select seg.Value).FirstOrDefault();
         string? certDigestValue = (from seg in sigProps.Descendants(ds + "DigestValue")

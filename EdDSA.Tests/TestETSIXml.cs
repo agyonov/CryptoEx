@@ -90,7 +90,9 @@ public class TestETSIXml
             doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
 
             // Verify signature
-            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo));
+            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo) 
+                        && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
+                        && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value));
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -122,7 +124,9 @@ public class TestETSIXml
                 doc.LoadXml(signature.OuterXml);
 
                 // Verify signature
-                Assert.True(signer.VerifyDetached(msCheck, doc, out ETSIContextInfo cInfo));
+                Assert.True(signer.VerifyDetached(msCheck, doc, out ETSIContextInfo cInfo)
+                        && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
+                        && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value));
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -158,7 +162,9 @@ public class TestETSIXml
                 doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
 
                 // Verify signature
-                Assert.True(signer.VerifyDetached(msCheck, doc, out ETSIContextInfo cInfo));
+                Assert.True(signer.VerifyDetached(msCheck, doc, out ETSIContextInfo cInfo)
+                        && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
+                        && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value));
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -194,7 +200,9 @@ public class TestETSIXml
             await signer.AddTimestampAsync(CreateRfc3161RequestAsync, doc);
 
             // Verify signature
-            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo));
+            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo)
+                        && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
+                        && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value));
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -226,7 +234,9 @@ public class TestETSIXml
             doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
 
             // Verify signature
-            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo));
+            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo)
+                        && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
+                        && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value));
         } else {
             Assert.Fail("NO ECDSA certificate available");
         }
@@ -258,7 +268,9 @@ public class TestETSIXml
                 doc.LoadXml(signature.OuterXml);
 
                 // Verify signature
-                Assert.True(signer.VerifyDetached(msCheck, doc, out ETSIContextInfo cInfo));
+                Assert.True(signer.VerifyDetached(msCheck, doc, out ETSIContextInfo cInfo)
+                        && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
+                        && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value));
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -294,7 +306,9 @@ public class TestETSIXml
                 doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
 
                 // Verify signature
-                Assert.True(signer.VerifyDetached(msCheck, doc, out ETSIContextInfo cInfo));
+                Assert.True(signer.VerifyDetached(msCheck, doc, out ETSIContextInfo cInfo)
+                        && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
+                        && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value));
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -332,7 +346,9 @@ public class TestETSIXml
                 doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
 
                 // Verify signature
-                Assert.False(signer.VerifyDetached(msCheck, docTwo, out ETSIContextInfo cInfo));
+                Assert.False(signer.VerifyDetached(msCheck, docTwo, out ETSIContextInfo cInfo)
+                        && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
+                        && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value));
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -383,7 +399,7 @@ public class TestETSIXml
         }
     }
 
-    private async Task<byte[]> CreateRfc3161RequestAsync(byte[] data)
+    private async Task<byte[]> CreateRfc3161RequestAsync(byte[] data, CancellationToken ct = default)
     {
         Rfc3161TimestampRequest req = Rfc3161TimestampRequest.CreateFromData(data, HashAlgorithmName.SHA512, null, null, true, null);
 
@@ -397,10 +413,10 @@ public class TestETSIXml
             // "http://timestamp.sectigo.com/qualified"
             // "http://tsa.esign.bg"
             // "http://timestamp.digicert.com"
-            var res = await client.PostAsync("http://timestamp.sectigo.com/qualified", content);
+            var res = await client.PostAsync("http://timestamp.sectigo.com/qualified", content, ct);
 
 
-            return (await res.Content.ReadAsByteArrayAsync())[9..]; // 9 // 27 // 9
+            return (await res.Content.ReadAsByteArrayAsync(ct))[9..]; // 9 // 27 // 9
         }
     }
 }

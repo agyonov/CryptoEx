@@ -48,10 +48,15 @@ public class ETSISigner : JOSESigner
     /// <param name="funcAsync">Async function that calls Timestamping server, with input data and returns 
     /// response from the server
     /// </param>
-    public async Task AddTimestampAsync(Func<byte[], Task<byte[]>> funcAsync)
+    public async Task AddTimestampAsync(Func<byte[], CancellationToken, Task<byte[]>> funcAsync, CancellationToken ct = default)
     {
         byte[] prepSign = Encoding.ASCII.GetBytes(Base64UrlEncoder.Encode(_signatures.FirstOrDefault() ?? Array.Empty<byte>()));
-        byte[] tStamp = await funcAsync(prepSign);
+        byte[] tStamp = await funcAsync(prepSign, ct);
+
+        // If canceled
+        if (ct.IsCancellationRequested) {
+            return;
+        }
 
         // Create the timestamp
         ETSISignatureTimestamp theTimeStamp = new ETSISignatureTimestamp

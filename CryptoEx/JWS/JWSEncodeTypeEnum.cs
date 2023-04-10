@@ -9,7 +9,7 @@ namespace CryptoEx.JOSE;
 /// <summary>
 /// Type of JOSE encoding
 /// </summary>
-public enum JOSEEncodeTypeEnum
+public enum JWSEncodeTypeEnum
 {
     Compact,
     Flattened,

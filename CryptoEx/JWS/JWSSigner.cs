@@ -11,7 +11,7 @@ namespace CryptoEx.JOSE;
 /// General JOSE signer. This class can be used for signing and verification of modes JWS.
 /// It can also be easilly extended to support other modes. For example, see ETSI JOSE signer in current project.
 /// </summary>
-public class JOSESigner
+public class JWSSigner
 {
     // The signing key
     protected readonly AsymmetricAlgorithm? _signer;
@@ -44,7 +44,7 @@ public class JOSESigner
     /// <summary>
     /// A constructor without a private key, used for verification
     /// </summary>
-    public JOSESigner()
+    public JWSSigner()
     {
         // Store
         _signatures = new List<byte[]>();
@@ -57,7 +57,7 @@ public class JOSESigner
     /// </summary>
     /// <param name="signer">The private key</param>
     /// <exception cref="ArgumentException">Invalid private key type</exception>
-    public JOSESigner(AsymmetricAlgorithm signer) : this()
+    public JWSSigner(AsymmetricAlgorithm signer) : this()
     {
         // Store
         _signer = signer;
@@ -67,9 +67,9 @@ public class JOSESigner
             case RSA rsa:
                 _algorithmNameJws = rsa.KeySize switch
                 {
-                    2048 => JOSEConstants.RS256,
-                    3072 => JOSEConstants.RS384,
-                    4096 => JOSEConstants.RS512,
+                    2048 => JWSConstants.RS256,
+                    3072 => JWSConstants.RS384,
+                    4096 => JWSConstants.RS512,
                     _ => throw new ArgumentException("Invalid RSA key size")
                 };
                 _algorithmName = rsa.KeySize switch
@@ -83,9 +83,9 @@ public class JOSESigner
             case ECDsa ecdsa:
                 _algorithmNameJws = ecdsa.KeySize switch
                 {
-                    256 => JOSEConstants.ES256,
-                    384 => JOSEConstants.ES384,
-                    521 => JOSEConstants.ES512,
+                    256 => JWSConstants.ES256,
+                    384 => JWSConstants.ES384,
+                    521 => JWSConstants.ES512,
                     _ => throw new ArgumentException("Invalid ECDSA key size")
                 };
                 _algorithmName = ecdsa.KeySize switch
@@ -107,7 +107,7 @@ public class JOSESigner
     /// <param name="signer">The private key</param>
     /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
     /// <exception cref="ArgumentException">Invalid private key type</exception>
-    public JOSESigner(AsymmetricAlgorithm signer, HashAlgorithmName hashAlgorithm) : this(signer)
+    public JWSSigner(AsymmetricAlgorithm signer, HashAlgorithmName hashAlgorithm) : this(signer)
     {
         // Determine the algorithm
         switch (signer) {
@@ -115,9 +115,9 @@ public class JOSESigner
                 // Allow set of hash algorithm
                 _algorithmNameJws = hashAlgorithm.Name switch
                 {
-                    "SHA256" => JOSEConstants.RS256,
-                    "SHA384" => JOSEConstants.RS384,
-                    "SHA512" => JOSEConstants.RS512,
+                    "SHA256" => JWSConstants.RS256,
+                    "SHA384" => JWSConstants.RS384,
+                    "SHA512" => JWSConstants.RS512,
                     _ => throw new ArgumentException("Invalid RSA hash algorithm")
                 };
                 _algorithmName = hashAlgorithm;
@@ -204,7 +204,7 @@ public class JOSESigner
         HashAlgorithmName algorithmName;
 
         // Get the headers, from the protected data! Do not accept them from the caller!
-        List<T> headers = _protecteds.Select(p => JsonSerializer.Deserialize<T>(Base64UrlEncoder.Decode(p), JOSEConstants.jsonOptions))
+        List<T> headers = _protecteds.Select(p => JsonSerializer.Deserialize<T>(Base64UrlEncoder.Decode(p), JWSConstants.jsonOptions))
                                                 .Where(p => p != null)
                                                 .ToList()!;
 
@@ -234,9 +234,9 @@ public class JOSESigner
                     // Get algorithm name
                     algorithmName = headers[loop].Alg switch
                     {
-                        JOSEConstants.RS256 => HashAlgorithmName.SHA256,
-                        JOSEConstants.RS384 => HashAlgorithmName.SHA384,
-                        JOSEConstants.RS512 => HashAlgorithmName.SHA512,
+                        JWSConstants.RS256 => HashAlgorithmName.SHA256,
+                        JWSConstants.RS384 => HashAlgorithmName.SHA384,
+                        JWSConstants.RS512 => HashAlgorithmName.SHA512,
                         _ => throw new ArgumentException($"Invalid RSA hash algorithm - {headers[loop].Alg}")
                     };
 
@@ -247,9 +247,9 @@ public class JOSESigner
                     // Get algorithm name
                     algorithmName = headers[loop].Alg switch
                     {
-                        JOSEConstants.ES256 => HashAlgorithmName.SHA256,
-                        JOSEConstants.ES384 => HashAlgorithmName.SHA384,
-                        JOSEConstants.ES512 => HashAlgorithmName.SHA512,
+                        JWSConstants.ES256 => HashAlgorithmName.SHA256,
+                        JWSConstants.ES384 => HashAlgorithmName.SHA384,
+                        JWSConstants.ES512 => HashAlgorithmName.SHA512,
                         _ => throw new ArgumentException($"Invalid ECDSA hash algorithm - {headers[loop].Alg}")
                     };
 
@@ -270,22 +270,22 @@ public class JOSESigner
     /// <param name="type">Type of JWS encoding. Default is Compact</param>
     /// <returns>The encoded JWS</returns>
     /// <exception cref="ArgumentException">Unknow enoding type</exception>
-    public string Encode(JOSEEncodeTypeEnum type = JOSEEncodeTypeEnum.Compact)
+    public string Encode(JWSEncodeTypeEnum type = JWSEncodeTypeEnum.Compact)
     {
         // Enoce it
         return type switch
         {
-            JOSEEncodeTypeEnum.Compact =>
+            JWSEncodeTypeEnum.Compact =>
                 $"{_protecteds.FirstOrDefault() ?? string.Empty}.{_payload}.{Base64UrlEncoder.Encode(_signatures.FirstOrDefault() ?? Array.Empty<byte>())}",
-            JOSEEncodeTypeEnum.Flattened =>
+            JWSEncodeTypeEnum.Flattened =>
                  JsonSerializer.Serialize(new JWSFlattened
                  {
                      Payload = _payload,
                      Protected = _protecteds.FirstOrDefault() ?? string.Empty,
                      Header = _unprotectedHeader,
                      Signature = Base64UrlEncoder.Encode(_signatures.FirstOrDefault() ?? Array.Empty<byte>())
-                 }, JOSEConstants.jsonOptions),
-            JOSEEncodeTypeEnum.Full =>
+                 }, JWSConstants.jsonOptions),
+            JWSEncodeTypeEnum.Full =>
                 JsonSerializer.Serialize(new JWS
                 {
                     Payload = _payload,
@@ -296,7 +296,7 @@ public class JOSESigner
                             Header = _unprotectedHeader,
                             Signature = Base64UrlEncoder.Encode(sigItem)
                         }).ToArray(),
-                }, JOSEConstants.jsonOptions),
+                }, JWSConstants.jsonOptions),
             _ => throw new ArgumentException("Invalid encoding type")
         };
     }
@@ -331,7 +331,7 @@ public class JOSESigner
         payload = _payload != null ? Base64UrlEncoder.Decode(_payload) : Array.Empty<byte>();
 
         // Return header
-        return _protecteds.Select(p => JsonSerializer.Deserialize<T>(Base64UrlEncoder.Decode(p), JOSEConstants.jsonOptions))
+        return _protecteds.Select(p => JsonSerializer.Deserialize<T>(Base64UrlEncoder.Decode(p), JWSConstants.jsonOptions))
                           .Where(p => p != null)
                           .ToList()
                           .AsReadOnly()!;
@@ -372,7 +372,7 @@ public class JOSESigner
     protected void DecodeFull(ReadOnlySpan<char> signature)
     {
         // Firts check if we have "flattened" encoded signature
-        JWSFlattened? resFalttened = JsonSerializer.Deserialize<JWSFlattened>(signature, JOSEConstants.jsonOptions);
+        JWSFlattened? resFalttened = JsonSerializer.Deserialize<JWSFlattened>(signature, JWSConstants.jsonOptions);
         if (resFalttened != null) {
             // We have flattened
             if (!string.IsNullOrEmpty(resFalttened.Protected) && !string.IsNullOrEmpty(resFalttened.Signature)) {
@@ -385,7 +385,7 @@ public class JOSESigner
         }
 
         // Check if we have "full" encoded signature
-        JWS? res = JsonSerializer.Deserialize<JWS>(signature, JOSEConstants.jsonOptions);
+        JWS? res = JsonSerializer.Deserialize<JWS>(signature, JWSConstants.jsonOptions);
         if (res != null) {
             // We have full
             if (res.Signatures != null && res.Signatures.Length > 0) {
@@ -429,7 +429,7 @@ public class JOSESigner
 
         // Serialize header
         using (MemoryStream ms = new(8192)) {
-            JsonSerializer.Serialize(ms, jWSHeader, JOSEConstants.jsonOptions);
+            JsonSerializer.Serialize(ms, jWSHeader, JWSConstants.jsonOptions);
             _header = Base64UrlEncoder.Encode(ms.ToArray());
         }
     }

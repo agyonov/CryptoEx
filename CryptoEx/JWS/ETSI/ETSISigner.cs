@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json;
 
 namespace CryptoEx.JOSE.ETSI;
-public class ETSISigner : JOSESigner
+public class ETSISigner : JWSSigner
 {
     // hashed data - used in detached mode
     protected byte[]? hashedData = null;
@@ -83,7 +83,7 @@ public class ETSISigner : JOSESigner
         // Construct unprotected header
         _unprotectedHeader = new ETSIUnprotectedHeader
         {
-            EtsiU = new string[] { Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JOSEConstants.jsonOptions))) }
+            EtsiU = new string[] { Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JWSConstants.jsonOptions))) }
         };
     }
 
@@ -310,7 +310,7 @@ public class ETSISigner : JOSESigner
 
         // Serialize header
         using (MemoryStream ms = new(8192)) {
-            JsonSerializer.Serialize(ms, etsHeader, JOSEConstants.jsonOptions);
+            JsonSerializer.Serialize(ms, etsHeader, JWSConstants.jsonOptions);
             _header = Base64UrlEncoder.Encode(ms.ToArray());
         }
     }

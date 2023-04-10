@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace CryptoEx.JOSE;
 
-public static class JOSEConstants
+public static class JWSConstants
 {
     /// <summary>
     /// RSASSA-PKCS1-v1_5 using SHA-256

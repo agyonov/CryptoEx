@@ -64,8 +64,11 @@ public class TestETSI
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
 
+            // Encode - produce JWS
+            var jSign = signer.Encode();
+
             // Decode & verify
-            var headers = signer.Decode<JWSHeader>(signer.Encode(), out byte[] _);
+            var headers = signer.Decode<JWSHeader>(jSign, out byte[] _);
             Assert.False(headers.Count != 1);
             var pubCertEnc = headers[0].X5c?.FirstOrDefault();
             Assert.False(string.IsNullOrEmpty(pubCertEnc));
@@ -95,9 +98,12 @@ public class TestETSI
             // Get payload 
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
-            
+
+            // Encode - produce JWS
+            var jSign = signer.Encode(JOSEEncodeTypeEnum.Compact);
+
             // Decode & verify
-            var headers = signer.Decode<JWSHeader>(signer.Encode(JOSEEncodeTypeEnum.Flattened), out byte[] _);
+            var headers = signer.Decode<ETSIHeader>(jSign, out byte[] _);
             Assert.False(headers.Count != 1);
             var pubCertEnc = headers[0].X5c?.FirstOrDefault();
             Assert.False(string.IsNullOrEmpty(pubCertEnc));
@@ -122,14 +128,26 @@ public class TestETSI
         RSA? rsaKey = cert.GetRSAPrivateKey();
         if (rsaKey != null) {
             // Get payload 
-            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim()))) {
+            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim())))
+            using (MemoryStream msCheck = new(Encoding.UTF8.GetBytes(testFile.Trim()), false)) {
                 // Create signer 
                 ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
 
                 // Sign
                 signer.AttachSignersCertificate(cert);
                 signer.SignDetached(ms, mimeTypeAttachement: "text/plain");
-                Assert.True(signer.Encode(JOSEEncodeTypeEnum.Flattened).Length > 0);
+
+                // Encode - produce JWS
+                var jSign = signer.Encode(JOSEEncodeTypeEnum.Full);
+
+                // Decode & verify
+                var headers = signer.Decode<ETSIHeader>(jSign, out byte[] _);
+                Assert.False(headers.Count != 1);
+                var pubCertEnc = headers[0].X5c?.FirstOrDefault();
+                Assert.False(string.IsNullOrEmpty(pubCertEnc));
+                var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
+                Assert.NotNull(pubCert.GetRSAPublicKey());
+                Assert.True(signer.VerifyDetached(msCheck, new AsymmetricAlgorithm[] { pubCert.GetRSAPublicKey()! }, headers));
             }
         } else {
             Assert.Fail("NO RSA certificate available");

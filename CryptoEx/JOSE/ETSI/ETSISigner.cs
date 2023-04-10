@@ -1,4 +1,5 @@
 ﻿using CryptoEx.Utils;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO.Pipes;
 using System.Security.Cryptography;
@@ -132,7 +133,7 @@ public class ETSISigner : JOSESigner
     /// </summary>
     /// <param name="header">The header</param>
     /// <returns>True - present and understood. Flase - other case</returns>
-    public static bool ETSIResolutor(ETSIHeader header) 
+    public static bool ETSIResolutor(ETSIHeader header)
     {
         // No header crit
         if (header.Crit == null) {
@@ -140,11 +141,11 @@ public class ETSISigner : JOSESigner
         }
 
         // Cycle through crit
-        for (int loop = 0; loop < header.Crit.Length; loop++) { 
+        for (int loop = 0; loop < header.Crit.Length; loop++) {
             switch (header.Crit[loop]) {
                 case "sigT":
                     // Check
-                    if (!DateTimeOffset.TryParseExact(header.SigT, "yyyy-MM-ddTHH:mm:ssZ", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out DateTimeOffset _)) { 
+                    if (!DateTimeOffset.TryParseExact(header.SigT, "yyyy-MM-ddTHH:mm:ssZ", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out DateTimeOffset _)) {
                         return false;
                     }
                     break;
@@ -181,6 +182,79 @@ public class ETSISigner : JOSESigner
 
         // All good
         return true;
+    }
+
+    /// <summary>
+    /// Verify the detached signature
+    /// </summary>
+    /// <param name="attachement">The dettached file</param>
+    /// <param name="publicKeys">Public keys to use for verification. MUST correspond to each of the JWS headers in the JWS, returned by te Decode method!</param>
+    /// <param name="etsiHeaders">Etsi headers returnd by Decode method</param>
+    /// <returns>True / false = valid / invalid signature check</returns>
+    /// <exception cref="NotSupportedException">Some more advanced ETSI detached signatures, that are not yet implemented</exception>
+    public virtual bool VerifyDetached(Stream attachement, IReadOnlyList<AsymmetricAlgorithm> publicKeys, ReadOnlyCollection<ETSIHeader> etsiHeaders)
+    {
+        if (etsiHeaders.Count != publicKeys.Count) {
+            return false;
+        }
+
+        // Call general verify
+        bool res = base.Verify<ETSIHeader>(publicKeys, ETSIResolutor);
+
+        // Check
+        if (res != true) {
+            return res;
+        }
+
+        // for each public key - verify attachement
+        for (int loop = 0; loop < publicKeys.Count; loop++) {
+            // get header
+            ETSIHeader header = etsiHeaders[loop];
+
+            // Check. This method allows just one signed attachement. ETSI generally allows more.
+            // Someone can implement it in future - New method with first parameter as array of streams
+            if (header.SigD == null || header.SigD.Pars.Length != 1 || header.SigD.HashV == null || header.SigD.HashV.Length != 1) {
+                return false;
+            }
+            if (header.SigD.MId != ETSIConstants.ETSI_DETACHED_PARTS_OBJECT_HASH) {
+                throw new NotSupportedException($"For now only {ETSIConstants.ETSI_DETACHED_PARTS_OBJECT_HASH} is supported.");
+            }
+
+            // Hash attachemnt
+            byte[] lHashedData;
+            using (HashAlgorithm hAlg = header.SigD.HashM switch
+            {
+                ETSIConstants.SHA512 => SHA512.Create(),
+                ETSIConstants.SHA384 => SHA384.Create(),
+                ETSIConstants.SHA256 => SHA256.Create(),
+                _ => throw new NotSupportedException($"Hash algorithm {header.SigD.HashM} is not supported.")
+            })
+            using (AnonymousPipeServerStream apss = new(PipeDirection.In))
+            using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
+                _ = Task.Run(() =>
+                {
+                    try {
+                        // Encode
+                        Base64UrlEncoder.Encode(attachement, apcs);
+                    } finally {
+                        // Close the pipe
+                        apcs.Close(); // To avoid blocking of the pipe.
+                    }
+                });
+                lHashedData = hAlg.ComputeHash(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+            }
+
+            // Get sent data
+            byte[] sentHash = Base64UrlEncoder.Decode(header.SigD.HashV[0]);
+
+            // Compare
+            if (!sentHash.SequenceEqual(lHashedData)) { 
+                return false;
+            }
+        }
+
+        // return 
+        return res;
     }
 
     // Prepare header values

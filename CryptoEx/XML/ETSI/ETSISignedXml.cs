@@ -600,13 +600,8 @@ public class ETSISignedXml
             byte[] computed = hash.ComputeHash(attachement);
 
             // Compare
-            if (origHash.Length != computed.Length) {
+            if (!origHash.SequenceEqual(computed)) {
                 return false;
-            }
-            for (int loop = 0; loop < computed.Length; loop++) {
-                if (origHash[loop] != computed[loop]) {
-                    return false;
-                }
             }
         }
 

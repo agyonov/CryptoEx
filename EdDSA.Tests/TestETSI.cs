@@ -1,5 +1,5 @@
-﻿using CryptoEx.JOSE;
-using CryptoEx.JOSE.ETSI;
+﻿using CryptoEx.JWS;
+using CryptoEx.JWS.ETSI;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;

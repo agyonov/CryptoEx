@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace CryptoEx.JOSE.ETSI;
+namespace CryptoEx.JWS.ETSI;
 public class ETSISigner : JWSSigner
 {
     // hashed data - used in detached mode
@@ -248,7 +248,7 @@ public class ETSISigner : JWSSigner
             byte[] sentHash = Base64UrlEncoder.Decode(header.SigD.HashV[0]);
 
             // Compare
-            if (!sentHash.SequenceEqual(lHashedData)) { 
+            if (!sentHash.SequenceEqual(lHashedData)) {
                 return false;
             }
         }

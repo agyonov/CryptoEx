@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace CryptoEx.JOSE;
+namespace CryptoEx.JWS;
 
 public static class JWSConstants
 {

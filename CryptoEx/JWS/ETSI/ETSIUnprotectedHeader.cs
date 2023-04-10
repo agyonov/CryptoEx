@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace CryptoEx.JOSE.ETSI;
+namespace CryptoEx.JWS.ETSI;
 
 // ETSI unprotected header as defined in ETSI TS 119 182-1
 public record class ETSIUnprotectedHeader

@@ -5,7 +5,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 
-namespace CryptoEx.JOSE;
+namespace CryptoEx.JWS;
 
 /// <summary>
 /// General JOSE signer. This class can be used for signing and verification of modes JWS.

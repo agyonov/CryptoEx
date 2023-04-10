@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace CryptoEx.JOSE;
+namespace CryptoEx.JWS;
 
 public record class JWSHeader
 {

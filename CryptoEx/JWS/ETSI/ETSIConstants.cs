@@ -1,4 +1,4 @@
-﻿namespace CryptoEx.JOSE.ETSI;
+﻿namespace CryptoEx.JWS.ETSI;
 
 //  Some ETSI constants as defined in ETSI TS 119 182-1
 public static class ETSIConstants

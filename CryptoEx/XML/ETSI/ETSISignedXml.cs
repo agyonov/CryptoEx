@@ -38,7 +38,7 @@ public class ETSISignedXml
     /// <summary>
     /// A constructiror without a private key - used for verification
     /// </summary>
-    public ETSISignedXml() 
+    public ETSISignedXml()
     {
 
     }
@@ -140,7 +140,7 @@ public class ETSISignedXml
     public virtual XmlElement Sign(XmlDocument payload, X509Certificate2 cert)
     {
         // Check
-        if (_signer == null) { 
+        if (_signer == null) {
             throw new InvalidOperationException("No private key provided");
         }
 

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace CryptoEx.JOSE.ETSI;
+namespace CryptoEx.JWS.ETSI;
 
 
 public record class ETSIHeader : JWSHeader

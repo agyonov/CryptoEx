@@ -22,7 +22,7 @@ public record class ETSIHeader : JWSHeader
     [JsonPropertyName("sigD")]
     public ETSIDetachedParts? SigD { get; set; } = null;
     [JsonPropertyName("crit")]
-    public string[] Crit
+    public override string[]? Crit
     {
         get {
             List<string> build = new List<string>
@@ -37,5 +37,11 @@ public record class ETSIHeader : JWSHeader
             }
             return build.ToArray();
         }
+
+        set {
+            // Do nothing
+            _Crit = value;
+        }
     }
+    internal string[]? _Crit = null;
 }

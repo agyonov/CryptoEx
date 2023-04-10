@@ -110,9 +110,8 @@ public class ETSISigner : JOSESigner
         if (optionalPayload != null) {
             _payload = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(optionalPayload));
         }
-        string _protected = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(_header ?? string.Empty));
-        _protecteds.Add(_protected);
-        string calc = optionalPayload == null ? $"{_protected}." : $"{_protected}.{_payload}";
+        _protecteds.Add(_header);
+        string calc = optionalPayload == null ? $"{_header}." : $"{_header}.{_payload}";
         if (_signer is RSA) {
             _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, RSASignaturePadding.Pkcs1));
         } else if (_signer is ECDsa) {
@@ -125,11 +124,17 @@ public class ETSISigner : JOSESigner
     {
         // check
         if (_certificate == null) {
-            throw new Exception("Certificate can not be null");
+            throw new ArgumentNullException(nameof(_certificate));
+        }
+
+        if (string.IsNullOrEmpty(_algorithmNameJws)) {
+            throw new ArgumentNullException(nameof(_algorithmNameJws));
         }
 
         // header ETSI
         ETSIHeader etsHeader;
+        _header = string.Empty;
+
 
         // Attached
         if (hashedData == null) {
@@ -165,7 +170,10 @@ public class ETSISigner : JOSESigner
             };
         }
 
-        // Encode
-        _header = JsonSerializer.Serialize(etsHeader, JOSEConstants.jsonOptions);
+        // Serialize header
+        using (MemoryStream ms = new(8192)) {
+            JsonSerializer.Serialize(ms, etsHeader, JOSEConstants.jsonOptions);
+            _header = Base64UrlEncoder.Encode(ms.ToArray());
+        }
     }
 }

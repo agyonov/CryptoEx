@@ -63,7 +63,7 @@ public class TestETSI
             // Get payload 
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
-            Assert.True(signer.EncodeCompact().Length > 0);
+            Assert.True(signer.Encode().Length > 0);
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -87,7 +87,7 @@ public class TestETSI
             // Get payload 
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
-            Assert.True(signer.Encode().Length > 0);
+            Assert.True(signer.Encode(JOSEEncodeTypeEnum.Flattened).Length > 0);
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -113,7 +113,7 @@ public class TestETSI
                 // Sign
                 signer.AttachSignersCertificate(cert);
                 signer.SignDetached(ms, mimeTypeAttachement: "text/plain");
-                Assert.True(signer.Encode().Length > 0);
+                Assert.True(signer.Encode(JOSEEncodeTypeEnum.Flattened).Length > 0);
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -139,7 +139,7 @@ public class TestETSI
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
             await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
-            Assert.True(signer.Encode().Length > 0);
+            Assert.True(signer.Encode(JOSEEncodeTypeEnum.Flattened).Length > 0);
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -166,7 +166,7 @@ public class TestETSI
                 signer.AttachSignersCertificate(cert);
                 signer.SignDetached(ms, message, "text/plain");
                 await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
-                Assert.True(signer.Encode().Length > 0);
+                Assert.True(signer.Encode(JOSEEncodeTypeEnum.Flattened).Length > 0);
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -191,7 +191,7 @@ public class TestETSI
             // Get payload 
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
-            Assert.True(signer.EncodeCompact().Length > 0);
+            Assert.True(signer.Encode().Length > 0);
         } else {
             Assert.Fail("NO ECDSA certificate available");
         }
@@ -215,7 +215,7 @@ public class TestETSI
             // Get payload 
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
-            Assert.True(signer.Encode().Length > 0);
+            Assert.True(signer.Encode(JOSEEncodeTypeEnum.Flattened).Length > 0);
         } else {
             Assert.Fail("NO ECDSA certificate available");
         }
@@ -240,7 +240,7 @@ public class TestETSI
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
             await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
-            Assert.True(signer.Encode().Length > 0);
+            Assert.True(signer.Encode(JOSEEncodeTypeEnum.Flattened).Length > 0);
         } else {
             Assert.Fail("NO ECDSA certificate available");
         }

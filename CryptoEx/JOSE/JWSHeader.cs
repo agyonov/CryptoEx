@@ -16,4 +16,6 @@ public record class JWSHeader
     public string[]? X5c { get; set; } = null;
     [JsonPropertyName("typ")]
     public virtual string? Typ { get; set; } = null;
+    [JsonPropertyName("crit")]
+    public virtual string[]? Crit { get; set; } = null;
 }

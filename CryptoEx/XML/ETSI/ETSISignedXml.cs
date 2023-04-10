@@ -21,19 +21,27 @@ public class ETSISignedXml
     private const string IdXadesSignedProperties = "id-xades-signed-properties";
 
     // The signing key
-    protected readonly AsymmetricAlgorithm _signer;
+    protected readonly AsymmetricAlgorithm? _signer;
 
     // XML algorithm name for dagest
-    protected readonly string _algorithmNameDigestXML;
+    protected readonly string? _algorithmNameDigestXML;
 
     // XML algorithm name for signature
-    protected readonly string _algorithmNameSignatureXML;
+    protected readonly string? _algorithmNameSignatureXML;
 
     // DOTNET Hash algorithm name
     protected readonly HashAlgorithmName _hashAlgorithm;
 
     // last qualifying properties
     protected XmlNodeList? _qualifyingPropetries;
+
+    /// <summary>
+    /// A constructiror without a private key - used for verification
+    /// </summary>
+    public ETSISignedXml() 
+    {
+
+    }
 
     /// <summary>
     /// A constructiror with an private key - RSA or ECDSA, used for signing
@@ -131,6 +139,11 @@ public class ETSISignedXml
     /// <returns>The Xml Signature element</returns>
     public virtual XmlElement Sign(XmlDocument payload, X509Certificate2 cert)
     {
+        // Check
+        if (_signer == null) { 
+            throw new InvalidOperationException("No private key provided");
+        }
+
         // Create a SignedXml object & provide GetIdElement method
         SignedXmlExt signedXml = new SignedXmlExt(payload, GetIdElement);
         signedXml.Signature.Id = IdSignature;
@@ -187,6 +200,11 @@ public class ETSISignedXml
     /// <returns>The Xml Signature element</returns>
     public virtual XmlElement SignDetached(Stream attachement, X509Certificate2 cert, XmlDocument? payload = null)
     {
+        // Check
+        if (_signer == null) {
+            throw new InvalidOperationException("No private key provided");
+        }
+
         // Create a SignedXml object & provide GetIdElement method
         SignedXmlExt signedXml = payload == null ? new SignedXmlExt(GetIdElement) : new SignedXmlExt(payload, GetIdElement);
         signedXml.Signature.Id = IdSignature;

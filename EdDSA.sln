@@ -5,9 +5,9 @@ VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoEx", "CryptoEx\CryptoEx.csproj", "{C26C3C3C-4260-4FE1-9364-F852EBD90AEB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EdDSA.Tests", "EdDSA.Tests\EdDSA.Tests.csproj", "{F24CBF92-3FC7-48C1-A360-710D775571B5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoEx.Tests", "EdDSA.Tests\CryptoEx.Tests.csproj", "{F24CBF92-3FC7-48C1-A360-710D775571B5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EdDSA.Benchmark", "EdDSA.Benchmark\EdDSA.Benchmark.csproj", "{72959546-C4A1-4938-AE72-F27F77539F97}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoEx.Benchmark", "EdDSA.Benchmark\CryptoEx.Benchmark.csproj", "{72959546-C4A1-4938-AE72-F27F77539F97}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

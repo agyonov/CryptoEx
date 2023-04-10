@@ -90,7 +90,7 @@ public class TestETSIXml
             doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
 
             // Verify signature
-            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo) 
+            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo)
                         && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
                         && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value));
         } else {

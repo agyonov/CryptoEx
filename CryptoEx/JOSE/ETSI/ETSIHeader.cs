@@ -39,9 +39,9 @@ public record class ETSIHeader : JWSHeader
         }
 
         set {
-            // Do nothing
+            // Do nothing, but store for possible use in resolutor function
             _Crit = value;
         }
     }
-    internal string[]? _Crit = null;
+    protected internal string[]? _Crit = null;
 }

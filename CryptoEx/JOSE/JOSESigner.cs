@@ -6,6 +6,11 @@ using System.Text;
 using System.Text.Json;
 
 namespace CryptoEx.JOSE;
+
+/// <summary>
+/// General JOSE signer. This class can be used for signing and verification of modes JWS.
+/// It can also be easilly extended to support other modes. For example, see ETSI JOSE signer in current project.
+/// </summary>
 public class JOSESigner
 {
     // The signing key
@@ -52,13 +57,10 @@ public class JOSESigner
     /// </summary>
     /// <param name="signer">The private key</param>
     /// <exception cref="ArgumentException">Invalid private key type</exception>
-    public JOSESigner(AsymmetricAlgorithm signer) : base()
+    public JOSESigner(AsymmetricAlgorithm signer) : this()
     {
         // Store
         _signer = signer;
-        _signatures = new List<byte[]>();
-        _protecteds = new List<string>();
-        _header = string.Empty;
 
         // Determine the algorithm
         switch (signer) {
@@ -195,13 +197,13 @@ public class JOSESigner
     /// </param>
     /// <returns>True / false = valid / invalid signature check</returns>
     /// <exception cref="ArgumentException">Some issues exists with the arguments and/or keys provided to this method</exception>
-    public virtual bool Verify<T>(List<AsymmetricAlgorithm> publicKeys, Func<T, bool>? resolutor = null) where T : JWSHeader
+    public virtual bool Verify<T>(IReadOnlyList<AsymmetricAlgorithm> publicKeys, Func<T, bool>? resolutor = null) where T : JWSHeader
     {
         // Declare result
         bool result = true;
         HashAlgorithmName algorithmName;
 
-        // Get the headers, from the protected data! 
+        // Get the headers, from the protected data! Do not accept them from the caller!
         List<T> headers = _protecteds.Select(p => JsonSerializer.Deserialize<T>(Base64UrlEncoder.Decode(p), JOSEConstants.jsonOptions))
                                                 .Where(p => p != null)
                                                 .ToList()!;
@@ -350,17 +352,18 @@ public class JOSESigner
         // Read payload
         if (index + 1 < signature.Length) {
             // Get index of next dot
-            int indexTwo = signature.Slice(index + 1).IndexOf('.');
-            if (indexTwo < -1) {
+            signature = signature.Slice(index + 1);
+            index = signature.IndexOf('.');
+            if (index < -1) {
                 return;
             } else {
                 // Add protected
-                _payload = signature.Slice(index + 1, indexTwo).ToString();
+                _payload = signature.Slice(0, index).ToString();
             }
 
             // Get signature
-            if (indexTwo + 1 < signature.Length) {
-                _signatures.Add(Base64UrlEncoder.Decode(signature.Slice(indexTwo + 1).ToString()));
+            if (index + 1 < signature.Length) {
+                _signatures.Add(Base64UrlEncoder.Decode(signature.Slice(index + 1).ToString()));
             }
         }
     }

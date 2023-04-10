@@ -1,4 +1,5 @@
 ﻿using CryptoEx.Utils;
+using System.Globalization;
 using System.IO.Pipes;
 using System.Security.Cryptography;
 using System.Text;
@@ -9,6 +10,13 @@ public class ETSISigner : JOSESigner
 {
     // hashed data - used in detached mode
     protected byte[]? hashedData = null;
+
+    /// <summary>
+    /// A constructor without a private key, used for verification
+    /// </summary>
+    public ETSISigner() : base()
+    {
+    }
 
     /// <summary>
     /// A constructiror with an private key - RSA or ECDSA, used for signing
@@ -117,6 +125,62 @@ public class ETSISigner : JOSESigner
         } else if (_signer is ECDsa) {
             _signatures.Add(((ECDsa)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName));
         }
+    }
+
+    /// <summary>
+    /// Validates crytical header values, for an ETSI signature
+    /// </summary>
+    /// <param name="header">The header</param>
+    /// <returns>True - present and understood. Flase - other case</returns>
+    public static bool ETSIResolutor(ETSIHeader header) 
+    {
+        // No header crit
+        if (header.Crit == null) {
+            return false;
+        }
+
+        // Cycle through crit
+        for (int loop = 0; loop < header.Crit.Length; loop++) { 
+            switch (header.Crit[loop]) {
+                case "sigT":
+                    // Check
+                    if (!DateTimeOffset.TryParseExact(header.SigT, "yyyy-MM-ddTHH:mm:ssZ", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out DateTimeOffset _)) { 
+                        return false;
+                    }
+                    break;
+                case "x5t#o":
+                    return false; // TODO: Implement in future
+                case "sigX5ts":
+                    return false; // TODO: Implement in future
+                case "srCms":
+                    return false; // TODO: Implement in future
+                case "sigPl":
+                    return false; // TODO: Implement in future
+                case "srAts":
+                    return false; // TODO: Implement in future
+                case "adoTst":
+                    // Chech
+                    if (header.AdoTst == null) {
+                        // Not provided
+                        return false;
+                    } // If not null, then it is parsed and processed by a consumer
+                    break;
+                case "sigPId":
+                    return false; // TODO: Implement in future
+                case "sigD":
+                    // Check
+                    if (header.SigD == null) {
+                        // Not provided
+                        return false;
+                    } // If not null, then it is checked in detached verification
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        // All good
+        return true;
     }
 
     // Prepare header values

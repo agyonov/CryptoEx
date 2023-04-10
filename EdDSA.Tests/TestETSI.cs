@@ -63,7 +63,15 @@ public class TestETSI
             // Get payload 
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
-            Assert.True(signer.Encode().Length > 0);
+
+            // Decode & verify
+            var headers = signer.Decode<JWSHeader>(signer.Encode(), out byte[] _);
+            Assert.False(headers.Count != 1);
+            var pubCertEnc = headers[0].X5c?.FirstOrDefault();
+            Assert.False(string.IsNullOrEmpty(pubCertEnc));
+            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
+            Assert.NotNull(pubCert.GetRSAPublicKey());
+            Assert.True(signer.Verify<JWSHeader>(new AsymmetricAlgorithm[] { pubCert.GetRSAPublicKey()! }, null));
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -87,7 +95,15 @@ public class TestETSI
             // Get payload 
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
-            Assert.True(signer.Encode(JOSEEncodeTypeEnum.Flattened).Length > 0);
+            
+            // Decode & verify
+            var headers = signer.Decode<JWSHeader>(signer.Encode(JOSEEncodeTypeEnum.Flattened), out byte[] _);
+            Assert.False(headers.Count != 1);
+            var pubCertEnc = headers[0].X5c?.FirstOrDefault();
+            Assert.False(string.IsNullOrEmpty(pubCertEnc));
+            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
+            Assert.NotNull(pubCert.GetRSAPublicKey());
+            Assert.True(signer.Verify<ETSIHeader>(new AsymmetricAlgorithm[] { pubCert.GetRSAPublicKey()! }, ETSISigner.ETSIResolutor));
         } else {
             Assert.Fail("NO RSA certificate available");
         }

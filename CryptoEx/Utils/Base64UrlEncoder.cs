@@ -100,8 +100,8 @@ public static class Base64UrlEncoder
 
     /// <summary>
     /// Converts the specified string, base-64-url encoded to  bytes.</summary>
-    /// <param name="str">base64Url encoded string.</param>
-    /// <param name="result">The Stream to write the bytes to.</param>
+    /// <param name="str">TexReader with base64Url encoded string.</param>
+    /// <param name="result">The Stream to write the bytes to.  Result stream - can be piped!</param>
     public static void Decode(TextReader str, Stream result)
     {
         //locals 
@@ -196,8 +196,8 @@ public static class Base64UrlEncoder
 
     /// <summary>
     /// Converts the specified string, base-64-url encoded to  bytes.</summary>
-    /// <param name="str">base64Url encoded string.</param>
-    /// <param name="result">The Stream to write the bytes to.</param>
+    /// <param name="str">TextReader with base64Url encoded string.</param>
+    /// <param name="result">The Stream to write the bytes to.  Result stream - can be piped!</param>
     public async static Task DecodeAsync(TextReader str, Stream result, CancellationToken ct = default)
     {
         //locals 
@@ -363,8 +363,8 @@ public static class Base64UrlEncoder
     /// <summary>
     /// The following functions perform base64url encoding .
     /// </summary>
-    /// <param name="arg">The stream to encode</param>
-    /// <param name="result">The stream to write the Base64Url to</param>
+    /// <param name="arg">The Stream to encode</param>
+    /// <param name="result">The Writer to write the Base64Url to</param>
     public static void Encode(Stream arg, TextWriter result)
     {
         // bytes read
@@ -421,10 +421,10 @@ public static class Base64UrlEncoder
     }
 
     /// <summary>
-    /// The following functions perform base64url encoding. 
+    /// The following functions perform base64url encoding, as ASCII bytes. 
     /// </summary>
-    /// <param name="arg">The stream to encode</param>
-    /// <param name="result">The PipeStream to write the Base64Url to, as ASCII bytes</param>
+    /// <param name="arg">The Stream to encode</param>
+    /// <param name="result">The Stream to write the Base64Url to, as ASCII bytes. Result stream - can be piped!</param>
     public static void Encode(Stream arg, Stream result)
     {
         // bytes read
@@ -483,8 +483,8 @@ public static class Base64UrlEncoder
     /// <summary>
     /// The following functions perform base64url encoding.
     /// </summary>
-    /// <param name="arg">The stream to encode</param>
-    /// <param name="result">The stream to write the Base64Url to</param>
+    /// <param name="arg">The Stream to encode</param>
+    /// <param name="result">The Writer to write the Base64Url to</param>
     public async static Task EncodeAsync(Stream arg, TextWriter result, CancellationToken ct = default)
     {
         // bytes read
@@ -546,10 +546,10 @@ public static class Base64UrlEncoder
     }
 
     /// <summary>
-    /// The following functions perform base64url encoding. 
+    /// The following functions perform base64url encoding, as ASCII bytes. 
     /// </summary>
-    /// <param name="arg">The stream to encode</param>
-    /// <param name="result">The PipeStream to write the Base64Url to, as ASCII bytes</param>
+    /// <param name="arg">The Stream to encode</param>
+    /// <param name="result">The Stream to write the Base64Url to, as ASCII bytes. Result stream - can be piped!</param>
     public async static Task EncodeAsync(Stream arg, Stream result, CancellationToken ct = default)
     {
         // bytes read

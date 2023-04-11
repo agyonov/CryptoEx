@@ -2,15 +2,19 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO.Pipes;
+using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
+using System.Xml;
 
 namespace CryptoEx.JWS.ETSI;
 public class ETSISigner : JWSSigner
 {
     // hashed data - used in detached mode
     protected byte[]? hashedData = null;
+    protected string? mimeTypePayload = null;
 
     /// <summary>
     /// A constructor without a private key, used for verification
@@ -41,11 +45,13 @@ public class ETSISigner : JWSSigner
     /// <summary>
     /// Clear some data.
     /// Every thing except the signer and the HashAlgorithmName!
+    /// After calling 'Decode' and before calling 'Sign' you MUST call this method! 'Veryfy...' calls this method internally.
     /// </summary>
     public override void Clear()
     {
         // Clear hashed data
         hashedData = null;
+        mimeTypePayload = null;
 
         // call parent
         base.Clear();
@@ -93,7 +99,8 @@ public class ETSISigner : JWSSigner
     /// <param name="attachement">The attached data (file) </param>
     /// <param name="optionalPayload">The optional payload. SHOUD BE JSON STRING.</param>
     /// <param name="mimeTypeAttachement">Optionally mimeType. Defaults to "octet-stream"</param>
-    public virtual void SignDetached(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream")
+    /// <param name="mimeType">Optionally mimeType of the payload</param>
+    public virtual void SignDetached(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null)
     {
         // Hash attachemnt
         using (HashAlgorithm hAlg = SHA512.Create())
@@ -113,6 +120,7 @@ public class ETSISigner : JWSSigner
         }
 
         // Prepare header
+        mimeTypePayload = mimeType;
         PrepareHeader(mimeTypeAttachement);
 
         // Form JOSE protected data 
@@ -185,14 +193,112 @@ public class ETSISigner : JWSSigner
     }
 
     /// <summary>
+    /// Verify the signature of an enveloped JWS
+    /// </summary>
+    /// <param name="signature">The JWS signature</param>
+    /// <param name="payload">The payload in the signature document</param>
+    /// <param name="cInfo">returns the context info about the signature</param>
+    /// <returns>True signature is valid. False - no it is invalid</returns>
+    /// <exception cref="NotSupportedException">Some more advanced ETSI detached signatures, that are not yet implemented</exception>
+    public virtual bool Verify(ReadOnlySpan<char> signature, out byte[] payload, out ETSIContextInfo cInfo)
+    {
+        // locals
+        cInfo = new ETSIContextInfo();
+
+        // Decode
+        ReadOnlyCollection<ETSIHeader> eTSIHeaders = Decode<ETSIHeader>(signature, out payload);
+
+        // Fill context info from the first header
+        if (eTSIHeaders.Count > 0) {
+            // Get the first header
+            ETSIHeader eTSIHeader = eTSIHeaders[0];
+            // Extract the context info
+            ExtractETSIContextInfo(eTSIHeader, cInfo);
+        }
+
+        // Try to extract the public keys
+        List<AsymmetricAlgorithm> pubKeys = new List<AsymmetricAlgorithm>();
+        for (int loop = 0; loop < eTSIHeaders.Count; loop++) {
+            // Tre get the public key
+            string? x5c = eTSIHeaders[loop].X5c?.FirstOrDefault();
+            if (x5c != null) {
+                // Get the public key
+                try {
+                    X509Certificate2 cert = new(Convert.FromBase64String(x5c));
+                    RSA? rsa = cert.GetRSAPublicKey();
+                    if (rsa != null) {
+                        pubKeys.Add(rsa);
+                        continue;
+                    }
+                    ECDsa? ecdsa = cert.GetECDsaPublicKey();
+                    if (ecdsa != null) {
+                        pubKeys.Add(ecdsa);
+                    }
+                } catch { }
+            }
+        }
+
+        // Verify
+        try {
+            return Verify<ETSIHeader>(pubKeys, ETSIResolutor);
+        } finally { Clear(); }
+    }
+
+    /// <summary>
     /// Verify the detached signature
     /// </summary>
     /// <param name="attachement">The dettached file</param>
-    /// <param name="publicKeys">Public keys to use for verification. MUST correspond to each of the JWS headers in the JWS, returned by te Decode method!</param>
-    /// <param name="etsiHeaders">Etsi headers returnd by Decode method</param>
+    /// <param name="signature">The JWS signature</param>
+    /// <param name="payload">Public keys to use for verification. MUST correspond to each of the JWS headers in the JWS, returned by te Decode method!</param>
+    /// <param name="cInfo">Etsi headers returnd by Decode method</param>
     /// <returns>True / false = valid / invalid signature check</returns>
     /// <exception cref="NotSupportedException">Some more advanced ETSI detached signatures, that are not yet implemented</exception>
-    public virtual bool VerifyDetached(Stream attachement, IReadOnlyList<AsymmetricAlgorithm> publicKeys, ReadOnlyCollection<ETSIHeader> etsiHeaders)
+    public virtual bool VerifyDetached(Stream attachement, ReadOnlySpan<char> signature, out byte[] payload, out ETSIContextInfo cInfo)
+    {
+        // locals
+        cInfo = new ETSIContextInfo();
+
+        // Decode
+        ReadOnlyCollection<ETSIHeader> eTSIHeaders = Decode<ETSIHeader>(signature, out payload);
+
+        // Fill context info from the first header
+        if (eTSIHeaders.Count > 0) {
+            // Get the first header
+            ETSIHeader eTSIHeader = eTSIHeaders[0];
+            // Extract the context info
+            ExtractETSIContextInfo(eTSIHeader, cInfo);
+        }
+
+        // Try to extract the public keys
+        List<AsymmetricAlgorithm> pubKeys = new List<AsymmetricAlgorithm>();
+        for (int loop = 0; loop < eTSIHeaders.Count; loop++) {
+            // Tre get the public key
+            string? x5c = eTSIHeaders[loop].X5c?.FirstOrDefault();
+            if (x5c != null) {
+                // Get the public key
+                try {
+                    X509Certificate2 cert = new(Convert.FromBase64String(x5c));
+                    RSA? rsa = cert.GetRSAPublicKey();
+                    if (rsa != null) {
+                        pubKeys.Add(rsa);
+                        continue;
+                    }
+                    ECDsa? ecdsa = cert.GetECDsaPublicKey();
+                    if (ecdsa != null) {
+                        pubKeys.Add(ecdsa);
+                    }
+                } catch { }
+            }
+        }
+
+        // Verify
+        try {
+            return VerifyDetached(attachement, pubKeys, eTSIHeaders);
+        } finally { Clear(); }
+    }
+
+    // Verify detached ETSI signature
+    protected virtual bool VerifyDetached(Stream attachement, IReadOnlyList<AsymmetricAlgorithm> publicKeys, ReadOnlyCollection<ETSIHeader> etsiHeaders)
     {
         if (etsiHeaders.Count != publicKeys.Count) {
             return false;
@@ -257,6 +363,28 @@ public class ETSISigner : JWSSigner
         return res;
     }
 
+    // Extract the context info from the ETSI header
+    protected virtual void ExtractETSIContextInfo(ETSIHeader eTSIHeader, ETSIContextInfo cInfo)
+    {
+        // Try to extract the signing time
+        if (DateTimeOffset.TryParseExact(eTSIHeader.SigT, "yyyy-MM-ddTHH:mm:ssZ", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out DateTimeOffset dto)) {
+            cInfo.SigningDateTime = dto;
+        }
+        // Try to extract the signing certificate
+        if (eTSIHeader.X5c != null && eTSIHeader.X5c.Length > 0) {
+            try {
+                cInfo.SigningCertificate = new X509Certificate2(Convert.FromBase64String(eTSIHeader.X5c[0]));
+            } catch { }
+        }
+        // Try to extract the signing certificate digest
+        if (!string.IsNullOrEmpty(eTSIHeader.X5)) {
+            cInfo.SigningCertificateDigestValue = Base64UrlEncoder.Decode(eTSIHeader.X5);
+            cInfo.SigningCertificateDagestMethod = HashAlgorithmName.SHA256;
+        }
+        // Try to set content info
+        cInfo.PayloadContentType = eTSIHeader.Cty;
+    }
+
     // Prepare header values
     protected override void PrepareHeader(string? mimeType = null)
     {
@@ -272,7 +400,6 @@ public class ETSISigner : JWSSigner
         // header ETSI
         ETSIHeader etsHeader;
         _header = string.Empty;
-
 
         // Attached
         if (hashedData == null) {
@@ -291,6 +418,7 @@ public class ETSISigner : JWSSigner
             etsHeader = new ETSIHeader
             {
                 Alg = _algorithmNameJws,
+                Cty = mimeTypePayload,
                 Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
                 SigT = $"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH:mm:ssZ}",
                 X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),

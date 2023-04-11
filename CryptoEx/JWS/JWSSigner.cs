@@ -132,6 +132,7 @@ public class JWSSigner
     /// <summary>
     /// Clear some data.
     /// Every thing except the signer and the HashAlgorithmName!
+    /// After calling 'Decode' and before calling 'Sign' next time you MUST call this method! 'Veryfy...' calls this method internally.
     /// </summary>
     public virtual void Clear()
     {
@@ -154,10 +155,11 @@ public class JWSSigner
     }
 
     /// <summary>
-    /// Digitally sign the payload and protected header
+    /// Digitally sign the payload and protected header.
+    /// You may call this method multiple times to add multiple signatures, BEFORE calling 'Encode'.
     /// </summary>
     /// <param name="payload">The payload</param>
-    /// <param name="mimeType">Optionally the mime type of the header</param>
+    /// <param name="mimeType">Optionally the mime type of the payload, to put in the header</param>
     public virtual void Sign(ReadOnlySpan<byte> payload, string? mimeType = null)
     {
         // Prepare header
@@ -194,6 +196,8 @@ public class JWSSigner
     /// <param name="resolutor">Resolutor if "Cryt" header parameter if it EXISTS in any of the JWS headers in the JWS, returned by te Decode method!
     /// Please provide DECENT resolutor, as this is a SECURITY issue! You may read https://www.rfc-editor.org/rfc/rfc7515#section-4.1.10 for more information.
     /// You may also have a look at the ETSISigner class in the current project, for an example of a resolutor.
+    /// IMPORTANT: If the "Cryt" header parameter is not present in any of the JWS headers in the JWS, returned by te Decode method - the resolutor is NOT called!
+    /// So you may provide null as the resolutor, as you do not need it.
     /// </param>
     /// <returns>True / false = valid / invalid signature check</returns>
     /// <exception cref="ArgumentException">Some issues exists with the arguments and/or keys provided to this method</exception>
@@ -203,65 +207,67 @@ public class JWSSigner
         bool result = true;
         HashAlgorithmName algorithmName;
 
-        // Get the headers, from the protected data! Do not accept them from the caller!
-        List<T> headers = _protecteds.Select(p => JsonSerializer.Deserialize<T>(Base64UrlEncoder.Decode(p), JWSConstants.jsonOptions))
-                                                .Where(p => p != null)
-                                                .ToList()!;
+        try {
+            // Get the headers, from the protected data! Do not accept them from the caller!
+            List<T> headers = _protecteds.Select(p => JsonSerializer.Deserialize<T>(Base64UrlEncoder.Decode(p), JWSConstants.jsonOptions))
+                                                    .Where(p => p != null)
+                                                    .ToList()!;
 
-        // Check the number of signatures
-        if (headers.Count != _protecteds.Count || headers.Count != publicKeys.Count) {
-            return false;
-        }
+            // Check the number of signatures
+            if (headers.Count != _protecteds.Count || headers.Count != publicKeys.Count) {
+                return false;
+            }
 
-        // Check the signatures of the JWS
-        for (int loop = 0; loop < headers.Count; loop++) {
-            // Make sure Crytical header is not present or resolutor is provided
-            if (headers[loop].Crit != null) {
-                // No resolutor provided !
-                if (resolutor == null) {
-                    throw new ArgumentException($"There are crytical parameters in the header. You MUST provide crytical header resolutor!");
-                } else {
-                    // Check the crytical headers, by calling the resolutor
-                    if (!resolutor(headers[loop])) {
-                        return false;
+            // Check the signatures of the JWS
+            for (int loop = 0; loop < headers.Count; loop++) {
+                // Make sure Crytical header is not present or resolutor is provided
+                if (headers[loop].Crit != null) {
+                    // No resolutor provided !
+                    if (resolutor == null) {
+                        throw new ArgumentException($"There are crytical parameters in the header. You MUST provide crytical header resolutor!");
+                    } else {
+                        // Check the crytical headers, by calling the resolutor
+                        if (!resolutor(headers[loop])) {
+                            return false;
+                        }
                     }
+                }
+
+                // Verify
+                switch (publicKeys[loop]) {
+                    case RSA rsa:
+                        // Get algorithm name
+                        algorithmName = headers[loop].Alg switch
+                        {
+                            JWSConstants.RS256 => HashAlgorithmName.SHA256,
+                            JWSConstants.RS384 => HashAlgorithmName.SHA384,
+                            JWSConstants.RS512 => HashAlgorithmName.SHA512,
+                            _ => throw new ArgumentException($"Invalid RSA hash algorithm - {headers[loop].Alg}")
+                        };
+
+                        // Verify
+                        result &= rsa.VerifyData(Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"), _signatures[loop], algorithmName, RSASignaturePadding.Pkcs1);
+                        break;
+                    case ECDsa ecdsa:
+                        // Get algorithm name
+                        algorithmName = headers[loop].Alg switch
+                        {
+                            JWSConstants.ES256 => HashAlgorithmName.SHA256,
+                            JWSConstants.ES384 => HashAlgorithmName.SHA384,
+                            JWSConstants.ES512 => HashAlgorithmName.SHA512,
+                            _ => throw new ArgumentException($"Invalid ECDSA hash algorithm - {headers[loop].Alg}")
+                        };
+
+                        // Verify
+                        result &= ecdsa.VerifyData(Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"), _signatures[loop], algorithmName);
+                        break;
+                    default:
+                        throw new ArgumentException("Invalid key type. If you want to use some of HSxxx or PSxxx key types - please write descendant class of this class and override the current method...");
                 }
             }
 
-            // Verify
-            switch (publicKeys[loop]) {
-                case RSA rsa:
-                    // Get algorithm name
-                    algorithmName = headers[loop].Alg switch
-                    {
-                        JWSConstants.RS256 => HashAlgorithmName.SHA256,
-                        JWSConstants.RS384 => HashAlgorithmName.SHA384,
-                        JWSConstants.RS512 => HashAlgorithmName.SHA512,
-                        _ => throw new ArgumentException($"Invalid RSA hash algorithm - {headers[loop].Alg}")
-                    };
-
-                    // Verify
-                    result &= rsa.VerifyData(Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"), _signatures[loop], algorithmName, RSASignaturePadding.Pkcs1);
-                    break;
-                case ECDsa ecdsa:
-                    // Get algorithm name
-                    algorithmName = headers[loop].Alg switch
-                    {
-                        JWSConstants.ES256 => HashAlgorithmName.SHA256,
-                        JWSConstants.ES384 => HashAlgorithmName.SHA384,
-                        JWSConstants.ES512 => HashAlgorithmName.SHA512,
-                        _ => throw new ArgumentException($"Invalid ECDSA hash algorithm - {headers[loop].Alg}")
-                    };
-
-                    // Verify
-                    result &= ecdsa.VerifyData(Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"), _signatures[loop], algorithmName);
-                    break;
-                default:
-                    throw new ArgumentException("Invalid key type. If you want to use some of HSxxx or PSxxx key types - please write descendant class of this class and override the current method...");
-            }
-        }
-
-        return result;
+            return result;
+        } finally { Clear(); }
     }
 
     /// <summary>

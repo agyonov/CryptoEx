@@ -1,13 +1,21 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace CryptoEx.XML.ETSI;
-
+namespace CryptoEx.JWS.ETSI;
 /// <summary>
-/// Some context information for ETSI XML signatures - certificate, signing time, certificate digest, etc.
+/// Some context information for ETSI JWS signatures - certificate, signing time, certificate digest, etc.
 /// </summary>
 public class ETSIContextInfo
 {
+    /// <summary>
+    /// The payload content type
+    /// </summary>
+    public string? PayloadContentType { get; set; } = null;
     /// <summary>
     /// The signing certificate
     /// </summary>

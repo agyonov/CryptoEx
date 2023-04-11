@@ -94,7 +94,7 @@ public class TestETSI
         RSA? rsaKey = cert.GetRSAPrivateKey();
         if (rsaKey != null) {
             // Create signer 
-            JWSSigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
+            ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
 
             // Get payload 
             signer.AttachSignersCertificate(cert);
@@ -104,13 +104,7 @@ public class TestETSI
             var jSign = signer.Encode(JWSEncodeTypeEnum.Compact);
 
             // Decode & verify
-            var headers = signer.Decode<ETSIHeader>(jSign, out byte[] _);
-            Assert.False(headers.Count != 1);
-            var pubCertEnc = headers[0].X5c?.FirstOrDefault();
-            Assert.False(string.IsNullOrEmpty(pubCertEnc));
-            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
-            Assert.NotNull(pubCert.GetRSAPublicKey());
-            Assert.True(signer.Verify<ETSIHeader>(new AsymmetricAlgorithm[] { pubCert.GetRSAPublicKey()! }, ETSISigner.ETSIResolutor));
+            Assert.True(signer.Verify(jSign, out byte[] payload, out ETSIContextInfo cInfo));
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -142,13 +136,7 @@ public class TestETSI
                 var jSign = signer.Encode(JWSEncodeTypeEnum.Full);
 
                 // Decode & verify
-                var headers = signer.Decode<ETSIHeader>(jSign, out byte[] _);
-                Assert.False(headers.Count != 1);
-                var pubCertEnc = headers[0].X5c?.FirstOrDefault();
-                Assert.False(string.IsNullOrEmpty(pubCertEnc));
-                var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
-                Assert.NotNull(pubCert.GetRSAPublicKey());
-                Assert.True(signer.VerifyDetached(msCheck, new AsymmetricAlgorithm[] { pubCert.GetRSAPublicKey()! }, headers));
+                Assert.True(signer.VerifyDetached(msCheck, jSign, out byte[] payload, out ETSIContextInfo cInfo));
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -179,13 +167,7 @@ public class TestETSI
             var jSign = signer.Encode(JWSEncodeTypeEnum.Full);
 
             // Decode & verify
-            var headers = signer.Decode<ETSIHeader>(jSign, out byte[] _);
-            Assert.False(headers.Count != 1);
-            var pubCertEnc = headers[0].X5c?.FirstOrDefault();
-            Assert.False(string.IsNullOrEmpty(pubCertEnc));
-            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
-            Assert.NotNull(pubCert.GetRSAPublicKey());
-            Assert.True(signer.Verify<ETSIHeader>(new AsymmetricAlgorithm[] { pubCert.GetRSAPublicKey()! }, ETSISigner.ETSIResolutor));
+            Assert.True(signer.Verify(jSign, out byte[] payload, out ETSIContextInfo cInfo));
         } else {
             Assert.Fail("NO RSA certificate available");
         }
@@ -204,15 +186,21 @@ public class TestETSI
         RSA? rsaKey = cert.GetRSAPrivateKey();
         if (rsaKey != null) {
             // Get payload 
-            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim()))) {
+            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim())))
+            using (MemoryStream msCheck = new(Encoding.UTF8.GetBytes(testFile.Trim()), false)) {
                 // Create signer 
                 ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
 
                 // Sign 
                 signer.AttachSignersCertificate(cert);
-                signer.SignDetached(ms, message, "text/plain");
+                signer.SignDetached(ms, message, "text/plain", "text/json");
                 await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
-                Assert.True(signer.Encode(JWSEncodeTypeEnum.Flattened).Length > 0);
+
+                // Encode - produce JWS
+                var jSign = signer.Encode(JWSEncodeTypeEnum.Full);
+
+                // Decode & verify
+                Assert.True(signer.VerifyDetached(msCheck, jSign, out byte[] payload, out ETSIContextInfo cInfo));
             }
         } else {
             Assert.Fail("NO RSA certificate available");
@@ -237,7 +225,18 @@ public class TestETSI
             // Get payload 
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
-            Assert.True(signer.Encode().Length > 0);
+
+            // Encode - produce JWS
+            var jSign = signer.Encode();
+
+            // Decode & verify
+            var headers = signer.Decode<JWSHeader>(jSign, out byte[] _);
+            Assert.False(headers.Count != 1);
+            var pubCertEnc = headers[0].X5c?.FirstOrDefault();
+            Assert.False(string.IsNullOrEmpty(pubCertEnc));
+            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
+            Assert.NotNull(pubCert.GetECDsaPublicKey());
+            Assert.True(signer.Verify<JWSHeader>(new AsymmetricAlgorithm[] { pubCert.GetECDsaPublicKey()! }, null));
         } else {
             Assert.Fail("NO ECDSA certificate available");
         }
@@ -256,12 +255,17 @@ public class TestETSI
         ECDsa? ecKey = cert.GetECDsaPrivateKey();
         if (ecKey != null) {
             // Create signer 
-            JWSSigner signer = new ETSISigner(ecKey, HashAlgorithmName.SHA512);
+            ETSISigner signer = new ETSISigner(ecKey, HashAlgorithmName.SHA512);
 
             // Get payload 
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
-            Assert.True(signer.Encode(JWSEncodeTypeEnum.Flattened).Length > 0);
+
+            // Encode - produce JWS
+            var jSign = signer.Encode(JWSEncodeTypeEnum.Flattened);
+
+            // Decode & verify
+            Assert.True(signer.Verify(jSign, out byte[] payload, out ETSIContextInfo cInfo));
         } else {
             Assert.Fail("NO ECDSA certificate available");
         }
@@ -286,7 +290,12 @@ public class TestETSI
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
             await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
-            Assert.True(signer.Encode(JWSEncodeTypeEnum.Flattened).Length > 0);
+
+            // Encode - produce JWS
+            var jSign = signer.Encode(JWSEncodeTypeEnum.Flattened);
+
+            // Decode & verify
+            Assert.True(signer.Verify(jSign, out byte[] payload, out ETSIContextInfo cInfo));
         } else {
             Assert.Fail("NO ECDSA certificate available");
         }

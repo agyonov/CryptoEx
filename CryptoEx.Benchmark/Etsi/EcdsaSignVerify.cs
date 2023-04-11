@@ -68,7 +68,7 @@ public class EcdsaSignVerify
             // Sign payload
             signer.AttachSignersCertificate(cert!);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
-            _ = signer.Encode();
+            _ = signer.Encode(JWS.JWSEncodeTypeEnum.Flattened);
         } else {
             throw new Exception("NO ECDSA certificate available");
         }
@@ -100,7 +100,7 @@ public class EcdsaSignVerify
                 // Sign payload
                 signer.AttachSignersCertificate(cert!);
                 signer.SignDetached(ms);
-                _ = signer.Encode();
+                _ = signer.Encode(JWS.JWSEncodeTypeEnum.Flattened);
             }
         } else {
             throw new Exception("NO ECDSA certificate available");

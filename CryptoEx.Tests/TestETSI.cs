@@ -1,6 +1,7 @@
 ﻿using CryptoEx.JWS;
 using CryptoEx.JWS.ETSI;
 using System.Net.Http.Headers;
+using System.Reflection.Emit;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
@@ -173,7 +174,18 @@ public class TestETSI
             signer.AttachSignersCertificate(cert);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
             await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
-            Assert.True(signer.Encode(JWSEncodeTypeEnum.Flattened).Length > 0);
+
+            // Encode - produce JWS
+            var jSign = signer.Encode(JWSEncodeTypeEnum.Full);
+
+            // Decode & verify
+            var headers = signer.Decode<ETSIHeader>(jSign, out byte[] _);
+            Assert.False(headers.Count != 1);
+            var pubCertEnc = headers[0].X5c?.FirstOrDefault();
+            Assert.False(string.IsNullOrEmpty(pubCertEnc));
+            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
+            Assert.NotNull(pubCert.GetRSAPublicKey());
+            Assert.True(signer.Verify<ETSIHeader>(new AsymmetricAlgorithm[] { pubCert.GetRSAPublicKey()! }, ETSISigner.ETSIResolutor));
         } else {
             Assert.Fail("NO RSA certificate available");
         }

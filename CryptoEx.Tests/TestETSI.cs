@@ -270,6 +270,39 @@ public class TestETSI
         }
     }
 
+    [Fact(DisplayName = "Test ETSI ECDSA with detached data")]
+    public void Test_ETSI_ECDS_Detached()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.EC);
+        if (cert == null) {
+            Assert.Fail("NO ECDSA certificate available");
+        }
+
+        // Get ECDSA private key
+        ECDsa? ecKey = cert.GetECDsaPrivateKey();
+        if (ecKey != null) {
+            // Get payload 
+            using (MemoryStream ms = new(Encoding.UTF8.GetBytes(testFile.Trim())))
+            using (MemoryStream msCheck = new(Encoding.UTF8.GetBytes(testFile.Trim()), false)) {
+                // Create signer 
+                ETSISigner signer = new ETSISigner(ecKey);
+
+                // Sign
+                signer.AttachSignersCertificate(cert);
+                signer.SignDetached(ms, mimeTypeAttachement: "text/plain");
+
+                // Encode - produce JWS
+                var jSign = signer.Encode(JWSEncodeTypeEnum.Flattened);
+
+                // Decode & verify
+                Assert.True(signer.VerifyDetached(msCheck, jSign, out byte[] payload, out ETSIContextInfo cInfo));
+            }
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
     [Fact(DisplayName = "Test ETSI ECDSA Timestamp with enveloped data")]
     public async Task Test_ETSI_ECDSA_Timestamp_Enveloped()
     {

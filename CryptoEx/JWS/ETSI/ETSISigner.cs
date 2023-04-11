@@ -415,25 +415,52 @@ public class ETSISigner : JWSSigner
             };
         } else {
             // Prepare header
-            etsHeader = new ETSIHeader
-            {
-                Alg = _algorithmNameJws,
-                Cty = mimeTypePayload,
-                Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
-                SigT = $"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH:mm:ssZ}",
-                X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-                X5c = new string[] { Convert.ToBase64String(_certificate.RawData) },
-                SigD = new ETSIDetachedParts
+            if (_additionalCertificates == null || _additionalCertificates.Count < 1) {
+                etsHeader = new ETSIHeader
                 {
-                    Pars = new string[] { "attachement" },
-                    HashM = ETSIConstants.SHA512,
-                    HashV = new string[]
+                    Alg = _algorithmNameJws,
+                    Cty = mimeTypePayload,
+                    Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
+                    SigT = $"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH:mm:ssZ}",
+                    X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
+                    X5c = new string[] { Convert.ToBase64String(_certificate.RawData) },
+                    SigD = new ETSIDetachedParts
+                    {
+                        Pars = new string[] { "attachement" },
+                        HashM = ETSIConstants.SHA512,
+                        HashV = new string[]
                         {
                             Base64UrlEncoder.Encode(hashedData)
                         },
-                    Ctys = new string[] { mimeType ?? "octed-stream" }
+                        Ctys = new string[] { mimeType ?? "octed-stream" }
+                    }
+                };
+            } else {
+                string[] strX5c = new string[_additionalCertificates.Count + 1];
+                strX5c[0] = Convert.ToBase64String(_certificate.RawData);
+                for (int loop = 0; loop < _additionalCertificates.Count; loop++) {
+                    strX5c[loop + 1] = Convert.ToBase64String(_additionalCertificates[loop].RawData);
                 }
-            };
+                etsHeader = new ETSIHeader
+                {
+                    Alg = _algorithmNameJws,
+                    Cty = mimeTypePayload,
+                    Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
+                    SigT = $"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH:mm:ssZ}",
+                    X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
+                    X5c = strX5c,
+                    SigD = new ETSIDetachedParts
+                    {
+                        Pars = new string[] { "attachement" },
+                        HashM = ETSIConstants.SHA512,
+                        HashV = new string[]
+                        {
+                            Base64UrlEncoder.Encode(hashedData)
+                        },
+                        Ctys = new string[] { mimeType ?? "octed-stream" }
+                    }
+                };
+            }
         }
 
         // Serialize header

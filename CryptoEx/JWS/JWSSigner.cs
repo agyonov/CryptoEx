@@ -25,6 +25,9 @@ public class JWSSigner
     // Possibli the certificate
     protected X509Certificate2? _certificate;
 
+    // pssibly additional certificates 
+    protected IReadOnlyList<X509Certificate2>? _additionalCertificates;
+
     // Some header 
     protected string _header;
 
@@ -137,6 +140,7 @@ public class JWSSigner
     public virtual void Clear()
     {
         _certificate = null;
+        _additionalCertificates = null;
         _header = string.Empty;
         _protecteds.Clear();
         _payload = null;
@@ -149,9 +153,11 @@ public class JWSSigner
     /// This is optional and is only used to add the x5c, x5t header
     /// </summary>
     /// <param name="cert">The certificate</param>
-    public void AttachSignersCertificate(X509Certificate2 cert)
+    /// <param name="additionalCertificates">The additional certificates to add to the signature</param>
+    public void AttachSignersCertificate(X509Certificate2 cert, IReadOnlyList<X509Certificate2>? additionalCertificates = null)
     {
         _certificate = cert;
+        _additionalCertificates = additionalCertificates;
     }
 
     /// <summary>
@@ -189,7 +195,7 @@ public class JWSSigner
     /// <summary>
     /// Verify the JWS
     /// </summary>
-    /// <typeparam name="T">Must be descendant from the JWSHeader record. Shall hold data about protected headers of the JWS.
+    /// <typeparam name="T">Must be JWSHeader or descendant from the JWSHeader record. Shall hold data about protected headers of the JWS.
     /// For example, it may be ETSI JWS header, or some other header, which is used in the JWS.
     /// </typeparam>
     /// <param name="publicKeys">Public keys to use for verification. MUST correspond to each of the JWS headers in the JWS, returned by te Decode method!</param>
@@ -423,14 +429,30 @@ public class JWSSigner
                 Cty = mimeType
             };
         } else {
-            jWSHeader = new JWSHeader
-            {
-                Alg = _algorithmNameJws,
-                Cty = mimeType,
-                Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
-                X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-                X5c = new string[] { Convert.ToBase64String(_certificate.RawData) }
-            };
+            if (_additionalCertificates == null || _additionalCertificates.Count < 1) {
+                jWSHeader = new JWSHeader
+                {
+                    Alg = _algorithmNameJws,
+                    Cty = mimeType,
+                    Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
+                    X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
+                    X5c = new string[] { Convert.ToBase64String(_certificate.RawData) }
+                };
+            } else {
+                string[] strX5c = new string[_additionalCertificates.Count+1];
+                strX5c[0] = Convert.ToBase64String(_certificate.RawData);
+                for (int loop = 0; loop < _additionalCertificates.Count; loop++) {
+                    strX5c[loop + 1] = Convert.ToBase64String(_additionalCertificates[loop].RawData);
+                }
+                jWSHeader = new JWSHeader
+                {
+                    Alg = _algorithmNameJws,
+                    Cty = mimeType,
+                    Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
+                    X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
+                    X5c = strX5c
+                };
+            }
         }
 
         // Serialize header

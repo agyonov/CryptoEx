@@ -1,7 +1,6 @@
 ﻿using CryptoEx.JWS;
 using CryptoEx.JWS.ETSI;
 using System.Net.Http.Headers;
-using System.Reflection.Emit;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;

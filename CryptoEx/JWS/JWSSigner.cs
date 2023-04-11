@@ -439,7 +439,7 @@ public class JWSSigner
                     X5c = new string[] { Convert.ToBase64String(_certificate.RawData) }
                 };
             } else {
-                string[] strX5c = new string[_additionalCertificates.Count+1];
+                string[] strX5c = new string[_additionalCertificates.Count + 1];
                 strX5c[0] = Convert.ToBase64String(_certificate.RawData);
                 for (int loop = 0; loop < _additionalCertificates.Count; loop++) {
                     strX5c[loop + 1] = Convert.ToBase64String(_additionalCertificates[loop].RawData);

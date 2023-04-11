@@ -2,12 +2,10 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO.Pipes;
-using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
-using System.Xml;
 
 namespace CryptoEx.JWS.ETSI;
 public class ETSISigner : JWSSigner

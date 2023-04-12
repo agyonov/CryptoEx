@@ -82,7 +82,7 @@ public class ETSIContextInfo : IDisposable
     /// <summary>
     /// Check the certificate chain, with some standart chain policy
     /// If you need more complex chain policy, you can build your custom
-    /// logic suiing data in this class
+    /// logic suiting data in this class
     /// </summary>
     public bool? IsSigningCertificateValid
     {

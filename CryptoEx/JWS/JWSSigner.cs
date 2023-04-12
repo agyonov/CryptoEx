@@ -14,13 +14,13 @@ namespace CryptoEx.JWS;
 public class JWSSigner
 {
     // The signing key
-    protected readonly AsymmetricAlgorithm? _signer;
+    protected AsymmetricAlgorithm? _signer;
 
     // Jws algorithm name
-    protected readonly string? _algorithmNameJws;
+    protected string? _algorithmNameJws;
 
     // .NET algorithm name
-    protected readonly HashAlgorithmName _algorithmName;
+    protected HashAlgorithmName _algorithmName;
 
     // Possibli the certificate
     protected X509Certificate2? _certificate;
@@ -43,6 +43,9 @@ public class JWSSigner
     // The calculate signature
     protected readonly List<byte[]> _signatures;
 
+    // The 'typ' header parameter as of https://www.rfc-editor.org/rfc/rfc7515#section-4.1.9
+    protected string? _signatureTypHeaderParameter;
+
 
     /// <summary>
     /// A constructor without a private key, used for verification
@@ -61,6 +64,49 @@ public class JWSSigner
     /// <param name="signer">The private key</param>
     /// <exception cref="ArgumentException">Invalid private key type</exception>
     public JWSSigner(AsymmetricAlgorithm signer) : this()
+    {
+        // Store
+        SetNewSigningKey(signer, null);
+    }
+
+    /// <summary>
+    /// A constructiror with an private key - RSA or ECDSA, used for signing and hash algorithm
+    /// </summary>
+    /// <param name="signer">The private key</param>
+    /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
+    /// <exception cref="ArgumentException">Invalid private key type</exception>
+    public JWSSigner(AsymmetricAlgorithm signer, HashAlgorithmName hashAlgorithm) : this()
+    {
+        // Store
+        SetNewSigningKey(signer, hashAlgorithm);
+    }
+
+    /// <summary>
+    /// Clear some data.
+    /// Every thing except the signer and the HashAlgorithmName!
+    /// After calling 'Decode' and before calling 'Sign' next time you MUST call this method! 'Veryfy...' calls this method internally.
+    /// </summary>
+    public virtual void Clear()
+    {
+        _certificate = null;
+        _additionalCertificates = null;
+        _header = string.Empty;
+        _protecteds.Clear();
+        _payload = null;
+        _signatures.Clear();
+        _unprotectedHeader = null;
+        _signatureTypHeaderParameter = null;
+    }
+
+    /// <summary>
+    /// Change the signing key. This is useful for example when you want to sign with a new key.
+    /// When you want to add a new signature, you set it with this method and then can use 'Sign' method to actually sign with
+    /// the newly stetted key.
+    /// </summary>
+    /// <param name="signer">The private key</param>
+    /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
+    /// <exception cref="ArgumentException">Invalid private key type</exception>
+    public virtual void SetNewSigningKey(AsymmetricAlgorithm signer, HashAlgorithmName? hashAlgorithm = null)
     {
         // Store
         _signer = signer;
@@ -102,50 +148,27 @@ public class JWSSigner
             default:
                 throw new ArgumentException("Invalid key type");
         }
-    }
 
-    /// <summary>
-    /// A constructiror with an private key - RSA or ECDSA, used for signing and hash algorithm
-    /// </summary>
-    /// <param name="signer">The private key</param>
-    /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
-    /// <exception cref="ArgumentException">Invalid private key type</exception>
-    public JWSSigner(AsymmetricAlgorithm signer, HashAlgorithmName hashAlgorithm) : this(signer)
-    {
         // Determine the algorithm
-        switch (signer) {
-            case RSA:
-                // Allow set of hash algorithm
-                _algorithmNameJws = hashAlgorithm.Name switch
-                {
-                    "SHA256" => JWSConstants.RS256,
-                    "SHA384" => JWSConstants.RS384,
-                    "SHA512" => JWSConstants.RS512,
-                    _ => throw new ArgumentException("Invalid RSA hash algorithm")
-                };
-                _algorithmName = hashAlgorithm;
-                break;
-            case ECDsa:
-                break;
-            default:
-                throw new ArgumentException("Invalid key type");
+        if (hashAlgorithm != null) {
+            switch (signer) {
+                case RSA:
+                    // Allow set of hash algorithm
+                    _algorithmNameJws = hashAlgorithm.Value.Name switch
+                    {
+                        "SHA256" => JWSConstants.RS256,
+                        "SHA384" => JWSConstants.RS384,
+                        "SHA512" => JWSConstants.RS512,
+                        _ => throw new ArgumentException("Invalid RSA hash algorithm")
+                    };
+                    _algorithmName = hashAlgorithm.Value;
+                    break;
+                case ECDsa:
+                    break;
+                default:
+                    throw new ArgumentException("Invalid key type");
+            }
         }
-    }
-
-    /// <summary>
-    /// Clear some data.
-    /// Every thing except the signer and the HashAlgorithmName!
-    /// After calling 'Decode' and before calling 'Sign' next time you MUST call this method! 'Veryfy...' calls this method internally.
-    /// </summary>
-    public virtual void Clear()
-    {
-        _certificate = null;
-        _additionalCertificates = null;
-        _header = string.Empty;
-        _protecteds.Clear();
-        _payload = null;
-        _signatures.Clear();
-        _unprotectedHeader = null;
     }
 
     /// <summary>
@@ -163,11 +186,19 @@ public class JWSSigner
     /// <summary>
     /// Digitally sign the payload and protected header.
     /// You may call this method multiple times to add multiple signatures, BEFORE calling 'Encode'.
+    /// If you put multiple signatures, you'd better set a new signing key before calling this method,
+    /// by calling method 'SetNewSigningKey'.
     /// </summary>
     /// <param name="payload">The payload</param>
     /// <param name="mimeType">Optionally the mime type of the payload, to put in the header</param>
-    public virtual void Sign(ReadOnlySpan<byte> payload, string? mimeType = null)
+    /// <param name="typHeaderparameter">Optionally the 'typ' header parameter https://www.rfc-editor.org/rfc/rfc7515#section-4.1.9,
+    /// to put in the header.
+    /// </param>
+    public virtual void Sign(ReadOnlySpan<byte> payload, string? mimeType = null, string? typHeaderparameter = null)
     {
+        // Set it
+        _signatureTypHeaderParameter = typHeaderparameter;
+
         // Prepare header
         PrepareHeader(mimeType);
 
@@ -279,12 +310,18 @@ public class JWSSigner
     /// <summary>
     /// Encode JWS 
     /// </summary>
-    /// <param name="type">Type of JWS encoding. Default is Compact</param>
+    /// <param name="type">Type of JWS encoding. Default is Compact.
+    /// NB. If there is more than 1 (one) signature, the result is always FULL!</param>
     /// <returns>The encoded JWS</returns>
     /// <exception cref="ArgumentException">Unknow enoding type</exception>
     public string Encode(JWSEncodeTypeEnum type = JWSEncodeTypeEnum.Compact)
     {
-        // Enoce it
+        // Check it
+        if (_signatures.Count > 1) {
+            type = JWSEncodeTypeEnum.Full;
+        }
+
+        // Encode it
         return type switch
         {
             JWSEncodeTypeEnum.Compact =>
@@ -426,7 +463,8 @@ public class JWSSigner
             jWSHeader = new JWSHeader
             {
                 Alg = _algorithmNameJws,
-                Cty = mimeType
+                Cty = mimeType,
+                Typ = _signatureTypHeaderParameter
             };
         } else {
             if (_additionalCertificates == null || _additionalCertificates.Count < 1) {
@@ -434,9 +472,9 @@ public class JWSSigner
                 {
                     Alg = _algorithmNameJws,
                     Cty = mimeType,
-                    Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
                     X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-                    X5c = new string[] { Convert.ToBase64String(_certificate.RawData) }
+                    X5c = new string[] { Convert.ToBase64String(_certificate.RawData) },
+                    Typ = _signatureTypHeaderParameter
                 };
             } else {
                 string[] strX5c = new string[_additionalCertificates.Count + 1];
@@ -448,9 +486,9 @@ public class JWSSigner
                 {
                     Alg = _algorithmNameJws,
                     Cty = mimeType,
-                    Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
                     X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-                    X5c = strX5c
+                    X5c = strX5c,
+                    Typ = _signatureTypHeaderParameter
                 };
             }
         }

@@ -98,7 +98,10 @@ public class ETSISigner : JWSSigner
     /// <param name="optionalPayload">The optional payload. SHOUD BE JSON STRING.</param>
     /// <param name="mimeTypeAttachement">Optionally mimeType. Defaults to "octet-stream"</param>
     /// <param name="mimeType">Optionally mimeType of the payload</param>
-    public virtual void SignDetached(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null)
+    /// <param name="typHeaderparameter">Optionally the 'typ' header parameter https://www.rfc-editor.org/rfc/rfc7515#section-4.1.9,
+    /// to put in the header.
+    /// </param>
+    public virtual void SignDetached(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null, string? typHeaderparameter = null)
     {
         // Hash attachemnt
         using (HashAlgorithm hAlg = SHA512.Create())
@@ -119,6 +122,56 @@ public class ETSISigner : JWSSigner
 
         // Prepare header
         mimeTypePayload = mimeType;
+        _signatureTypHeaderParameter = typHeaderparameter;
+        PrepareHeader(mimeTypeAttachement);
+
+        // Form JOSE protected data 
+        if (optionalPayload != null) {
+            _payload = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(optionalPayload));
+        }
+        _protecteds.Add(_header);
+        string calc = optionalPayload == null ? $"{_header}." : $"{_header}.{_payload}";
+        if (_signer is RSA) {
+            _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, RSASignaturePadding.Pkcs1));
+        } else if (_signer is ECDsa) {
+            _signatures.Add(((ECDsa)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName));
+        }
+    }
+
+    /// <summary>
+    /// Digitally sign the attachement, optional payload and protected header in detached mode
+    /// Async version, for when the attachement is a network stream or some other stream that may be
+    /// good to be read async.
+    /// </summary>
+    /// <param name="attachement">The attached data (file) </param>
+    /// <param name="optionalPayload">The optional payload. SHOUD BE JSON STRING.</param>
+    /// <param name="mimeTypeAttachement">Optionally mimeType. Defaults to "octet-stream"</param>
+    /// <param name="mimeType">Optionally mimeType of the payload</param>
+    /// <param name="typHeaderparameter">Optionally the 'typ' header parameter https://www.rfc-editor.org/rfc/rfc7515#section-4.1.9,
+    /// to put in the header.
+    /// </param>
+    public virtual async Task SignDetachedAsync(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null, string? typHeaderparameter = null)
+    {
+        // Hash attachemnt
+        using (HashAlgorithm hAlg = SHA512.Create())
+        using (AnonymousPipeServerStream apss = new(PipeDirection.In))
+        using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
+            _ = Task.Run(async () =>
+            {
+                try {
+                    // Encode
+                    await Base64UrlEncoder.EncodeAsync(attachement, apcs);
+                } finally {
+                    // Close the pipe
+                    apcs.Close(); // To avoid blocking of the pipe.
+                }
+            });
+            hashedData = await hAlg.ComputeHashAsync(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+        }
+
+        // Prepare header
+        mimeTypePayload = mimeType;
+        _signatureTypHeaderParameter = typHeaderparameter;
         PrepareHeader(mimeTypeAttachement);
 
         // Form JOSE protected data 
@@ -295,6 +348,54 @@ public class ETSISigner : JWSSigner
         } finally { Clear(); }
     }
 
+    /// <summary>
+    /// Verify the detached signature.
+    /// Async version, for when the attachement is a network stream or some other stream that may be
+    /// good to be read async.
+    /// 
+    /// NB. Unfortunatelly Async methods can not have out parameters, so the payload and cInfo, are not provided
+    /// out of the box. They are however available if you call the Decode method. So ypu can call Decode, 
+    /// after successfull check of the signature, by this method, to get the payload and cInfo.
+    /// </summary>
+    /// <param name="attachement">The dettached file</param>
+    /// <param name="signature">The JWS signature</param>
+    /// <param name="payload">Public keys to use for verification. MUST correspond to each of the JWS headers in the JWS, returned by te Decode method!</param>
+    /// <param name="cInfo">Etsi headers returnd by Decode method</param>
+    /// <returns>True / false = valid / invalid signature check</returns>
+    /// <exception cref="NotSupportedException">Some more advanced ETSI detached signatures, that are not yet implemented</exception>
+    public virtual async Task<bool> VerifyDetachedAsync(Stream attachement, string signature)
+    {
+        // Decode
+        ReadOnlyCollection<ETSIHeader> eTSIHeaders = Decode<ETSIHeader>(signature, out byte[] _);
+
+        // Try to extract the public keys
+        List<AsymmetricAlgorithm> pubKeys = new List<AsymmetricAlgorithm>();
+        for (int loop = 0; loop < eTSIHeaders.Count; loop++) {
+            // Tre get the public key
+            string? x5c = eTSIHeaders[loop].X5c?.FirstOrDefault();
+            if (x5c != null) {
+                // Get the public key
+                try {
+                    X509Certificate2 cert = new(Convert.FromBase64String(x5c));
+                    RSA? rsa = cert.GetRSAPublicKey();
+                    if (rsa != null) {
+                        pubKeys.Add(rsa);
+                        continue;
+                    }
+                    ECDsa? ecdsa = cert.GetECDsaPublicKey();
+                    if (ecdsa != null) {
+                        pubKeys.Add(ecdsa);
+                    }
+                } catch { }
+            }
+        }
+
+        // Verify
+        try {
+            return await VerifyDetachedAsync(attachement, pubKeys, eTSIHeaders);
+        } finally { Clear(); }
+    }
+
     // Verify detached ETSI signature
     protected virtual bool VerifyDetached(Stream attachement, IReadOnlyList<AsymmetricAlgorithm> publicKeys, ReadOnlyCollection<ETSIHeader> etsiHeaders)
     {
@@ -361,6 +462,72 @@ public class ETSISigner : JWSSigner
         return res;
     }
 
+    // Verify detached ETSI signature - aync version
+    protected virtual async Task<bool> VerifyDetachedAsync(Stream attachement, IReadOnlyList<AsymmetricAlgorithm> publicKeys, ReadOnlyCollection<ETSIHeader> etsiHeaders)
+    {
+        if (etsiHeaders.Count != publicKeys.Count) {
+            return false;
+        }
+
+        // Call general verify
+        bool res = base.Verify<ETSIHeader>(publicKeys, ETSIResolutor);
+
+        // Check
+        if (res != true) {
+            return res;
+        }
+
+        // for each public key - verify attachement
+        for (int loop = 0; loop < publicKeys.Count; loop++) {
+            // get header
+            ETSIHeader header = etsiHeaders[loop];
+
+            // Check. This method allows just one signed attachement. ETSI generally allows more.
+            // Someone can implement it in future - New method with first parameter as array of streams
+            if (header.SigD == null || header.SigD.Pars.Length != 1 || header.SigD.HashV == null || header.SigD.HashV.Length != 1) {
+                return false;
+            }
+            if (header.SigD.MId != ETSIConstants.ETSI_DETACHED_PARTS_OBJECT_HASH) {
+                throw new NotSupportedException($"For now only {ETSIConstants.ETSI_DETACHED_PARTS_OBJECT_HASH} is supported.");
+            }
+
+            // Hash attachemnt
+            byte[] lHashedData;
+            using (HashAlgorithm hAlg = header.SigD.HashM switch
+            {
+                ETSIConstants.SHA512 => SHA512.Create(),
+                ETSIConstants.SHA384 => SHA384.Create(),
+                ETSIConstants.SHA256 => SHA256.Create(),
+                _ => throw new NotSupportedException($"Hash algorithm {header.SigD.HashM} is not supported.")
+            })
+            using (AnonymousPipeServerStream apss = new(PipeDirection.In))
+            using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
+                _ = Task.Run(async () =>
+                {
+                    try {
+                        // Encode
+                        await Base64UrlEncoder.EncodeAsync(attachement, apcs);
+                    } finally {
+                        // Close the pipe
+                        apcs.Close(); // To avoid blocking of the pipe.
+                    }
+                });
+                lHashedData = await hAlg.ComputeHashAsync(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+            }
+
+            // Get sent data
+            byte[] sentHash = Base64UrlEncoder.Decode(header.SigD.HashV[0]);
+
+            // Compare
+            if (!sentHash.SequenceEqual(lHashedData)) {
+                return false;
+            }
+        }
+
+        // return 
+        return res;
+    }
+
     // Extract the context info from the ETSI header
     protected virtual void ExtractETSIContextInfo(ETSIHeader eTSIHeader, ETSIContextInfo cInfo)
     {
@@ -409,7 +576,8 @@ public class ETSISigner : JWSSigner
                 Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
                 SigT = $"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH:mm:ssZ}",
                 X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-                X5c = new string[] { Convert.ToBase64String(_certificate.RawData) }
+                X5c = new string[] { Convert.ToBase64String(_certificate.RawData) },
+                Typ = _signatureTypHeaderParameter
             };
         } else {
             // Prepare header
@@ -431,7 +599,8 @@ public class ETSISigner : JWSSigner
                             Base64UrlEncoder.Encode(hashedData)
                         },
                         Ctys = new string[] { mimeType ?? "octed-stream" }
-                    }
+                    },
+                    Typ = _signatureTypHeaderParameter
                 };
             } else {
                 string[] strX5c = new string[_additionalCertificates.Count + 1];
@@ -456,7 +625,8 @@ public class ETSISigner : JWSSigner
                             Base64UrlEncoder.Encode(hashedData)
                         },
                         Ctys = new string[] { mimeType ?? "octed-stream" }
-                    }
+                    },
+                    Typ = _signatureTypHeaderParameter
                 };
             }
         }

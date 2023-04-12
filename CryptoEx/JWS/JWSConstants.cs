@@ -43,6 +43,14 @@ public static class JWSConstants
     /// </summary>
     public const string HS512 = "HS512";
     /// <summary>
+    /// JWS in compact serialization format
+    /// </summary>
+    public const string JOSE = "jose";
+    /// <summary>
+    /// JWS in flattened or full serialization format
+    /// </summary>
+    public const string JOSE_JSON = "jose+json";
+    /// <summary>
     /// Some JSON options
     /// </summary>
     public static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions

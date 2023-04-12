@@ -1,15 +1,8 @@
 ﻿using BenchmarkDotNet.Attributes;
 using CryptoEx.JWS.ETSI;
-using CryptoEx.XML.ETSI;
-using Dia2Lib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
 
 namespace CryptoEx.Benchmark.Etsi;
 

@@ -331,7 +331,12 @@ public class TestETSI
                 // Verify
                 Assert.True(await signer.VerifyDetachedAsync(msCheck, jSign));
                 // Decode - optionally
-                signer.Decode<ETSIHeader>(jSign, out byte[] payload);
+                ETSIContextInfo context = signer.ExtractContextInfo(jSign, out byte[] payload);
+
+                // Verify certificate
+                Assert.True(context.IsSigningCertificateValid ?? true);
+                Assert.True(context.IsSigningCertDigestValid ?? true);
+                Assert.True(context.IsSigningTimeInValidityPeriod ?? true);
             }
         } else {
             Assert.Fail("NO RSA certificate available");

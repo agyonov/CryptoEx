@@ -396,6 +396,61 @@ public class ETSISigner : JWSSigner
         } finally { Clear(); }
     }
 
+    /// <summary>
+    /// Extract only the ETSI context info and payload, from the signature.
+    /// To be used mainly with VerifyAsync
+    /// </summary>
+    /// <param name="signature">The signature</param>
+    /// <param name="payload">The payload</param>
+    /// <returns>The ETSI context info</returns>
+    public ETSIContextInfo ExtractContextInfo(string signature, out byte[] payload)
+    {
+        // locals
+        ETSIContextInfo res = new ETSIContextInfo();
+
+        // Decode
+        ReadOnlyCollection<ETSIHeader> eTSIHeaders = Decode<ETSIHeader>(signature, out payload);
+
+        // Check
+        if (eTSIHeaders.Count > 0) {
+            // Convert
+            ExtractETSIContextInfo(eTSIHeaders[0], res);
+        }
+
+        // Return   
+        return res;
+    }
+
+    // Extract the context info from the ETSI header
+    protected virtual void ExtractETSIContextInfo(ETSIHeader eTSIHeader, ETSIContextInfo cInfo)
+    {
+        // Try to extract the signing time
+        if (DateTimeOffset.TryParseExact(eTSIHeader.SigT, "yyyy-MM-ddTHH:mm:ssZ", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out DateTimeOffset dto)) {
+            cInfo.SigningDateTime = dto;
+        }
+        // Try to extract the signing certificate
+        if (eTSIHeader.X5c != null && eTSIHeader.X5c.Length > 0) {
+            try {
+                cInfo.SigningCertificate = new X509Certificate2(Convert.FromBase64String(eTSIHeader.X5c[0]));
+            } catch { }
+            if (eTSIHeader.X5c.Length > 1) {
+                cInfo.x509Certificate2s = new X509Certificate2Collection();
+                for (int loop = 1; loop < eTSIHeader.X5c.Length; loop++) {
+                    try {
+                        cInfo.x509Certificate2s.Add(new X509Certificate2(Convert.FromBase64String(eTSIHeader.X5c[loop])));
+                    } catch { }
+                }
+            }
+        }
+        // Try to extract the signing certificate digest
+        if (!string.IsNullOrEmpty(eTSIHeader.X5)) {
+            cInfo.SigningCertificateDigestValue = Base64UrlEncoder.Decode(eTSIHeader.X5);
+            cInfo.SigningCertificateDagestMethod = HashAlgorithmName.SHA256;
+        }
+        // Try to set content info
+        cInfo.PayloadContentType = eTSIHeader.Cty;
+    }
+
     // Verify detached ETSI signature
     protected virtual bool VerifyDetached(Stream attachement, IReadOnlyList<AsymmetricAlgorithm> publicKeys, ReadOnlyCollection<ETSIHeader> etsiHeaders)
     {
@@ -526,28 +581,6 @@ public class ETSISigner : JWSSigner
 
         // return 
         return res;
-    }
-
-    // Extract the context info from the ETSI header
-    protected virtual void ExtractETSIContextInfo(ETSIHeader eTSIHeader, ETSIContextInfo cInfo)
-    {
-        // Try to extract the signing time
-        if (DateTimeOffset.TryParseExact(eTSIHeader.SigT, "yyyy-MM-ddTHH:mm:ssZ", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out DateTimeOffset dto)) {
-            cInfo.SigningDateTime = dto;
-        }
-        // Try to extract the signing certificate
-        if (eTSIHeader.X5c != null && eTSIHeader.X5c.Length > 0) {
-            try {
-                cInfo.SigningCertificate = new X509Certificate2(Convert.FromBase64String(eTSIHeader.X5c[0]));
-            } catch { }
-        }
-        // Try to extract the signing certificate digest
-        if (!string.IsNullOrEmpty(eTSIHeader.X5)) {
-            cInfo.SigningCertificateDigestValue = Base64UrlEncoder.Decode(eTSIHeader.X5);
-            cInfo.SigningCertificateDagestMethod = HashAlgorithmName.SHA256;
-        }
-        // Try to set content info
-        cInfo.PayloadContentType = eTSIHeader.Cty;
     }
 
     // Prepare header values

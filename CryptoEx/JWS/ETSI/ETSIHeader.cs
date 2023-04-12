@@ -6,15 +6,7 @@ namespace CryptoEx.JWS.ETSI;
 public record class ETSIHeader : JWSHeader
 {
     [JsonPropertyName("typ")]
-    public override string? Typ
-    {
-        get {
-            return "jose+json";
-        }
-        set {
-            // No wai
-        }
-    }
+    public override string? Typ { get; set; }
     [JsonPropertyName("sigT")]
     public string SigT { get; set; } = string.Empty;
     [JsonPropertyName("adoTst")]

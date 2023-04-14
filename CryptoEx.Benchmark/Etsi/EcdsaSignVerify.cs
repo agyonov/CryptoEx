@@ -101,6 +101,27 @@ public class EcdsaSignVerify
     }
 
     [Benchmark]
+    public void SignETSI_Detached_Large()
+    {
+        // Get  private key
+        ECDsa? ecKey = cert!.GetECDsaPrivateKey();
+        if (ecKey != null) {
+            // Get payload 
+            using (FileStream ms = new(@"c:\temp\testLarge.zip", FileMode.Open, FileAccess.Read)) {
+                // Create signer 
+                ETSISigner signer = new ETSISigner(ecKey);
+
+                // Sign payload
+                signer.AttachSignersCertificate(cert!);
+                signer.SignDetached(ms);
+                _ = signer.Encode(JWS.JWSEncodeTypeEnum.Flattened);
+            }
+        } else {
+            throw new Exception("NO ECDSA certificate available");
+        }
+    }
+
+    [Benchmark]
     public void VerifyETSI_Detached()
     {
         // Get payload 
@@ -109,7 +130,22 @@ public class EcdsaSignVerify
             ETSISigner signer = new ETSISigner();
 
             // Verify signature
-            _ = signer.VerifyDetached(msCheck, signedDetached, out byte[] _, out JWS.ETSI.ETSIContextInfo cInfo)
+            _ = signer.VerifyDetached(msCheck, signedDetached, out byte[] _, out ETSIContextInfo cInfo)
+                    && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
+                    && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value);
+        }
+    }
+
+    [Benchmark]
+    public void VerifyETSI_Detached_large()
+    {
+        // Get payload 
+        using (FileStream msCheck = new(@"c:\temp\testLarge.zip", FileMode.Open, FileAccess.Read)) {
+            // Create signer 
+            ETSISigner signer = new ETSISigner();
+
+            // Verify signature
+            _ = signer.VerifyDetached(msCheck, signedDetached, out byte[] _, out ETSIContextInfo cInfo)
                     && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
                     && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value);
         }

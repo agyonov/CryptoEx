@@ -6,7 +6,7 @@ namespace CryptoEx.XML.ETSI;
 /// <summary>
 /// Some context information for ETSI XML signatures - certificate, signing time, certificate digest, etc.
 /// </summary>
-public class ETSIContextInfo
+public class ETSIContextInfo : IDisposable
 {
     /// <summary>
     /// The signing certificate
@@ -64,6 +64,50 @@ public class ETSIContextInfo
             }
 
             return true;
+        }
+    }
+
+    /// <summary>
+    /// Check the certificate chain, with some standart chain policy
+    /// If you need more complex chain policy, you can build your custom
+    /// logic suiting data in this class
+    /// </summary>
+    public bool? IsSigningCertificateValid
+    {
+        get {
+            // Check
+            if (SigningCertificate == null) {
+                return null;
+            }
+
+            // Validate cetificate on chain 
+            using (var chain = new X509Chain()) {
+                // Set some standart chain policy
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                chain.ChainPolicy.RevocationFlag = X509RevocationFlag.EndCertificateOnly;
+                chain.ChainPolicy.DisableCertificateDownloads = true;
+                chain.ChainPolicy.VerificationTimeIgnored = false;
+                chain.ChainPolicy.VerificationTime = SigningDateTime.HasValue ? SigningDateTime.Value.ToLocalTime().DateTime : DateTime.Now;
+
+                bool res = chain.Build(SigningCertificate);
+
+                for (int i = 0; i < chain.ChainElements.Count; i++) {
+                    chain.ChainElements[i].Certificate.Dispose();
+                }
+
+                return res;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Clear
+    /// </summary>
+    public void Dispose()
+    {
+        // Check and free
+        if (SigningCertificate != null) {
+            SigningCertificate.Dispose();
         }
     }
 }

@@ -13,6 +13,10 @@ namespace CryptoEx.JWS;
 [JsonSerializable(typeof(ETSITimestampContainer))]
 [JsonSerializable(typeof(ETSITimestampToken))]
 [JsonSerializable(typeof(ETSIUnprotectedHeader))]
+[JsonSerializable(typeof(ETSIUnprotectedHeader))]
+[JsonSerializable(typeof(JWK.OtherPrimeInfo))]
+[JsonSerializable(typeof(JWK.Jwk))]
+[JsonSerializable(typeof(JWK.JwkSet))]
 internal partial class JWSSourceGenerationContext : JsonSerializerContext
 {
 }

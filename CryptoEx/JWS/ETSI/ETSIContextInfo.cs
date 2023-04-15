@@ -11,27 +11,27 @@ public class ETSIContextInfo : IDisposable
     /// The payload content type
     /// </summary>
     public string? PayloadContentType { get; set; } = null;
-    
+
     /// <summary>
     /// The signing certificate
     /// </summary>
     public X509Certificate2? SigningCertificate { get; set; } = null;
-    
+
     /// <summary>
     /// Additional certificates
     /// </summary>
     public X509Certificate2Collection? x509Certificate2s { get; set; }
-    
+
     /// <summary>
     /// The time when the signature was created as UTC - if availabl
     /// </summary>
     public DateTimeOffset? SigningDateTime { get; set; } = null;
-    
+
     /// <summary>
     /// Digest value of the signing certificate
     /// </summary>
     public byte[]? SigningCertificateDigestValue { get; set; } = null;
-    
+
     /// <summary>
     /// Digest method of the signing certificate
     /// </summary>

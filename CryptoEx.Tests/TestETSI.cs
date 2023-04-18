@@ -79,6 +79,41 @@ public class TestETSI
         }
     }
 
+    [Fact(DisplayName = "Test JOSE RSA PSS with enveloped data")]
+    public void Test_JOSE_RSA_PSS_Enveloped()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey != null) {
+            // Create signer 
+            JWSSigner signer = new JWSSigner(rsaKey, HashAlgorithmName.SHA512, true);
+
+            // Get payload 
+            signer.AttachSignersCertificate(cert);
+            signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
+
+            // Encode - produce JWS
+            var jSign = signer.Encode();
+
+            // Decode & verify
+            var headers = signer.Decode<JWSHeader>(jSign, out byte[] _);
+            Assert.False(headers.Count != 1);
+            var pubCertEnc = headers[0].X5c?.FirstOrDefault();
+            Assert.False(string.IsNullOrEmpty(pubCertEnc));
+            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
+            Assert.NotNull(pubCert.GetRSAPublicKey());
+            Assert.True(signer.Verify<JWSHeader>(new AsymmetricAlgorithm[] { pubCert.GetRSAPublicKey()! }, null));
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
     [Fact(DisplayName = "Test ETSI RSA with enveloped data")]
     public void Test_ETSI_RSA_Enveloped()
     {
@@ -402,6 +437,56 @@ public class TestETSI
             var headers = signer.Decode<JWSHeader>(jSign, out byte[] _);
             Assert.False(headers.Count != 1);
             Assert.True(signer.Verify<JWSHeader>(new HMAC[] { key }, null));
+        }
+    }
+
+    [Fact(DisplayName = "Test JOSE RSA & HMAC with enveloped data")]
+    public void Test_JOSE_RSA_HMAC_Enveloped()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Try get Key
+        JwkSymmetric? jwk = JsonSerializer.Deserialize<Jwk>(HMACKey, JwkConstants.jsonOptions) as JwkSymmetric;
+
+        // Check
+        Assert.NotNull(jwk);
+
+        // Get The hkey
+        byte[]? theKey = jwk.GetSymmetricKey();
+
+        // Check
+        Assert.NotNull(theKey);
+
+        // Get The hkey
+        using (HMAC key = new HMACSHA256(theKey)) {
+            // Create signer 
+            JWSSigner signer = new JWSSigner(key);
+
+            // Get payload 
+            signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
+
+            // Sign with RSA
+            signer.SetNewSigningKey(rsaKey, HashAlgorithmName.SHA512, true);
+            signer.AttachSignersCertificate(cert);
+            signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
+
+            // Encode - produce JWS
+            var jSign = signer.Encode(JWSEncodeTypeEnum.Full);
+
+            // Decode & verify
+            var headers = signer.Decode<JWSHeader>(jSign, out byte[] _);
+            Assert.False(headers.Count != 2);
+            Assert.True(signer.Verify<JWSHeader>(new object[] { key, rsaKey }, null));
         }
     }
 

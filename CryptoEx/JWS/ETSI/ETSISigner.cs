@@ -35,8 +35,9 @@ public class ETSISigner : JWSSigner
     /// </summary>
     /// <param name="signer">The private key</param>
     /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
+    /// <param name="useRSAPSS">In case of RSA, whether to use RSA-PSS</param>
     /// <exception cref="ArgumentException">Invalid private key type</exception>
-    public ETSISigner(AsymmetricAlgorithm signer, HashAlgorithmName hashAlgorithm) : base(signer, hashAlgorithm)
+    public ETSISigner(AsymmetricAlgorithm signer, HashAlgorithmName hashAlgorithm, bool useRSAPSS = false) : base(signer, hashAlgorithm, useRSAPSS)
     {
     }
 
@@ -48,6 +49,7 @@ public class ETSISigner : JWSSigner
     /// <exception cref="ArgumentException">Invalid private key type</exception>
     public ETSISigner(HMAC signer) : base(signer)
     {
+        throw new Exception("As of ETSI TS 119 312 V1.3.1, p. 6.2.2 HMAC is not supported");
     }
 
     /// <summary>
@@ -113,6 +115,12 @@ public class ETSISigner : JWSSigner
     /// </param>
     public virtual void SignDetached(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null, string? typHeaderparameter = null)
     {
+        // PSS RSA
+        bool PSSRSA = false;
+        if (_algorithmNameJws != null && _algorithmNameJws.StartsWith("PS")) {
+            PSSRSA = true;
+        }
+
         // Hash attachemnt
         using (HashAlgorithm hAlg = SHA512.Create())
         using (AnonymousPipeServerStream apss = new(PipeDirection.In))
@@ -142,9 +150,11 @@ public class ETSISigner : JWSSigner
         _protecteds.Add(_header);
         string calc = optionalPayload == null ? $"{_header}." : $"{_header}.{_payload}";
         if (_signer is RSA) {
-            _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, RSASignaturePadding.Pkcs1));
+            _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, PSSRSA ? RSASignaturePadding.Pss : RSASignaturePadding.Pkcs1));
         } else if (_signer is ECDsa) {
             _signatures.Add(((ECDsa)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName));
+        } else {
+            throw new Exception("As of ETSI TS 119 312 V1.3.1, p. 6.2.2 it shall be RSA or ECDSA");
         }
     }
 
@@ -162,6 +172,12 @@ public class ETSISigner : JWSSigner
     /// </param>
     public virtual async Task SignDetachedAsync(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null, string? typHeaderparameter = null)
     {
+        // PSS RSA
+        bool PSSRSA = false;
+        if (_algorithmNameJws != null && _algorithmNameJws.StartsWith("PS")) {
+            PSSRSA = true;
+        }
+
         // Hash attachemnt
         using (HashAlgorithm hAlg = SHA512.Create())
         using (AnonymousPipeServerStream apss = new(PipeDirection.In))
@@ -191,9 +207,11 @@ public class ETSISigner : JWSSigner
         _protecteds.Add(_header);
         string calc = optionalPayload == null ? $"{_header}." : $"{_header}.{_payload}";
         if (_signer is RSA) {
-            _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, RSASignaturePadding.Pkcs1));
+            _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, PSSRSA ? RSASignaturePadding.Pss : RSASignaturePadding.Pkcs1));
         } else if (_signer is ECDsa) {
             _signatures.Add(((ECDsa)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName));
+        } else {
+            throw new Exception("As of ETSI TS 119 312 V1.3.1, p. 6.2.2 it shall be RSA or ECDSA");
         }
     }
 

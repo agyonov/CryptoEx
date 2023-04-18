@@ -75,11 +75,12 @@ public class JWSSigner
     /// </summary>
     /// <param name="signer">The private key</param>
     /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
+    /// <param name="useRSAPSS">In case of RSA, whether to use RSA-PSS</param>
     /// <exception cref="ArgumentException">Invalid private key type</exception>
-    public JWSSigner(AsymmetricAlgorithm signer, HashAlgorithmName hashAlgorithm) : this()
+    public JWSSigner(AsymmetricAlgorithm signer, HashAlgorithmName hashAlgorithm, bool useRSAPSS = false) : this()
     {
         // Store
-        SetNewSigningKey(signer, hashAlgorithm);
+        SetNewSigningKey(signer, hashAlgorithm, useRSAPSS);
     }
 
     /// <summary>
@@ -117,8 +118,9 @@ public class JWSSigner
     /// </summary>
     /// <param name="signer">The private key</param>
     /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
+    /// <param name="useRSAPSS">In case of RSA, whether to use RSA-PSS</param>
     /// <exception cref="ArgumentException">Invalid private key type</exception>
-    public virtual void SetNewSigningKey(AsymmetricAlgorithm signer, HashAlgorithmName? hashAlgorithm = null)
+    public virtual void SetNewSigningKey(AsymmetricAlgorithm signer, HashAlgorithmName? hashAlgorithm = null, bool useRSAPSS = false)
     {
         // Store
         _signer = signer;
@@ -129,9 +131,9 @@ public class JWSSigner
             case RSA rsa:
                 _algorithmNameJws = rsa.KeySize switch
                 {
-                    2048 => JWSConstants.RS256,
-                    3072 => JWSConstants.RS384,
-                    4096 => JWSConstants.RS512,
+                    2048 => useRSAPSS ? JWSConstants.PS256 : JWSConstants.RS256,
+                    3072 => useRSAPSS ? JWSConstants.PS384 : JWSConstants.RS384,
+                    4096 => useRSAPSS ? JWSConstants.PS384 : JWSConstants.RS512,
                     _ => throw new ArgumentException("Invalid RSA key size")
                 };
                 _algorithmName = rsa.KeySize switch
@@ -169,9 +171,9 @@ public class JWSSigner
                     // Allow set of hash algorithm
                     _algorithmNameJws = hashAlgorithm.Value.Name switch
                     {
-                        "SHA256" => JWSConstants.RS256,
-                        "SHA384" => JWSConstants.RS384,
-                        "SHA512" => JWSConstants.RS512,
+                        "SHA256" => useRSAPSS ? JWSConstants.PS256 : JWSConstants.RS256,
+                        "SHA384" => useRSAPSS ? JWSConstants.PS384 : JWSConstants.RS384,
+                        "SHA512" => useRSAPSS ? JWSConstants.PS512 : JWSConstants.RS512,
                         _ => throw new ArgumentException("Invalid RSA hash algorithm")
                     };
                     _algorithmName = hashAlgorithm.Value;
@@ -241,6 +243,12 @@ public class JWSSigner
     /// </param>
     public virtual void Sign(ReadOnlySpan<byte> payload, string? mimeType = null, string? typHeaderparameter = null)
     {
+        // PSS RSA
+        bool PSSRSA = false;
+        if (_algorithmNameJws != null && _algorithmNameJws.StartsWith("PS")) {
+            PSSRSA = true;
+        }
+
         // Set it
         _signatureTypHeaderParameter = typHeaderparameter;
 
@@ -255,7 +263,7 @@ public class JWSSigner
         if (_signer != null) {
             switch (_signer) {
                 case RSA rsa:
-                    _signatures.Add(rsa.SignData(Encoding.ASCII.GetBytes($"{_header}.{_payload}"), _algorithmName, RSASignaturePadding.Pkcs1));
+                    _signatures.Add(rsa.SignData(Encoding.ASCII.GetBytes($"{_header}.{_payload}"), _algorithmName, PSSRSA ? RSASignaturePadding.Pss : RSASignaturePadding.Pkcs1));
                     break;
                 case ECDsa ecdsa:
                     _signatures.Add(ecdsa.SignData(Encoding.ASCII.GetBytes($"{_header}.{_payload}"), _algorithmName));
@@ -331,11 +339,20 @@ public class JWSSigner
                                 JWSConstants.RS256 => HashAlgorithmName.SHA256,
                                 JWSConstants.RS384 => HashAlgorithmName.SHA384,
                                 JWSConstants.RS512 => HashAlgorithmName.SHA512,
+                                JWSConstants.PS256 => HashAlgorithmName.SHA256,
+                                JWSConstants.PS384 => HashAlgorithmName.SHA384,
+                                JWSConstants.PS512 => HashAlgorithmName.SHA512,
                                 _ => throw new ArgumentException($"Invalid RSA hash algorithm - {headers[loop].Alg}")
                             };
 
+                            // PSS RSA
+                            bool PSSRSA = false;
+                            if (headers[loop].Alg.StartsWith("PS")) {
+                                PSSRSA = true;
+                            }
+
                             // Verify
-                            result &= rsa.VerifyData(Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"), _signatures[loop], algorithmName, RSASignaturePadding.Pkcs1);
+                            result &= rsa.VerifyData(Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"), _signatures[loop], algorithmName, PSSRSA ? RSASignaturePadding.Pss : RSASignaturePadding.Pkcs1);
                             break;
                         case ECDsa ecdsa:
                             // Get algorithm name
@@ -351,7 +368,7 @@ public class JWSSigner
                             result &= ecdsa.VerifyData(Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"), _signatures[loop], algorithmName);
                             break;
                         default:
-                            throw new ArgumentException("Invalid key type. If you want to use some of PSxxx key types - please write descendant class of this class and override the current method...");
+                            throw new ArgumentException("Invalid key type.");
                     }
                 } else {
                     // HMAC case

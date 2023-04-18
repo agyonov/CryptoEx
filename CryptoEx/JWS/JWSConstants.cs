@@ -47,6 +47,19 @@ public static class JWSConstants
     /// </summary>
     public const string HS512 = "HS512";
 
+    /// <summary>
+    /// RSASSA-PSS using SHA-256
+    /// </summary>
+    public const string PS256 = "PS256";
+    /// <summary>
+    /// RSASSA-PSS using SHA-384
+    /// </summary>
+    public const string PS384 = "PS384";
+    /// <summary>
+    /// RSASSA-PSS using SHA-512
+    /// </summary>
+    public const string PS512 = "PS512";
+
 
     /// <summary>
     /// JWS in compact serialization format

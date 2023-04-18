@@ -15,6 +15,7 @@ public class JWSSigner
 {
     // The signing key
     protected AsymmetricAlgorithm? _signer;
+    protected HMAC? _signerHmac;
 
     // Jws algorithm name
     protected string? _algorithmNameJws;
@@ -82,6 +83,17 @@ public class JWSSigner
     }
 
     /// <summary>
+    /// A constructiror with an private key - RSA or ECDSA, used for signing
+    /// </summary>
+    /// <param name="signer">The private key</param>
+    /// <exception cref="ArgumentException">Invalid private key type</exception>
+    public JWSSigner(HMAC signer) : this()
+    {
+        // Store
+        SetNewSigningKey(signer);
+    }
+
+    /// <summary>
     /// Clear some data.
     /// Every thing except the signer and the HashAlgorithmName!
     /// After calling 'Decode' and before calling 'Sign' next time you MUST call this method! 'Veryfy...' calls this method internally.
@@ -110,6 +122,7 @@ public class JWSSigner
     {
         // Store
         _signer = signer;
+        _signerHmac = null;
 
         // Determine the algorithm
         switch (signer) {
@@ -172,6 +185,38 @@ public class JWSSigner
     }
 
     /// <summary>
+    /// Change the signing key. This is useful for example when you want to sign with a new key.
+    /// When you want to add a new signature, you set it with this method and then can use 'Sign' method to actually sign with
+    /// the newly stetted key.
+    /// </summary>
+    /// <param name="signer">The private key</param>
+    /// <exception cref="ArgumentException">Invalid private key type</exception>
+    public virtual void SetNewSigningKey(HMAC signer)
+    {
+        // Store
+        _signer = null;
+        _signerHmac = signer;
+
+        // Determine the algorithm
+        switch (_signerHmac) {
+            case HMACSHA256 _:
+                _algorithmNameJws = JWSConstants.HS256;
+                _algorithmName = HashAlgorithmName.SHA256;
+                break;
+            case HMACSHA384 _:
+                _algorithmNameJws = JWSConstants.HS384;
+                _algorithmName = HashAlgorithmName.SHA384;
+                break;
+            case HMACSHA512 _:
+                _algorithmNameJws = JWSConstants.HS512;
+                _algorithmName = HashAlgorithmName.SHA512;
+                break;
+            default:
+                throw new ArgumentException("Invalid key type");
+        }
+    }
+
+    /// <summary>
     /// Attach the signer's certificate to the JWS. ONLY public part of the certificate is used.
     /// This is optional and is only used to add the x5c, x5t header
     /// </summary>
@@ -207,20 +252,23 @@ public class JWSSigner
         _protecteds.Add(_header);
 
         // Sign
-        switch (_signer) {
-            case RSA rsa:
-                _signatures.Add(rsa.SignData(Encoding.ASCII.GetBytes($"{_header}.{_payload}"), _algorithmName, RSASignaturePadding.Pkcs1));
-                break;
-            case ECDsa ecdsa:
-                _signatures.Add(ecdsa.SignData(Encoding.ASCII.GetBytes($"{_header}.{_payload}"), _algorithmName));
-                break;
-            default:
-                if (_signer == null) {
-                    throw new ArgumentNullException(nameof(_algorithmNameJws));
-                } else {
-                    throw new ArgumentException("Invalid key type.  If you want to use some of HSxxx or PSxxx key types - please write descendant class of this class and override the current method...");
-                }
-        };
+        if (_signer != null) {
+            switch (_signer) {
+                case RSA rsa:
+                    _signatures.Add(rsa.SignData(Encoding.ASCII.GetBytes($"{_header}.{_payload}"), _algorithmName, RSASignaturePadding.Pkcs1));
+                    break;
+                case ECDsa ecdsa:
+                    _signatures.Add(ecdsa.SignData(Encoding.ASCII.GetBytes($"{_header}.{_payload}"), _algorithmName));
+                    break;
+                default:
+                    throw new ArgumentException("Invalid key type.");
+            };
+        } else if (_signerHmac != null) {
+            // HMAC case
+            _signatures.Add(_signerHmac.ComputeHash(Encoding.ASCII.GetBytes($"{_header}.{_payload}")));
+        } else {
+            throw new ArgumentNullException(nameof(_algorithmNameJws));
+        }
     }
 
     /// <summary>
@@ -229,7 +277,9 @@ public class JWSSigner
     /// <typeparam name="T">Must be JWSHeader or descendant from the JWSHeader record. Shall hold data about protected headers of the JWS.
     /// For example, it may be ETSI JWS header, or some other header, which is used in the JWS.
     /// </typeparam>
-    /// <param name="publicKeys">Public keys to use for verification. MUST correspond to each of the JWS headers in the JWS, returned by te Decode method!</param>
+    /// <param name="keys">Public (RSA, ECDS) keys or Symmetric key (HMAC) to use for verification. MUST correspond to each of the JWS headers in the JWS,
+    /// returned by te Decode method!
+    /// MUST be descendent type from AsymmetricAlgorithm or HMAC</param>
     /// <param name="resolutor">Resolutor if "Cryt" header parameter if it EXISTS in any of the JWS headers in the JWS, returned by te Decode method!
     /// Please provide DECENT resolutor, as this is a SECURITY issue! You may read https://www.rfc-editor.org/rfc/rfc7515#section-4.1.10 for more information.
     /// You may also have a look at the ETSISigner class in the current project, for an example of a resolutor.
@@ -238,7 +288,7 @@ public class JWSSigner
     /// </param>
     /// <returns>True / false = valid / invalid signature check</returns>
     /// <exception cref="ArgumentException">Some issues exists with the arguments and/or keys provided to this method</exception>
-    public virtual bool Verify<T>(IReadOnlyList<AsymmetricAlgorithm> publicKeys, Func<T, bool>? resolutor = null) where T : JWSHeader
+    public virtual bool Verify<T>(IReadOnlyList<object> keys, Func<T, bool>? resolutor = null) where T : JWSHeader
     {
         // Declare result
         bool result = true;
@@ -251,7 +301,7 @@ public class JWSSigner
                                                     .ToList()!;
 
             // Check the number of signatures
-            if (headers.Count != _protecteds.Count || headers.Count != publicKeys.Count) {
+            if (headers.Count != _protecteds.Count || headers.Count != keys.Count) {
                 return false;
             }
 
@@ -271,35 +321,59 @@ public class JWSSigner
                 }
 
                 // Verify
-                switch (publicKeys[loop]) {
-                    case RSA rsa:
+                AsymmetricAlgorithm? aa = keys[loop] as AsymmetricAlgorithm;
+                if (aa != null) {
+                    switch (aa) {
+                        case RSA rsa:
+                            // Get algorithm name
+                            algorithmName = headers[loop].Alg switch
+                            {
+                                JWSConstants.RS256 => HashAlgorithmName.SHA256,
+                                JWSConstants.RS384 => HashAlgorithmName.SHA384,
+                                JWSConstants.RS512 => HashAlgorithmName.SHA512,
+                                _ => throw new ArgumentException($"Invalid RSA hash algorithm - {headers[loop].Alg}")
+                            };
+
+                            // Verify
+                            result &= rsa.VerifyData(Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"), _signatures[loop], algorithmName, RSASignaturePadding.Pkcs1);
+                            break;
+                        case ECDsa ecdsa:
+                            // Get algorithm name
+                            algorithmName = headers[loop].Alg switch
+                            {
+                                JWSConstants.ES256 => HashAlgorithmName.SHA256,
+                                JWSConstants.ES384 => HashAlgorithmName.SHA384,
+                                JWSConstants.ES512 => HashAlgorithmName.SHA512,
+                                _ => throw new ArgumentException($"Invalid ECDSA hash algorithm - {headers[loop].Alg}")
+                            };
+
+                            // Verify
+                            result &= ecdsa.VerifyData(Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"), _signatures[loop], algorithmName);
+                            break;
+                        default:
+                            throw new ArgumentException("Invalid key type. If you want to use some of PSxxx key types - please write descendant class of this class and override the current method...");
+                    }
+                } else {
+                    // HMAC case
+                    HMAC? hmac = keys[loop] as HMAC;
+
+                    // Check
+                    if (hmac != null) {
                         // Get algorithm name
                         algorithmName = headers[loop].Alg switch
                         {
-                            JWSConstants.RS256 => HashAlgorithmName.SHA256,
-                            JWSConstants.RS384 => HashAlgorithmName.SHA384,
-                            JWSConstants.RS512 => HashAlgorithmName.SHA512,
-                            _ => throw new ArgumentException($"Invalid RSA hash algorithm - {headers[loop].Alg}")
+                            JWSConstants.HS256 => HashAlgorithmName.SHA256,
+                            JWSConstants.HS384 => HashAlgorithmName.SHA384,
+                            JWSConstants.HS512 => HashAlgorithmName.SHA512,
+                            _ => throw new ArgumentException($"Invalid HMAC hash algorithm - {headers[loop].Alg}")
                         };
 
                         // Verify
-                        result &= rsa.VerifyData(Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"), _signatures[loop], algorithmName, RSASignaturePadding.Pkcs1);
-                        break;
-                    case ECDsa ecdsa:
-                        // Get algorithm name
-                        algorithmName = headers[loop].Alg switch
-                        {
-                            JWSConstants.ES256 => HashAlgorithmName.SHA256,
-                            JWSConstants.ES384 => HashAlgorithmName.SHA384,
-                            JWSConstants.ES512 => HashAlgorithmName.SHA512,
-                            _ => throw new ArgumentException($"Invalid ECDSA hash algorithm - {headers[loop].Alg}")
-                        };
-
-                        // Verify
-                        result &= ecdsa.VerifyData(Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"), _signatures[loop], algorithmName);
-                        break;
-                    default:
-                        throw new ArgumentException("Invalid key type. If you want to use some of HSxxx or PSxxx key types - please write descendant class of this class and override the current method...");
+                        result &= hmac.ComputeHash(Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"))
+                                      .SequenceEqual(_signatures[loop]);
+                    } else {
+                        throw new ArgumentException("Invalid key type.");
+                    }
                 }
             }
 

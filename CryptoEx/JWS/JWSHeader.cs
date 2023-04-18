@@ -27,7 +27,7 @@ public record class JWSHeader
     public string? X5t { get; set; } = null;
 
     [JsonPropertyName("x5t#S256")]
-    public string? X5 { get; set; } = string.Empty;
+    public string? X5 { get; set; } = null;
 
     [JsonPropertyName("typ")]
     public string? Typ { get; set; } = null;

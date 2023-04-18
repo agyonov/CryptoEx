@@ -41,6 +41,16 @@ public class ETSISigner : JWSSigner
     }
 
     /// <summary>
+    /// A constructiror with an private key - HMAC, used for signing.
+    /// I doubt that for ETSI you can use HMAC, but still here is it
+    /// </summary>
+    /// <param name="signer">The private key</param>
+    /// <exception cref="ArgumentException">Invalid private key type</exception>
+    public ETSISigner(HMAC signer) : base(signer)
+    {
+    }
+
+    /// <summary>
     /// Clear some data.
     /// Every thing except the signer and the HashAlgorithmName!
     /// After calling 'Decode' and before calling 'Sign' you MUST call this method! 'Veryfy...' calls this method internally.

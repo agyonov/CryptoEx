@@ -1,24 +1,23 @@
-﻿using CryptoEx.JWS;
+﻿using CryptoEx.JWK;
+using CryptoEx.JWS;
 using CryptoEx.JWS.ETSI;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace CryptoEx.Tests;
 public class TestETSI
 {
-    public static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions
-    {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        WriteIndented = false,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-    };
 
+    public static string HMACKey = """
+    {
+        "kty":"oct",
+        "k":"AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow"
+    }
+    """;
 
     // Some test data for JADES
     public static string message = """
@@ -370,6 +369,39 @@ public class TestETSI
             Assert.True(signer.Verify(jSign, out byte[] payload, out ETSIContextInfo cInfo));
         } else {
             Assert.Fail("NO ECDSA certificate available");
+        }
+    }
+
+    [Fact(DisplayName = "Test JOSE HMAC with enveloped data")]
+    public void Test_JOSE_HMAC_Enveloped()
+    {
+        // Try get Key
+        JwkSymmetric? jwk = JsonSerializer.Deserialize<Jwk>(HMACKey, JwkConstants.jsonOptions) as JwkSymmetric;
+
+        // Check
+        Assert.NotNull(jwk);
+
+        // Get The hkey
+        byte[]? theKey = jwk.GetSymmetricKey();
+
+        // Check
+        Assert.NotNull(theKey);
+
+        // Get The hkey
+        using (HMAC key = new HMACSHA256(theKey)) {
+            // Create signer 
+            JWSSigner signer = new JWSSigner(key);
+
+            // Get payload 
+            signer.Sign(Encoding.UTF8.GetBytes(message), "text/json");
+
+            // Encode - produce JWS
+            var jSign = signer.Encode();
+
+            // Decode & verify
+            var headers = signer.Decode<JWSHeader>(jSign, out byte[] _);
+            Assert.False(headers.Count != 1);
+            Assert.True(signer.Verify<JWSHeader>(new HMAC[] { key }, null));
         }
     }
 

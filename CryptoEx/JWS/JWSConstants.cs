@@ -18,6 +18,8 @@ public static class JWSConstants
     /// RSASSA-PKCS1-v1_5 using SHA-512
     /// </summary>
     public const string RS512 = "RS512";
+
+
     /// <summary>
     /// ECDSA using P-256 and SHA-256
     /// </summary>
@@ -30,6 +32,8 @@ public static class JWSConstants
     /// ECDSA using P-521 and SHA-512
     /// </summary>
     public const string ES512 = "ES512";
+
+
     /// <summary>
     ///  HMAC using SHA-256
     /// </summary>
@@ -42,6 +46,8 @@ public static class JWSConstants
     /// HMAC using SHA-512
     /// </summary>
     public const string HS512 = "HS512";
+
+
     /// <summary>
     /// JWS in compact serialization format
     /// </summary>
@@ -50,6 +56,8 @@ public static class JWSConstants
     /// JWS in flattened or full serialization format
     /// </summary>
     public const string JOSE_JSON = "jose+json";
+
+
     /// <summary>
     /// Some JSON options
     /// </summary>

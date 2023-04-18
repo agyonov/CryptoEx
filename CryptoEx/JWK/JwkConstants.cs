@@ -1,4 +1,9 @@
-﻿namespace CryptoEx.JWK;
+﻿using CryptoEx.JWS;
+using System.Text.Encodings.Web;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+
+namespace CryptoEx.JWK;
 
 /// <summary>
 /// Various constants used in JWK.
@@ -38,4 +43,15 @@ public static partial class JwkConstants
     public const string CurveP521 = "P-521";
 
     #endregion EC Curves
+
+    /// <summary>
+    /// Some JSON options
+    /// </summary>
+    public static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        WriteIndented = false,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        TypeInfoResolver = JWSSourceGenerationContext.Default
+    };
 }

@@ -70,7 +70,7 @@ public class TestJWK
     [Fact(DisplayName = "Decode RSA key public one")]
     public void DecodeRSAPublic()
     {
-        JwkRSA? jwk = JsonSerializer.Deserialize<Jwk>(JWK_PUBLIC_2, JWSConstants.jsonOptions) as JwkRSA;
+        JwkRSA? jwk = JsonSerializer.Deserialize<Jwk>(JWK_PUBLIC_2, JwkConstants.jsonOptions) as JwkRSA;
 
         Assert.NotNull(jwk);
         Assert.Equal("RSA", jwk.Kty);
@@ -82,7 +82,7 @@ public class TestJWK
     [Fact(DisplayName = "Decode EC key public one")]
     public void DecodeECPublic()
     {
-        JwkEc? jwk = JsonSerializer.Deserialize<Jwk>(JWK_PUBLIC_1, JWSConstants.jsonOptions) as JwkEc;
+        JwkEc? jwk = JsonSerializer.Deserialize<Jwk>(JWK_PUBLIC_1, JwkConstants.jsonOptions) as JwkEc;
 
         Assert.NotNull(jwk);
         Assert.Equal("EC", jwk.Kty);
@@ -95,7 +95,7 @@ public class TestJWK
     [Fact(DisplayName = "Decode EC key private one")]
     public void DecodeECPrivate()
     {
-        JwkEc? jwk = JsonSerializer.Deserialize<Jwk>(JWK_PRIVATE_1, JWSConstants.jsonOptions) as JwkEc;
+        JwkEc? jwk = JsonSerializer.Deserialize<Jwk>(JWK_PRIVATE_1, JwkConstants.jsonOptions) as JwkEc;
 
         Assert.NotNull(jwk);
         Assert.Equal("EC", jwk.Kty);
@@ -110,7 +110,7 @@ public class TestJWK
     [Fact(DisplayName = "Decode RSA key private one")]
     public void DecodeRSAPrivate() 
     {
-        JwkRSA? jwk = JsonSerializer.Deserialize<Jwk>(JWK_PRIVATE_2, JWSConstants.jsonOptions) as JwkRSA;
+        JwkRSA? jwk = JsonSerializer.Deserialize<Jwk>(JWK_PRIVATE_2, JwkConstants.jsonOptions) as JwkRSA;
 
         Assert.NotNull(jwk);
         Assert.Equal("RSA", jwk.Kty);
@@ -129,7 +129,7 @@ public class TestJWK
     [Fact(DisplayName = "Decode HMAC")]
     public void DecodeHMAC() 
     {
-        JwkSymetric? jwk = JsonSerializer.Deserialize<Jwk>(JWK_SYMMETRIC, JWSConstants.jsonOptions) as JwkSymetric;
+        JwkSymmetric? jwk = JsonSerializer.Deserialize<Jwk>(JWK_SYMMETRIC, JwkConstants.jsonOptions) as JwkSymmetric;
 
         Assert.NotNull(jwk);
         Assert.Equal("AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow", jwk.K);

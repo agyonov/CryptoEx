@@ -19,7 +19,7 @@ namespace CryptoEx.JWS;
 [JsonSerializable(typeof(JWK.JwkSet))]
 [JsonSerializable(typeof(JWK.JwkEc))]
 [JsonSerializable(typeof(JWK.JwkRSA))]
-[JsonSerializable(typeof(JWK.JwkSymetric))]
+[JsonSerializable(typeof(JWK.JwkSymmetric))]
 internal partial class JWSSourceGenerationContext : JsonSerializerContext
 {
 }

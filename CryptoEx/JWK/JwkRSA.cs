@@ -1,6 +1,11 @@
 ﻿using System.Text.Json.Serialization;
 
 namespace CryptoEx.JWK;
+
+/// <summary>
+/// A Jeson Web Key (JWK) is a JavaScript Object Notation (JSON) data structure that represents a cryptographic key.
+/// For RSA keys
+/// </summary>
 public record JwkRSA : Jwk
 {
     /// <summary>

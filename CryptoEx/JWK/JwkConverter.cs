@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace CryptoEx.JWK;
 
 /// <summary>
-/// Converter for JWK
+/// Converter for JWK <-- --> Json
 /// </summary>
 public class JwkConverter : JsonConverter<Jwk>
 {
@@ -20,7 +20,7 @@ public class JwkConverter : JsonConverter<Jwk>
             case JwkEc ec:
                 JsonSerializer.Serialize(writer, ec, options);
                 break;
-            case JwkSymetric hmac:
+            case JwkSymmetric hmac:
                 JsonSerializer.Serialize(writer, hmac, options);
                 break;
             default:
@@ -81,7 +81,7 @@ public class JwkConverter : JsonConverter<Jwk>
         {
             JwkConstants.EC => JsonSerializer.Deserialize<JwkEc>(ref reader, options),
             JwkConstants.RSA => JsonSerializer.Deserialize<JwkRSA>(ref reader, options),
-            JwkConstants.OCT => JsonSerializer.Deserialize<JwkSymetric>(ref reader, options),
+            JwkConstants.OCT => JsonSerializer.Deserialize<JwkSymmetric>(ref reader, options),
             _ => null
         };
 

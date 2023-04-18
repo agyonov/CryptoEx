@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
+﻿using CryptoEx.Utils;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using CryptoEx.Utils;
-using System.Reflection.Metadata.Ecma335;
-using CryptoEx.JWS;
+using System.Security.Cryptography.X509Certificates;
 
 namespace CryptoEx.JWK;
 
@@ -215,8 +208,8 @@ public static class JwkExtentions
 
             // return
             return jwk;
-        } catch { 
-            return null; 
+        } catch {
+            return null;
         }
     }
 
@@ -236,7 +229,8 @@ public static class JwkExtentions
             // Set public part
             jwk.X = Base64UrlEncoder.Encode(param.Q.X);
             jwk.Y = Base64UrlEncoder.Encode(param.Q.Y);
-            jwk.Crv = param.Curve.Oid.Value switch {
+            jwk.Crv = param.Curve.Oid.Value switch
+            {
                 "1.2.840.10045.3.1.7" => JwkConstants.CurveP256,
                 "1.3.132.0.34" => JwkConstants.CurveP384,
                 "1.3.132.0.35" => JwkConstants.CurveP521,
@@ -258,7 +252,7 @@ public static class JwkExtentions
     /// <summary>
     ///  Get JWK from private (HMAC) or null if not possible.
     /// </summary>
-    public static JwkSymmetric? GetJwk(this byte[] key) 
+    public static JwkSymmetric? GetJwk(this byte[] key)
     {
         try {
             // Create 
@@ -270,6 +264,68 @@ public static class JwkExtentions
 
             // return
             return jwk;
+        } catch {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Set some certificate info into the Jwk
+    /// </summary>
+    public static void SetX509Certificate(this Jwk jwk, X509Certificate2 cert)
+    {
+        jwk.X5C = new List<string>
+        {
+            Convert.ToBase64String(cert.RawData)
+        };
+        using (HashAlgorithm hash = SHA256.Create()) {
+            jwk.X5TSha256 = Base64UrlEncoder.Encode(hash.ComputeHash(cert.RawData));
+        }
+    }
+
+    /// <summary>
+    /// Set some certificates info into the Jwk
+    /// </summary>
+    public static void SetX509Certificate(this Jwk jwk, List<X509Certificate2> certs)
+    {
+        // Get number one
+        X509Certificate2? cert = certs.FirstOrDefault();
+
+        // Check
+        if (cert == null) {
+            return;
+        }
+
+        // Set some data
+        jwk.X5C = new List<string>(certs.Count);
+        foreach (X509Certificate2 elm in certs) {
+            jwk.X5C.Add(Convert.ToBase64String(elm.RawData));
+        }
+        using (HashAlgorithm hash = SHA256.Create()) {
+            jwk.X5TSha256 = Base64UrlEncoder.Encode(hash.ComputeHash(cert.RawData));
+        }
+    }
+
+    /// <summary>
+    /// Get certificates from JWK
+    /// </summary>
+    public static List<X509Certificate2>? GetX509Certificates(this Jwk jwk)
+    {
+        // Check
+        if (jwk.X5C == null) {
+            return null;
+        }
+
+        try {
+            // convert
+            List<X509Certificate2> result = new(jwk.X5C.Count);
+            foreach (string elm in jwk.X5C) {
+                X509Certificate2 cert = new X509Certificate2(Convert.FromBase64String(elm));
+                result.Add(cert);
+            }
+
+            // return 
+            return result;
         } catch {
             return null;
         }

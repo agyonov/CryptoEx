@@ -1,5 +1,4 @@
 ﻿using CryptoEx.JWK;
-using CryptoEx.JWS;
 using System.Text.Json;
 
 namespace CryptoEx.Tests;
@@ -100,7 +99,7 @@ public class TestJWK
         Assert.NotNull(jwk);
         Assert.Equal("EC", jwk.Kty);
         Assert.Equal("P-256", jwk.Crv);
-        Assert.Equal("MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4", jwk.X); 
+        Assert.Equal("MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4", jwk.X);
         Assert.Equal("4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM", jwk.Y);
         Assert.Equal("870MB6gfuTJ4HtUnUvYMyJpr5eUZNP4Bk43bVdj3eAE", jwk.D);
         Assert.Equal("enc", jwk.Use);
@@ -108,7 +107,7 @@ public class TestJWK
     }
 
     [Fact(DisplayName = "Decode RSA key private one")]
-    public void DecodeRSAPrivate() 
+    public void DecodeRSAPrivate()
     {
         JwkRSA? jwk = JsonSerializer.Deserialize<Jwk>(JWK_PRIVATE_2, JwkConstants.jsonOptions) as JwkRSA;
 
@@ -127,7 +126,7 @@ public class TestJWK
     }
 
     [Fact(DisplayName = "Decode HMAC")]
-    public void DecodeHMAC() 
+    public void DecodeHMAC()
     {
         JwkSymmetric? jwk = JsonSerializer.Deserialize<Jwk>(JWK_SYMMETRIC, JwkConstants.jsonOptions) as JwkSymmetric;
 

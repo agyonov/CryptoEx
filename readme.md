@@ -1,4 +1,4 @@
-# About this project
+# About CryptoEx project
 
 This project provides a couple of .NET / C# libraries for cryptographically signing and verifying data using .NET in some advanced scenarios.
 
@@ -24,7 +24,7 @@ You can check the code and some pages in the Wiki.
 
 You can freely use it as an example and further amend or extend the code to suit your particular needs as possible applications are vast.
 
-**Other example is the JSON Web signatures** area. In this domain there are few open source libraries but their focus is either JSON Web Tokens (that are private case of the broader JSON Web Signatures) and / or limited in application for [jAdES](https://www.etsi.org/deliver/etsi_ts/119100_119199/11918201/01.01.01_60/ts_11918201v010101p.pdf).
+**Other example is the JSON Web signatures** area. In this domain there are few open source libraries but their focus is either JSON Web Tokens (that are private case of the broader JSON Web Signatures) or limited in application for [jAdES](https://www.etsi.org/deliver/etsi_ts/119100_119199/11918201/01.01.01_60/ts_11918201v010101p.pdf).
 
 In the current project you can find an implementation of **RFC 7515** (JSON Web Signatures) and practical implementation for the European Union's *Advanced digital signatures*, that builds on top of **RFC 7515** (JSON Web Signatures).
 
@@ -34,5 +34,41 @@ Again, you are free and encouraged to use these as an example or to extend these
 
 ## Projetcs' structure
 
+There is one Visual Studio Solution that summons all .NET projects in the current repository.
 
+The individual .NET projects are:
+
+- CryptoEx - the main project / library of the repository, with core program logic
+- CryptoEx.Test - test for the core library
+- CryptoEx.Benchmark - Micro-benchmark for the core library
+- CryptoEx.EdDSA - Extension of the logic in the core library to support Ed25519 & Ed448 cryptographic algorithms. TODO!
+
+### CryptoEx
+
+The main project / library of the repository, with core program logic. Here you can find and if needed extend logic for main areas - advanced XML signing, JSON web signatures and applications of the above in EU's xAdES and jAdES.
+
+### CryptoEx.Test
+
+The test for the core library. Has a dependency on xUnit, for testing.
+
+Can be looked at as an example of client programming logic that calls methods from the core library.
+
+### CryptoEx.Benchmark
+
+The Micro-benchmark for the core library. Has a dependency on BenchmarkDotNet.
+
+Some useful test for speed and memory consumptions. Especially interesting for signing large external files in detached mode - for time and memory allocations.
+
+Also for other micro-benchmarking for example for Base64Url encoding and decoding.
+
+### CryptoEx.EdDSA
+
+Extension of the logic in the core library to support Ed25519 & Ed448 cryptographic algorithms.
+
+**THIS IS STILL WORK IN PROGRESS !** :)
+
+I have decided to put it on a different project, mainly because Ed25519 & Ed448 are still not implemented in main-stream .NET. So I need to rely on third-party libraries, such as:
+
+    - Bouncy Castle
+    - libsodium
 

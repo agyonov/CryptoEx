@@ -20,7 +20,7 @@ This project **does not** have an intention to be a full-featured library to ful
 
 Now this might be annoying flaws, but also there are to some extend "natural" (the all possible implementations, ways to implement XML signing, is vast area, because of the "opened" specification) or easy to overcome. So, in the current project I have extended the standard library to support the missing algorithms and have provided some implementations to show as an example how to sign *Detached* data and additional *Reference* XML elements.
 
-You can check the code and some pages in the Wiki.
+You can check the code and some pages in the [Wiki](https://github.com/agyonov/CryptoEx/wiki).
 
 You can freely use it as an example and further amend or extend the code to suit your particular needs as possible applications are vast.
 
@@ -28,7 +28,7 @@ You can freely use it as an example and further amend or extend the code to suit
 
 In the current project you can find an implementation of **RFC 7515** (JSON Web Signatures) and practical implementation for the European Union's *Advanced digital signatures*, that builds on top of **RFC 7515** (JSON Web Signatures).
 
-Please, check the code and the corresponding Wiki Pages.
+Please, check the code and the corresponding [Wiki Pages](https://github.com/agyonov/CryptoEx/wiki).
 
 Again, you are free and encouraged to use these as an example or to extend these to suit you purposes in a better way.
 

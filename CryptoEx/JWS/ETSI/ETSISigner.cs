@@ -220,7 +220,7 @@ public class ETSISigner : JWSSigner
     /// </summary>
     /// <param name="header">The header</param>
     /// <returns>True - present and understood. Flase - other case</returns>
-    public static bool ETSIResolutor(ETSIHeader header)
+    protected static bool ETSIResolutor(ETSIHeader header)
     {
         // No header crit
         if (header.Crit == null) {

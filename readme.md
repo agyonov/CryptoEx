@@ -26,7 +26,7 @@ You can freely use it as an example and further amend or extend the code to suit
 
 **Other example is the JSON Web signatures** area. In this domain there are few open source libraries but their focus is either JSON Web Tokens (that are private case of the broader JSON Web Signatures) or limited in application for [jAdES](https://www.etsi.org/deliver/etsi_ts/119100_119199/11918201/01.01.01_60/ts_11918201v010101p.pdf).
 
-In the current project you can find an implementation of **RFC 7515** (JSON Web Signatures) and practical implementation for the European Union's *Advanced digital signatures*, that builds on top of **RFC 7515** (JSON Web Signatures).
+In the current project you can find an implementation of [RFC 7515 (JSON Web Signatures)](https://www.rfc-editor.org/rfc/rfc7515.html) and practical implementation for the European Union's *Advanced digital signatures*, that builds on top of [RFC 7515 (JSON Web Signatures)](https://www.rfc-editor.org/rfc/rfc7515.html).
 
 Please, check the code and the corresponding [Wiki Pages](https://github.com/agyonov/CryptoEx/wiki).
 

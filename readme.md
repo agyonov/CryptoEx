@@ -15,10 +15,10 @@ This project **does not** have an intention to be a full-featured library to ful
 ### Example areas and gaps 
 
 **For example in XML signatures** area there is mature (and not very much evolving) library provided by the platform itself [System.Security.Cryptography.Xml](https://www.nuget.org/packages/System.Security.Cryptography.Xml/), but in my personal experience there are two major issues with it:
-1. Examples and documentation are messy - You may easily see from Microsoft's docs how to do basic sign / verify of an enveloped XML message, but you will be in trouble finding "official" docs and examples on some more advanced scenarios like - *detached* signatures or signing additional *References* XML data 
+1. Examples and documentation are messy - You may easily see from Microsoft's docs how to do basic sign / verify of an enveloped XML message, but you will be in trouble finding "official" docs and examples on some more advanced scenarios like - *detached* signatures or signing additional *Reference* XML data.
 2. The basic library also lacks some algorithms that are part of the XML digital signature specification - namely the ones with EcDSA.
 
-Now this might be annoying flaws, but also there are to some extend "natural" (the all possible implementations, ways to implement XML signing, is vast area, because of the "opened" specification) or easy to overcome. So, in the current project I have extended the standard library to support the missing algorithms and have provided some implementations to show as an example how to sign *Detached* data and additional *Reference* XML elements.
+Now this might be annoying flaws, but also they are to some extend "natural" (the all possible implementations, ways to implement XML signing, is vast area, because of the "opened" specification) or easy to overcome. So, in the current project I have extended the standard library to support the missing algorithms and have provided some implementations to show as an example how to sign *Detached* data and additional *Reference* XML elements.
 
 You can check the code and some pages in the [Wiki](https://github.com/agyonov/CryptoEx/wiki).
 

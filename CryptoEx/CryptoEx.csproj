@@ -7,9 +7,21 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <PackageReadmeFile>readme_nuget.md</PackageReadmeFile>
+    <Title>Extended and Examples Difital signatures in .NET</Title>
+    <Authors>CryptoEx's developers</Authors>
+    <Description>An extension of and example how to use the standard .NET libraries to sign / verify signatures of XMLs and JSONs, especially in regards to  XAdES, JAdES</Description>
+    <Copyright>MIT</Copyright>
+    <PackageProjectUrl>https://github.com/agyonov/CryptoEx</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/agyonov/CryptoEx</RepositoryUrl>
+    <PackageTags>digital;rsa;;ecdsa;jws;xades;xmldsig;jades;signhing</PackageTags>
+    <PackageIcon>logo_lib.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\logo_lib.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Include="..\readme_nuget.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>

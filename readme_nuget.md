@@ -17,8 +17,8 @@ As the name ***CryptoEx*** suggests, it can be think of both as *Extension of* a
 This project **does not** have an intention to be a full-featured library that fully implements
 all possible features and applications in all possible scenarios for digital signatures
 (In my humble opinion it is not feasible option anyway). Rather than, that it's purpose is to be
-used as a reference (or example if you prefer) of how to achieve some tasks using platforms
-abilities in some areas and how to extend minor platform gaps in other areas.
+used as a reference (or example if you prefer) of how to achieve some tasks using platform's
+abilities in some areas and how to extend minor platform's gaps in other areas.
 
 ### Example areas and gaps 
 
@@ -28,7 +28,7 @@ but in my personal experience there are two major issues with it:
 
 1. Examples and documentation are messy - You may easily see from Microsoft's docs how to do
    basic sign / verify of an enveloped XML message, but you will be in trouble finding "official"
-   docs and examples on some more advanced scenarios like - *detached* signatures or signing 
+   docs and examples on some more advanced scenarios, like - *detached* signatures or signing 
    additional *Reference* XML data.
 
 2. The basic library also lacks some algorithms that are part of the XML digital signature

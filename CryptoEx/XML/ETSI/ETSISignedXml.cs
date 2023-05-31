@@ -10,7 +10,7 @@ namespace CryptoEx.XML.ETSI;
 public class ETSISignedXml
 {
     // XADES namespace
-    protected const string XadesNamespaceUrl = "http://uri.etsi.org/01903/v1.3.2#";
+    protected const string XadesNamespaceUri = "http://uri.etsi.org/01903/v1.3.2#";
     protected const string XadesNamespaceName = "xades";
     protected const string ETSISignedPropertiesType = "http://uri.etsi.org/01903#SignedProperties";
 
@@ -272,7 +272,7 @@ public class ETSISignedXml
         SignedXmlExt signedXml = new SignedXmlExt(payload);
 
         // Load the signature node
-        XmlNodeList nodeList = payload.GetElementsByTagName("Signature");
+        XmlNodeList nodeList = payload.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
         XmlElement? sigantureNode = nodeList[0] as XmlElement;
         if (sigantureNode == null) {
             return false;
@@ -336,7 +336,7 @@ public class ETSISignedXml
         SignedXmlExt signedXml = new SignedXmlExt(payload);
 
         // Load the signature node
-        XmlNodeList nodeList = payload.GetElementsByTagName("Signature");
+        XmlNodeList nodeList = payload.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
         XmlElement? sigantureNode = nodeList[0] as XmlElement;
         if (sigantureNode == null) {
             return false;
@@ -413,10 +413,10 @@ public class ETSISignedXml
     {
         // locals
         byte[] timeStamp;
-        XNamespace xades = XadesNamespaceUrl;
+        XNamespace xades = XadesNamespaceUri;
         XNamespace ds = SignedXml.XmlDsigNamespaceUrl;
 
-        var qProperties = signedDoc.DocumentElement?.GetElementsByTagName("QualifyingProperties", XadesNamespaceUrl);
+        var qProperties = signedDoc.DocumentElement?.GetElementsByTagName("QualifyingProperties", XadesNamespaceUri);
         var sigValue = signedDoc.DocumentElement?.GetElementsByTagName("SignatureValue", SignedXml.XmlDsigNamespaceUrl);
 
         // Check
@@ -449,7 +449,7 @@ public class ETSISignedXml
            new XElement(ds + "Object",
                new XAttribute("xmlns", SignedXml.XmlDsigNamespaceUrl),
                new XElement(xades + "QualifyingProperties",
-                    new XAttribute(XNamespace.Xmlns + XadesNamespaceName, XadesNamespaceUrl),
+                    new XAttribute(XNamespace.Xmlns + XadesNamespaceName, XadesNamespaceUri),
                     new XAttribute("Target", $"#{IdSignature}"),
                     new XElement(xades + "UnsignedProperties",
                         new XElement(xades + "UnsignedSignatureProperties",
@@ -463,7 +463,7 @@ public class ETSISignedXml
             );
 
         // Extract the unsigned properties
-        var unsProps = obj.ToXmlElement()?.GetElementsByTagName("UnsignedProperties", XadesNamespaceUrl)[0];
+        var unsProps = obj.ToXmlElement()?.GetElementsByTagName("UnsignedProperties", XadesNamespaceUri)[0];
         if (unsProps == null) {
             return;
         }
@@ -480,7 +480,7 @@ public class ETSISignedXml
     /// <returns>The XmlNodeList that hold the qualifing parameters to be added to a DataObject</returns>
     protected virtual XmlNodeList CreateQualifyingPropertiesXML(X509Certificate2 certificate, HashAlgorithmName hashAlgorithm, string mimeType = "text/xml", bool hasDetachedAndXML = false)
     {
-        XNamespace xades = XadesNamespaceUrl;
+        XNamespace xades = XadesNamespaceUri;
         XNamespace ds = SignedXml.XmlDsigNamespaceUrl;
 
         // Allow set of hash algorithm
@@ -511,7 +511,7 @@ public class ETSISignedXml
             new XElement(ds + "Object",
                 new XAttribute("xmlns", SignedXml.XmlDsigNamespaceUrl),
                 new XElement(xades + "QualifyingProperties",
-                    new XAttribute(XNamespace.Xmlns + XadesNamespaceName, XadesNamespaceUrl),
+                    new XAttribute(XNamespace.Xmlns + XadesNamespaceName, XadesNamespaceUri),
                     new XAttribute("Target", $"#{IdSignature}"),
                     new XElement(xades + "SignedProperties",
                         new XAttribute("Id", IdXadesSignedProperties),
@@ -617,11 +617,11 @@ public class ETSISignedXml
     protected virtual void ExtractQualifyingProperties(XmlElement signature, ETSIContextInfo info)
     {
         // Some namespaces
-        XNamespace xades = XadesNamespaceUrl;
+        XNamespace xades = XadesNamespaceUri;
         XNamespace ds = SignedXml.XmlDsigNamespaceUrl;
 
         // Find the qualifying properties
-        XmlNodeList? qProperties = signature.GetElementsByTagName("QualifyingProperties", XadesNamespaceUrl);
+        XmlNodeList? qProperties = signature.GetElementsByTagName("QualifyingProperties", XadesNamespaceUri);
 
         // Check
         if (qProperties == null || qProperties.Count < 1 || qProperties[0] is not XmlElement) {

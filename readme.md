@@ -4,7 +4,7 @@ This project provides a couple of .NET / C# libraries for cryptographically sign
 verifying data using .NET in some advanced scenarios.
 
 As the name ***CryptoEx*** suggests, it can be think of both as *Extension of* and
-*Example of the usage* of the standard capabilities provided by the .NET platform in areas like:
+*Example of the usage of* the standard capabilities provided by the .NET platform in areas like:
 
 - XML digital signatures - [XML Signature Syntax and Processing Version 1.1](https://www.w3.org/TR/xmldsig-core/)
 - JSON digital signatures - [JSON Web Signature (JWS)](https://www.rfc-editor.org/rfc/rfc7515)

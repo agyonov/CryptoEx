@@ -8,7 +8,7 @@ namespace CryptoEx.JWK;
 /// <summary>
 /// Various constants used in JWK.
 /// </summary>
-public static partial class JwkConstants
+public static class JwkConstants
 {
     #region JWK Key Types
 
@@ -24,6 +24,10 @@ public static partial class JwkConstants
     /// RSA
     /// </summary>
     public const string RSA = "RSA";
+    /// <summary>
+    /// Ed Key type
+    /// </summary>
+    public const string OKP = "OKP";
 
     #endregion
 
@@ -43,6 +47,19 @@ public static partial class JwkConstants
     public const string CurveP521 = "P-521";
 
     #endregion EC Curves
+
+    #region Ed Curves
+
+    /// <summary>
+    ///  Ed25519 signature algorithm key pairs
+    /// </summary>
+    public const string CurveEd25519 = "Ed25519";
+    /// <summary>
+    /// Ed448 signature algorithm key pairs
+    /// </summary>
+    public const string CurveEd448 = "Ed448";
+
+    #endregion Ed Curves
 
     /// <summary>
     /// Some JSON options

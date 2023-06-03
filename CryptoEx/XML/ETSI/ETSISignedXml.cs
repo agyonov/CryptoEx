@@ -195,7 +195,7 @@ public class ETSISignedXml
     /// <param name="payload">The payload - original XML file</param>
     /// <param name="cert">The certificate. ONLY Public part is used! The PrivateKey is proided in constructor!</param>
     /// <returns>The Xml Signature element</returns>
-    public virtual XmlElement SignEnveloping(XmlDocument payload, X509Certificate2 cert) 
+    public virtual XmlElement SignEnveloping(XmlDocument payload, X509Certificate2 cert)
     {
         // Check
         if (_signer == null) {
@@ -208,7 +208,8 @@ public class ETSISignedXml
         signedXml.SignedInfo.SignatureMethod = _algorithmNameSignatureXML;
 
         // Create a DataObject to hold the data to be signed.
-        DataObject dataObject = new() {
+        DataObject dataObject = new()
+        {
             Data = payload.ChildNodes,
             Id = "source_xml_data_object_enveloping"
         };

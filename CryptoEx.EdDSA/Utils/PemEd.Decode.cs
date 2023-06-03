@@ -1,10 +1,11 @@
 ﻿
 
+using CryptoEx.Utils;
 using System.Formats.Asn1;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 
-namespace CryptoEx.Utils;
+namespace CryptoEx.EdDSA.Utils;
 
 /// <summary>
 /// Help class to encode and decode EcDSA keys in PEM files

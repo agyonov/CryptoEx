@@ -190,7 +190,7 @@ public class TestETSIXml
 
             // Sign payload
             XmlElement signature = signer.SignEnveloping(doc, cert);
-          
+
             // Prepare to verify
             doc.LoadXml(signature.OuterXml);
 

@@ -20,6 +20,9 @@ public class JwkConverter : JsonConverter<Jwk>
             case JwkEc ec:
                 JsonSerializer.Serialize(writer, ec, options);
                 break;
+            case JwkEd ed:
+                JsonSerializer.Serialize(writer, ed, options);
+                break;
             case JwkSymmetric hmac:
                 JsonSerializer.Serialize(writer, hmac, options);
                 break;
@@ -82,6 +85,7 @@ public class JwkConverter : JsonConverter<Jwk>
             JwkConstants.EC => JsonSerializer.Deserialize<JwkEc>(ref reader, options),
             JwkConstants.RSA => JsonSerializer.Deserialize<JwkRSA>(ref reader, options),
             JwkConstants.OCT => JsonSerializer.Deserialize<JwkSymmetric>(ref reader, options),
+            JwkConstants.OKP => JsonSerializer.Deserialize<JwkEd>(ref reader, options),
             _ => null
         };
 

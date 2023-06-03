@@ -1,4 +1,4 @@
-using CryptoEx.Utils;
+using CryptoEx.EdDSA.Utils;
 
 namespace CryptoEx.Tests;
 

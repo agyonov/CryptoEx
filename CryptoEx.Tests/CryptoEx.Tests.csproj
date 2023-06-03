@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CryptoEx.EdDSA\CryptoEx.EdDSA.csproj" />
     <ProjectReference Include="..\CryptoEx\CryptoEx.csproj" />
   </ItemGroup>
 

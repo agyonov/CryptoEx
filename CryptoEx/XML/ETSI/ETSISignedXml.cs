@@ -190,6 +190,71 @@ public class ETSISignedXml
     }
 
     /// <summary>
+    /// Digitally sign the xml document as enveloping
+    /// </summary>
+    /// <param name="payload">The payload - original XML file</param>
+    /// <param name="cert">The certificate. ONLY Public part is used! The PrivateKey is proided in constructor!</param>
+    /// <returns>The Xml Signature element</returns>
+    public virtual XmlElement SignEnveloping(XmlDocument payload, X509Certificate2 cert) 
+    {
+        // Check
+        if (_signer == null) {
+            throw new InvalidOperationException("No private key provided");
+        }
+
+        // Create a SignedXml object 
+        SignedXmlExt signedXml = new(GetIdElement);
+        signedXml.Signature.Id = IdSignature;
+        signedXml.SignedInfo.SignatureMethod = _algorithmNameSignatureXML;
+
+        // Create a DataObject to hold the data to be signed.
+        DataObject dataObject = new() {
+            Data = payload.ChildNodes,
+            Id = "source_xml_data_object_enveloping"
+        };
+        signedXml.AddObject(dataObject);
+
+        // Create a reference to be able to sign everything into the message.
+        Reference reference = new()
+        {
+            Uri = "#source_xml_data_object_enveloping",
+            Id = IdReferenceSignature
+        };
+        reference.AddTransform(new XmlDsigExcC14NTransform());
+        signedXml.AddReference(reference);
+
+        // Create a new KeyInfo object & add signing certificate
+        KeyInfo keyInfo = new KeyInfo();
+        keyInfo.AddClause(new KeyInfoX509Data(cert.RawData));
+        signedXml.KeyInfo = keyInfo;
+
+        // Create a data object to hold the data for the ETSI qualifying properties.
+        DataObject dataObjectQualifing = new();
+        dataObjectQualifing.Data = CreateQualifyingPropertiesXML(cert, _hashAlgorithm);
+        signedXml.AddObject(dataObjectQualifing);
+
+        // Create a reference to be able to sign ETSI qualifying properties.
+        var parametersSignature = new Reference
+        {
+            Uri = $"#{IdXadesSignedProperties}",
+            Type = ETSISignedPropertiesType
+        };
+        parametersSignature.AddTransform(new XmlDsigExcC14NTransform());
+        signedXml.AddReference(parametersSignature);
+
+        // Set hash algorithm
+        foreach (var r in signedXml.SignedInfo.References) {
+            ((Reference)r).DigestMethod = _algorithmNameDigestXML;
+        }
+
+        // Compute the signature
+        signedXml.SigningKey = _signer;
+        signedXml.ComputeSignature();
+
+        return signedXml.GetXml();
+    }
+
+    /// <summary>
     /// Digitally sign the attachement as XML signature.
     ///     If no payload is provided, the signature is detached.
     ///     if payload is provided, the signature is datached and provided XML is enveloped.

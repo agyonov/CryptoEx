@@ -169,6 +169,40 @@ public class TestETSIXml
         }
     }
 
+    [Fact(DisplayName = "Test XML RSA with enveloping data")]
+    public void Test_XML_RSA_Enveloping()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey != null) {
+            // Get payload 
+            var doc = new XmlDocument();
+            doc.LoadXml(message.Trim());
+
+            // Create signer 
+            ETSISignedXml signer = new ETSISignedXml(rsaKey, HashAlgorithmName.SHA512);
+
+            // Sign payload
+            XmlElement signature = signer.SignEnveloping(doc, cert);
+          
+            // Prepare to verify
+            doc.LoadXml(signature.OuterXml);
+
+            // Verify signature
+            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo)
+                        && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
+                        && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value));
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
     [Fact(DisplayName = "Test XML RSA with detached data")]
     public void Test_XML_RSA_Detached()
     {
@@ -303,6 +337,40 @@ public class TestETSIXml
 
             // Prepare enveloped data
             doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
+
+            // Verify signature
+            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo)
+                        && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
+                        && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value));
+        } else {
+            Assert.Fail("NO ECDSA certificate available");
+        }
+    }
+
+    [Fact(DisplayName = "Test XML ECDSA with enveloping data")]
+    public void Test_XML_ECDSA_Enveloping()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificate(CertType.EC);
+        if (cert == null) {
+            Assert.Fail("NO ECDSA certificate available");
+        }
+
+        // Get RSA private key
+        ECDsa? ecKey = cert.GetECDsaPrivateKey();
+        if (ecKey != null) {
+            // Get payload 
+            var doc = new XmlDocument();
+            doc.LoadXml(message.Trim());
+
+            // Create signer 
+            ETSISignedXml signer = new ETSISignedXml(ecKey, HashAlgorithmName.SHA512);
+
+            // Sign payload
+            XmlElement signature = signer.SignEnveloping(doc, cert);
+
+            // Prepare to verify
+            doc.LoadXml(signature.OuterXml);
 
             // Verify signature
             Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo)

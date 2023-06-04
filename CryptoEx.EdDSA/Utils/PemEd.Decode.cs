@@ -19,9 +19,9 @@ public static partial class PemEd
     public static readonly Oid OidEd448 = new Oid("1.3.101.113");
 
     // Some string comparison constants
-    private const string PUBLIC_KEY = "PUBLIC KEY";
-    private const string PRIVATE_KEY = "PRIVATE KEY";
-    private const string ENCRYPTED_PRIVATE_KEY = "ENCRYPTED PRIVATE KEY";
+    public const string PUBLIC_KEY = "PUBLIC KEY";
+    public const string PRIVATE_KEY = "PRIVATE KEY";
+    public const string ENCRYPTED_PRIVATE_KEY = "ENCRYPTED PRIVATE KEY";
 
     /// <summary>
     /// Decode a Ed25519 private key from a PEM

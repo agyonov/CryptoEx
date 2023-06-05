@@ -1,4 +1,4 @@
-﻿namespace CryptoEx.EdDSA.JWK;
+﻿namespace CryptoEx.Ed.JWK;
 
 /// <summary>
 /// Some extentiom methods for JWK - to get the key from the JWK

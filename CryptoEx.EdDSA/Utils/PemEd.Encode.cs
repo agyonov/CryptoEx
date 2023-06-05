@@ -3,7 +3,7 @@ using System.Formats.Asn1;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 
-namespace CryptoEx.EdDSA.Utils;
+namespace CryptoEx.Ed.Utils;
 public static partial class PemEd
 {
     /// <summary>
@@ -26,7 +26,7 @@ public static partial class PemEd
             // PrivateKeyAlgorithmIdentifier
             using (writer.PushSequence()) {
                 // OID of the algorithm
-                writer.WriteObjectIdentifier(OidEd25519.Value ?? string.Empty);
+                writer.WriteObjectIdentifier(EdConstants.OidEd25519.Value ?? string.Empty);
             }
             // PrivateKey
             using (writer.PushOctetString()) {
@@ -73,7 +73,7 @@ public static partial class PemEd
         writer.WriteOctetString(prKey);
 
         // Define some packaging
-        Pkcs8PrivateKeyInfo pkcs8 = new Pkcs8PrivateKeyInfo(OidEd25519, null, writer.Encode());
+        Pkcs8PrivateKeyInfo pkcs8 = new Pkcs8PrivateKeyInfo(EdConstants.OidEd25519, null, writer.Encode());
 
         // Encode
         PEMObject pEM = new PEMObject()
@@ -114,7 +114,7 @@ public static partial class PemEd
             // PrivateKeyAlgorithmIdentifier
             using (writer.PushSequence()) {
                 // OID of the algorithm
-                writer.WriteObjectIdentifier(OidEd25519.Value ?? string.Empty);
+                writer.WriteObjectIdentifier(EdConstants.OidEd25519.Value ?? string.Empty);
             }
             // Publickey
             writer.WriteBitString(pubKey);
@@ -161,7 +161,7 @@ public static partial class PemEd
             // PrivateKeyAlgorithmIdentifier
             using (writer.PushSequence()) {
                 // OID of the algorithm
-                writer.WriteObjectIdentifier(OidEd448.Value ?? string.Empty);
+                writer.WriteObjectIdentifier(EdConstants.OidEd448.Value ?? string.Empty);
             }
             // PrivateKey
             using (writer.PushOctetString()) {
@@ -208,7 +208,7 @@ public static partial class PemEd
         writer.WriteOctetString(prKey);
 
         // Define some packaging
-        Pkcs8PrivateKeyInfo pkcs8 = new Pkcs8PrivateKeyInfo(OidEd448, null, writer.Encode());
+        Pkcs8PrivateKeyInfo pkcs8 = new Pkcs8PrivateKeyInfo(EdConstants.OidEd448, null, writer.Encode());
 
         // Encode
         PEMObject pEM = new PEMObject()
@@ -249,7 +249,7 @@ public static partial class PemEd
             // PrivateKeyAlgorithmIdentifier
             using (writer.PushSequence()) {
                 // OID of the algorithm
-                writer.WriteObjectIdentifier(OidEd448.Value ?? string.Empty);
+                writer.WriteObjectIdentifier(EdConstants.OidEd448.Value ?? string.Empty);
             }
             // Publickey
             writer.WriteBitString(pubKey);

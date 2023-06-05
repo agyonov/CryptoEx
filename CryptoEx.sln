@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoEx.Tests", "CryptoEx.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoEx.Benchmark", "CryptoEx.Benchmark\CryptoEx.Benchmark.csproj", "{72959546-C4A1-4938-AE72-F27F77539F97}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoEx.EdDSA", "CryptoEx.EdDSA\CryptoEx.EdDSA.csproj", "{26254F6B-1BA3-42FE-9280-DEE3A9171F55}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoEx.Ed", "CryptoEx.EdDSA\CryptoEx.Ed.csproj", "{26254F6B-1BA3-42FE-9280-DEE3A9171F55}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

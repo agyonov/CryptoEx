@@ -1,23 +1,18 @@
 ﻿
 
+using CryptoEx.Ed;
 using CryptoEx.Utils;
 using System.Formats.Asn1;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 
-namespace CryptoEx.EdDSA.Utils;
+namespace CryptoEx.Ed.Utils;
 
 /// <summary>
 /// Help class to encode and decode EcDSA keys in PEM files
 /// </summary>
 public static partial class PemEd
 {
-    // Ed25519 OID
-    public static readonly Oid OidEd25519 = new Oid("1.3.101.112");
-
-    // Ed448 OID
-    public static readonly Oid OidEd448 = new Oid("1.3.101.113");
-
     // Some string comparison constants
     public const string PUBLIC_KEY = "PUBLIC KEY";
     public const string PRIVATE_KEY = "PRIVATE KEY";
@@ -71,7 +66,7 @@ public static partial class PemEd
 
                 // Parse OID
                 Oid oid = new Oid(AsnDecoder.ReadObjectIdentifier(oidSeq, AsnEncodingRules.DER, out bytes));
-                if (oid.Value != OidEd25519.Value) {
+                if (oid.Value != EdConstants.OidEd25519.Value) {
                     return false;
                 }
 
@@ -114,7 +109,7 @@ public static partial class PemEd
                 Pkcs8PrivateKeyInfo dcr = Pkcs8PrivateKeyInfo.DecryptAndDecode(password, pemObject.Content, out bytesRead);
 
                 // Check
-                if (dcr.AlgorithmId.Value != OidEd25519.Value) {
+                if (dcr.AlgorithmId.Value != EdConstants.OidEd25519.Value) {
                     return false;
                 }
 
@@ -170,7 +165,7 @@ public static partial class PemEd
 
                 // Parse OID
                 Oid oid = new Oid(AsnDecoder.ReadObjectIdentifier(oidSeq, AsnEncodingRules.DER, out bytes));
-                if (oid.Value != OidEd25519.Value) {
+                if (oid.Value != EdConstants.OidEd25519.Value) {
                     return false;
                 }
 
@@ -235,7 +230,7 @@ public static partial class PemEd
 
                 // Parse OID
                 Oid oid = new Oid(AsnDecoder.ReadObjectIdentifier(oidSeq, AsnEncodingRules.DER, out bytes));
-                if (oid.Value != OidEd448.Value) {
+                if (oid.Value != EdConstants.OidEd448.Value) {
                     return false;
                 }
 
@@ -277,7 +272,7 @@ public static partial class PemEd
                 Pkcs8PrivateKeyInfo dcr = Pkcs8PrivateKeyInfo.DecryptAndDecode(password, pemObject.Content, out bytesRead);
 
                 // Check
-                if (dcr.AlgorithmId.Value != OidEd448.Value) {
+                if (dcr.AlgorithmId.Value != EdConstants.OidEd448.Value) {
                     return false;
                 }
 
@@ -333,7 +328,7 @@ public static partial class PemEd
 
                 // Parse OID
                 Oid oid = new Oid(AsnDecoder.ReadObjectIdentifier(oidSeq, AsnEncodingRules.DER, out bytes));
-                if (oid.Value != OidEd448.Value) {
+                if (oid.Value != EdConstants.OidEd448.Value) {
                     return false;
                 }
 

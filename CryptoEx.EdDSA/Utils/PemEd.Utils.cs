@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Text;
 
-namespace CryptoEx.EdDSA.Utils;
+namespace CryptoEx.Ed.Utils;
 public static partial class PemEd
 {
     /// <summary>

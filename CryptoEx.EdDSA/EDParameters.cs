@@ -1,8 +1,11 @@
 ﻿
 using System.Security.Cryptography;
 
-namespace CryptoEx.EdDSA;
+namespace CryptoEx.Ed;
 
+/// <summary>
+/// The parameters for EdDSA and EdDiffieHellman
+/// </summary>
 public record class EDParameters
 {
     /// <summary>
@@ -20,3 +23,4 @@ public record class EDParameters
     /// </summary>
     public byte[]? D { get; set; }
 }
+

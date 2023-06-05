@@ -8,9 +8,8 @@ namespace CryptoEx.EdDSA;
 /// </summary>
 public partial class EdDsa : EDAlgorithm
 {
-    private const int KeySize448 = 456;
 
-    private Ed448PrivateKeyParameters? _PrivateKey448 = null;
 
-    private Ed448PublicKeyParameters? _PublicKey448 = null;
+
+
 }

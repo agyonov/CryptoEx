@@ -90,19 +90,16 @@ public abstract class EDAlgorithm : AsymmetricAlgorithm
         EDParameters eDParameters = ExportParameters(true);
 
         // OneAsymetricKey
-        using (writer.PushSequence())
-        {
+        using (writer.PushSequence()) {
             // Version
             writer.WriteInteger(0);
             // PrivateKeyAlgorithmIdentifier
-            using (writer.PushSequence())
-            {
+            using (writer.PushSequence()) {
                 // OID of the algorithm
                 writer.WriteObjectIdentifier(eDParameters.Crv.Value ?? string.Empty);
             }
             // PrivateKey
-            using (writer.PushOctetString())
-            {
+            using (writer.PushOctetString()) {
                 writer.WriteOctetString(eDParameters.D);
             }
         }
@@ -124,11 +121,9 @@ public abstract class EDAlgorithm : AsymmetricAlgorithm
         EDParameters eDParameters = ExportParameters(false);
 
         // OneAsymetricKey
-        using (writer.PushSequence())
-        {
+        using (writer.PushSequence()) {
             // PrivateKeyAlgorithmIdentifier
-            using (writer.PushSequence())
-            {
+            using (writer.PushSequence()) {
                 // OID of the algorithm
                 writer.WriteObjectIdentifier(eDParameters.Crv.Value ?? string.Empty);
             }
@@ -207,19 +202,16 @@ public abstract class EDAlgorithm : AsymmetricAlgorithm
         EDParameters eDParameters = ExportParameters(true);
 
         // OneAsymetricKey
-        using (writer.PushSequence())
-        {
+        using (writer.PushSequence()) {
             // Version
             writer.WriteInteger(0);
             // PrivateKeyAlgorithmIdentifier
-            using (writer.PushSequence())
-            {
+            using (writer.PushSequence()) {
                 // OID of the algorithm
                 writer.WriteObjectIdentifier(eDParameters.Crv.Value ?? string.Empty);
             }
             // PrivateKey
-            using (writer.PushOctetString())
-            {
+            using (writer.PushOctetString()) {
                 writer.WriteOctetString(eDParameters.D);
             }
         }
@@ -241,11 +233,9 @@ public abstract class EDAlgorithm : AsymmetricAlgorithm
         EDParameters eDParameters = ExportParameters(false);
 
         // OneAsymetricKey
-        using (writer.PushSequence())
-        {
+        using (writer.PushSequence()) {
             // PrivateKeyAlgorithmIdentifier
-            using (writer.PushSequence())
-            {
+            using (writer.PushSequence()) {
                 // OID of the algorithm
                 writer.WriteObjectIdentifier(eDParameters.Crv.Value ?? string.Empty);
             }
@@ -345,8 +335,7 @@ public abstract class EDAlgorithm : AsymmetricAlgorithm
 
         // Read version & check
         ReadOnlySpan<byte> version = AsnDecoder.ReadIntegerBytes(source, AsnEncodingRules.DER, out bytes);
-        if (version.Length != 1 && version[0] != 0)
-        {
+        if (version.Length != 1 && version[0] != 0) {
             throw new CryptographicException($"Verson of ASN.DER is not 0");
         }
         bytesRead += bytes;
@@ -436,21 +425,18 @@ public abstract class EDAlgorithm : AsymmetricAlgorithm
     public override void ImportFromPem(ReadOnlySpan<char> input)
     {
         // Read it
-        using (StringReader reader = new StringReader(input.ToString()))
-        {
+        using (StringReader reader = new StringReader(input.ToString())) {
             // Read PEM object
             ICollection<PEMObject> readRes = PEMReaderWriter.ReadPEM(reader);
             PEMObject? pemObject = readRes.FirstOrDefault();
 
             // Check
-            if (pemObject == null)
-            {
+            if (pemObject == null) {
                 throw new CryptographicException($"No PEM object found");
             }
 
             // Check
-            switch (pemObject.Type)
-            {
+            switch (pemObject.Type) {
                 case PemEd.PUBLIC_KEY:
                     ImportSubjectPublicKeyInfo(pemObject.Content, out _);
                     break;
@@ -474,21 +460,18 @@ public abstract class EDAlgorithm : AsymmetricAlgorithm
     public override void ImportFromEncryptedPem(ReadOnlySpan<char> input, ReadOnlySpan<byte> passwordBytes)
     {
         // Read it
-        using (StringReader reader = new StringReader(input.ToString()))
-        {
+        using (StringReader reader = new StringReader(input.ToString())) {
             // Read PEM object
             ICollection<PEMObject> readRes = PEMReaderWriter.ReadPEM(reader);
             PEMObject? pemObject = readRes.FirstOrDefault();
 
             // Check
-            if (pemObject == null)
-            {
+            if (pemObject == null) {
                 throw new CryptographicException($"No PEM object found");
             }
 
             // Check
-            switch (pemObject.Type)
-            {
+            switch (pemObject.Type) {
                 case PemEd.ENCRYPTED_PRIVATE_KEY:
                     ImportEncryptedPkcs8PrivateKey(passwordBytes, pemObject.Content, out _);
                     break;
@@ -509,21 +492,18 @@ public abstract class EDAlgorithm : AsymmetricAlgorithm
     public override void ImportFromEncryptedPem(ReadOnlySpan<char> input, ReadOnlySpan<char> password)
     {
         // Read it
-        using (StringReader reader = new StringReader(input.ToString()))
-        {
+        using (StringReader reader = new StringReader(input.ToString())) {
             // Read PEM object
             ICollection<PEMObject> readRes = PEMReaderWriter.ReadPEM(reader);
             PEMObject? pemObject = readRes.FirstOrDefault();
 
             // Check
-            if (pemObject == null)
-            {
+            if (pemObject == null) {
                 throw new CryptographicException($"No PEM object found");
             }
 
             // Check
-            switch (pemObject.Type)
-            {
+            switch (pemObject.Type) {
                 case PemEd.ENCRYPTED_PRIVATE_KEY:
                     ImportEncryptedPkcs8PrivateKey(password, pemObject.Content, out _);
                     break;

@@ -1,7 +1,4 @@
-﻿
-
-using CryptoEx.Ed;
-using CryptoEx.Utils;
+﻿using CryptoEx.Utils;
 using System.Formats.Asn1;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;

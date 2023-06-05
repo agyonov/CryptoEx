@@ -22,5 +22,10 @@ public record class EDParameters
     /// Private key Ed
     /// </summary>
     public byte[]? D { get; set; }
+
+    /// <summary>
+    /// Context to be used for Ed25519ctx and Ed448ctx
+    /// </summary>
+    public byte[] Ctx { get; set; } = Array.Empty<byte>();
 }
 

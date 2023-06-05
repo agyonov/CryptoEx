@@ -1,9 +1,7 @@
 ﻿
 
 using CryptoEx.Ed;
-using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Signers;
 using System.Security.Cryptography;
 
 namespace CryptoEx.EdDSA;
@@ -25,8 +23,8 @@ public partial class EdDsa : EDAlgorithm
     private Ed448PrivateKeyParameters? _PrivateKey448 = null;
     private Ed448PublicKeyParameters? _PublicKey448 = null;
 
-    // Some signer from BouncyCastle
-    private ISigner? _Signer = null;
+    // Context
+    private byte[] _Context = Array.Empty<byte>();
 
     /// <summary>
     /// Stop public to be able to create directly this class.
@@ -54,18 +52,12 @@ public partial class EdDsa : EDAlgorithm
             RandomNumberGenerator.Fill(key);
             res._PrivateKey25519 = new Ed25519PrivateKeyParameters(key);
             res._PublicKey25519 = res._PrivateKey25519.GeneratePublicKey();
-
-            // Create the signer
-            res._Signer = new Ed25519Signer();
         } else if (alg == EdAlgorithm.Ed448) {
             // Generate a new key pair
             Span<byte> key = stackalloc byte[KeySize448 / 8];
             RandomNumberGenerator.Fill(key);
             res._PrivateKey448 = new Ed448PrivateKeyParameters(key);
             res._PublicKey448 = res._PrivateKey448.GeneratePublicKey();
-
-            // Create the signer
-            res._Signer = new Ed448Signer(Array.Empty<byte>());
         } else {
             throw new NotSupportedException($"Curve {alg} not supported for EdDsa");
         }
@@ -121,6 +113,7 @@ public partial class EdDsa : EDAlgorithm
             default:
                 throw new NotSupportedException($"Curve {_EdAlgorithm} not supported for Dsa");
         }
+        eDParameters.Ctx = _Context;
 
         // Clear some
         ClearData();
@@ -153,6 +146,7 @@ public partial class EdDsa : EDAlgorithm
             default:
                 throw new NotSupportedException($"Curve {parameters.Crv.Value} not supported for Dsa");
         }
+        _Context = parameters.Ctx;
     }
 
     /// <summary>
@@ -237,6 +231,6 @@ public partial class EdDsa : EDAlgorithm
         _PrivateKey25519 = null;
         _PrivateKey448 = null;
         _PublicKey448 = null;
-        _Signer = null;
+        _Context = Array.Empty<byte>();
     }
 }

@@ -16,7 +16,7 @@ public partial class EdDsa : EDAlgorithm
     /// <param name="data">The data</param>
     /// <param name="signature">The signature</param>
     /// <returns>True / false - if valid signature or not valid signature</returns>
-    public bool Verify(byte[] data, byte[] signature)
+    public virtual bool Verify(byte[] data, byte[] signature)
     {
         // result
         bool result;
@@ -58,7 +58,7 @@ public partial class EdDsa : EDAlgorithm
     /// <param name="data">The data</param>
     /// <param name="signature">The signature</param>
     /// <returns>True / false - if valid signature or not valid signature</returns>
-    public bool VerifyPh(byte[] data, byte[] signature)
+    public virtual bool VerifyPh(byte[] data, byte[] signature)
     {
         // result
         bool result;

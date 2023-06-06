@@ -3,7 +3,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math.EC.Rfc8032;
 using System.Security.Cryptography;
 
-namespace CryptoEx.EdDSA;
+namespace CryptoEx.Ed.EdDsa;
 
 /// <summary>
 /// Digital signatures over the Edwards-curve Digital Signature Algorithm (EdDSA)
@@ -36,12 +36,12 @@ public partial class EdDsa : EDAlgorithm
                 break;
             case EdAlgorithm.Ed448:
                 // Check signer
-                signature = new byte[Ed448PrivateKeyParameters.SignatureSize];
                 if (_PrivateKey448 == null) {
                     throw new CryptographicException("No private key");
                 }
 
                 // Sign
+                signature = new byte[Ed448PrivateKeyParameters.SignatureSize];
                 _PrivateKey448.Sign(algorithm: Ed448.Algorithm.Ed448, ctx: _Context, msg: data,
                                        msgOff: 0, msgLen: data.Length, sig: signature, sigOff: 0);
                 break;
@@ -79,12 +79,12 @@ public partial class EdDsa : EDAlgorithm
                 break;
             case EdAlgorithm.Ed448:
                 // Check signer
-                signature = new byte[Ed448PrivateKeyParameters.SignatureSize];
                 if (_PrivateKey448 == null) {
                     throw new CryptographicException("No private key");
                 }
 
                 // Sign
+                signature = new byte[Ed448PrivateKeyParameters.SignatureSize];
                 _PrivateKey448.Sign(algorithm: Ed448.Algorithm.Ed448ph, ctx: _Context, msg: data,
                                        msgOff: 0, msgLen: data.Length, sig: signature, sigOff: 0);
                 break;

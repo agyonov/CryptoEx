@@ -4,7 +4,7 @@ using CryptoEx.Ed;
 using Org.BouncyCastle.Crypto.Parameters;
 using System.Security.Cryptography;
 
-namespace CryptoEx.EdDSA;
+namespace CryptoEx.Ed.EdDsa;
 
 /// <summary>
 /// Digital signatures over the Edwards-curve Digital Signature Algorithm (EdDSA)

@@ -1,5 +1,4 @@
-﻿using CryptoEx.EdDSA;
-using CryptoEx.JWK;
+﻿using CryptoEx.JWK;
 using CryptoEx.Utils;
 
 namespace CryptoEx.Ed.JWK;
@@ -13,7 +12,7 @@ public static class JwkExtentions
     /// <summary>
     /// Gets the EdDsa public key from the jwk or null if the jwk does not have an EdDsa public key.
     /// </summary>
-    public static EdDsa? GetEdDsaPublicKey(this Jwk jwk)
+    public static EdDsa.EdDsa? GetEdDsaPublicKey(this Jwk jwk)
     {
         //check the key type
         if (jwk is not JwkEd) {
@@ -39,7 +38,7 @@ public static class JwkExtentions
                 _ => throw new Exception($"Unknown curve name {jEd.Crv}")
             };
 
-            return EdDsa.Create(param);
+            return EdDsa.EdDsa.Create(param);
         } catch {
             return null;
         }
@@ -48,7 +47,7 @@ public static class JwkExtentions
     /// <summary>
     /// Gets the EdDsa private key from the jwk or null if the jwk does not have an EdDsa private key.
     /// </summary>
-    public static EdDsa? GetEdDsaPrivateKey(this Jwk jwk)
+    public static EdDsa.EdDsa? GetEdDsaPrivateKey(this Jwk jwk)
     {
         //check the key type
         if (jwk is not JwkEd) {
@@ -75,7 +74,7 @@ public static class JwkExtentions
                 _ => throw new Exception($"Unknown curve name {jEd.Crv}")
             };
 
-            return EdDsa.Create(param);
+            return EdDsa.EdDsa.Create(param);
         } catch {
             return null;
         }

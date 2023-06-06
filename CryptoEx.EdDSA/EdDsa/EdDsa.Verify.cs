@@ -2,7 +2,7 @@
 using Org.BouncyCastle.Math.EC.Rfc8032;
 using System.Security.Cryptography;
 
-namespace CryptoEx.EdDSA;
+namespace CryptoEx.Ed.EdDsa;
 
 /// <summary>
 /// Digital signatures over the Edwards-curve Digital Signature Algorithm (EdDSA)

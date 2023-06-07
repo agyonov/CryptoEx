@@ -89,6 +89,72 @@ public class TestEdDsaExtentions
         }
     }
 
+    [Fact(DisplayName = "Get private key from PEM and sign")]
+    public void TestGetPrivateKeyFromPemAndSign()
+    {
+        // Create EdDsa
+        EdDsa edDsa = EdDsa.Create();
+
+        // Read private key from PEM
+        using (FileStream fs = File.Open(@"source\cert.key", FileMode.Open, FileAccess.Read))
+        using (StreamReader sr = new (fs)) {
+            // Import
+            edDsa.ImportFromPem(sr.ReadToEnd());
+
+            // Sign
+            byte[] signature = edDsa.Sign(System.Text.Encoding.UTF8.GetBytes(testMessage));
+
+            // Get signature as hex string
+            string signatureHex = PemEd.ByteToHex(signature);
+
+            // Check
+            Assert.Equal(signature25519, signatureHex);
+        }
+    }
+
+    [Fact(DisplayName = "Get private key from encrypted PEM and sign")]
+    public void TestGetPrivateKeyFromPemEncriptedAndSign()
+    {
+        // Create EdDsa
+        EdDsa edDsa = EdDsa.Create();
+
+        // Read private key from PEM
+        using (FileStream fs = File.Open(@"source\cert.pem", FileMode.Open, FileAccess.Read))
+        using (StreamReader sr = new(fs)) {
+            // Import
+            edDsa.ImportFromEncryptedPem(sr.ReadToEnd(), "pass.123");
+
+            // Sign
+            byte[] signature = edDsa.Sign(System.Text.Encoding.UTF8.GetBytes(testMessage));
+
+            // Get signature as hex string
+            string signatureHex = PemEd.ByteToHex(signature);
+
+            // Check
+            Assert.Equal(signature25519, signatureHex);
+        }
+    }
+
+    [Fact(DisplayName = "Get public key from PEM and verify")]
+    public void TestGetPublicKeyFromPemAndVerify()
+    {
+        // Create EdDsa
+        EdDsa edDsa = EdDsa.Create();
+
+        // Read private key from PEM
+        using (FileStream fs = File.Open(@"source\cert.pub", FileMode.Open, FileAccess.Read))
+        using (StreamReader sr = new(fs)) {
+            // Import
+            edDsa.ImportFromPem(sr.ReadToEnd());
+
+            // Verify
+            bool result = edDsa.Verify(System.Text.Encoding.UTF8.GetBytes(testMessage), PemEd.HexToByte(signature25519));
+
+            // Check
+            Assert.True(result);
+        }
+    }
+
     // Ed25519 private key from OpenSSL
     //  "F4F3A94159C4BFF1A62642BE774E7C4E12F708C89C1FB643391E372DED84374E";
     // Ed25519 public key from OpenSSL

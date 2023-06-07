@@ -9,7 +9,7 @@ public class TestEdDsaExtentions
     [Fact(DisplayName = "Get public key from Crt/Cer File")]
     public void TestGetPublicKeyFromCrt()
     {
-        using (FileStream fs = File.Open(@"c:\temp\cert.crt", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"source\cert.crt", FileMode.Open, FileAccess.Read)) {
             X509Certificate2? cert = fs.LoadEdCertificateFromCrt();
 
             // Check
@@ -26,7 +26,7 @@ public class TestEdDsaExtentions
     [Fact(DisplayName = "Get private key from Pfx/P12 File")]
     public void TestGetPrivateKeyFromPfx()
     {
-        using (FileStream fs = File.Open(@"c:\temp\cert.pfx", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"csource\cert.pfx", FileMode.Open, FileAccess.Read)) {
             X509Certificate2Ed[] certs = fs.LoadEdCertificatesFromPfx("pass.123");
 
             // Check
@@ -43,7 +43,7 @@ public class TestEdDsaExtentions
     [Fact(DisplayName = "Sign with private key from pfx")]
     public void TestSign() 
     {
-        using (FileStream fs = File.Open(@"c:\temp\cert.pfx", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"source\cert.pfx", FileMode.Open, FileAccess.Read)) {
             X509Certificate2Ed[] certs = fs.LoadEdCertificatesFromPfx("pass.123");
 
             // Check
@@ -69,7 +69,7 @@ public class TestEdDsaExtentions
     [Fact(DisplayName = "Verify with public key from crt")]
     public void TestVerify()
     {
-        using (FileStream fs = File.Open(@"c:\temp\cert.crt", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"source\cert.crt", FileMode.Open, FileAccess.Read)) {
             X509Certificate2? cert = fs.LoadEdCertificateFromCrt();
 
             // Check

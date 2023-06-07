@@ -107,7 +107,7 @@ public class EcdsaSignVerify
         ECDsa? ecKey = cert!.GetECDsaPrivateKey();
         if (ecKey != null) {
             // Get payload 
-            using (FileStream ms = new(@"c:\temp\testLarge.zip", FileMode.Open, FileAccess.Read)) {
+            using (FileStream ms = new(@"source\testLarge.zip", FileMode.Open, FileAccess.Read)) {
                 // Create signer 
                 ETSISigner signer = new ETSISigner(ecKey);
 
@@ -140,7 +140,7 @@ public class EcdsaSignVerify
     public void VerifyETSI_Detached_large()
     {
         // Get payload 
-        using (FileStream msCheck = new(@"c:\temp\testLarge.zip", FileMode.Open, FileAccess.Read)) {
+        using (FileStream msCheck = new(@"source\testLarge.zip", FileMode.Open, FileAccess.Read)) {
             // Create signer 
             ETSISigner signer = new ETSISigner();
 

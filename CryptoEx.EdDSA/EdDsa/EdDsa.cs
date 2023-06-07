@@ -1,7 +1,4 @@
-﻿
-
-using CryptoEx.Ed;
-using Org.BouncyCastle.Crypto.Parameters;
+﻿using Org.BouncyCastle.Crypto.Parameters;
 using System.Security.Cryptography;
 
 namespace CryptoEx.Ed.EdDsa;

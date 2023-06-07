@@ -1,5 +1,4 @@
-﻿using CryptoEx.Ed;
-using Org.BouncyCastle.Math.EC.Rfc8032;
+﻿using Org.BouncyCastle.Math.EC.Rfc8032;
 using System.Security.Cryptography;
 
 namespace CryptoEx.Ed.EdDsa;

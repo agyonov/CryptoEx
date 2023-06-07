@@ -26,7 +26,7 @@ public class TestEdDsaExtentions
     [Fact(DisplayName = "Get private key from Pfx/P12 File")]
     public void TestGetPrivateKeyFromPfx()
     {
-        using (FileStream fs = File.Open(@"csource\cert.pfx", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"source\cert.pfx", FileMode.Open, FileAccess.Read)) {
             X509Certificate2Ed[] certs = fs.LoadEdCertificatesFromPfx("pass.123");
 
             // Check

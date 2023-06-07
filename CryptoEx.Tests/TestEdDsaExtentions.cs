@@ -90,9 +90,9 @@ public class TestEdDsaExtentions
     }
 
     // Ed25519 private key from OpenSSL
-    public const string thePrKeyOpenSSL = "F4F3A94159C4BFF1A62642BE774E7C4E12F708C89C1FB643391E372DED84374E";
+    //  "F4F3A94159C4BFF1A62642BE774E7C4E12F708C89C1FB643391E372DED84374E";
     // Ed25519 public key from OpenSSL
-    public const string thePubKeyOpenSSL = "589E283430A6655608C591B898EAEECCE2A93F24B68C8018B20F1043F840FFDC";
+    //  "589E283430A6655608C591B898EAEECCE2A93F24B68C8018B20F1043F840FFDC";
     // Some test message
     public const string testMessage = "This is a test";
     // Signature of the test message from OpenSSL

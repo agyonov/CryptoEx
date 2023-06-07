@@ -97,14 +97,18 @@ public partial class EdDsa : EDAlgorithm
                 eDParameters.Crv = new Oid(EdConstants.Ed25519_Oid);
                 eDParameters.X = _PublicKey25519 != null ? _PublicKey25519.GetEncoded() : Array.Empty<byte>();
                 if (includePrivateParameters) {
-                    eDParameters.D = _PrivateKey25519 != null ? _PrivateKey25519.GetEncoded() : Array.Empty<byte>();
+                    eDParameters.D = _PrivateKey25519 != null ? _PrivateKey25519.GetEncoded() : null;
+                } else {
+                    eDParameters.D = null;
                 }
                 break;
             case EdAlgorithm.Ed448:
                 eDParameters.Crv = new Oid(EdConstants.Ed448_Oid);
                 eDParameters.X = _PublicKey448 != null ? _PublicKey448.GetEncoded() : Array.Empty<byte>();
                 if (includePrivateParameters) {
-                    eDParameters.D = _PrivateKey448 != null ? _PrivateKey448.GetEncoded() : Array.Empty<byte>();
+                    eDParameters.D = _PrivateKey448 != null ? _PrivateKey448.GetEncoded() : null;
+                } else {
+                    eDParameters.D = null;
                 }
                 break;
             default:
@@ -132,13 +136,21 @@ public partial class EdDsa : EDAlgorithm
         switch (parameters.Crv.Value) {
             // Case Ed25519
             case EdConstants.Ed25519_Oid:
-                _PublicKey25519 = new Ed25519PublicKeyParameters(parameters.X);
                 _PrivateKey25519 = parameters.D != null ? new Ed25519PrivateKeyParameters(parameters.D) : null;
+                if (parameters.X.Length > 0) {
+                    _PublicKey25519 = new Ed25519PublicKeyParameters(parameters.X);
+                } else if (_PrivateKey25519 != null) {
+                    _PublicKey25519 = _PrivateKey25519.GeneratePublicKey();
+                }
                 break;
             // Case Ed448
             case EdConstants.Ed448_Oid:
                 _PrivateKey448 = parameters.D != null ? new Ed448PrivateKeyParameters(parameters.D) : null;
-                _PublicKey448 = new Ed448PublicKeyParameters(parameters.X);
+                if (parameters.X.Length > 0) {
+                    _PublicKey448 = new Ed448PublicKeyParameters(parameters.X);
+                } else if (_PrivateKey448 != null) {
+                    _PublicKey448 = _PrivateKey448.GeneratePublicKey();
+                }
                 break;
             default:
                 throw new NotSupportedException($"Curve {parameters.Crv.Value} not supported for Dsa");

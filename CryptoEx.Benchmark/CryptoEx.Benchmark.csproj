@@ -8,6 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="source\testLarge.zip" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="source\testLarge.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
   </ItemGroup>
 

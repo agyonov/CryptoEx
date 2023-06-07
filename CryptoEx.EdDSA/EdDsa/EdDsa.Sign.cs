@@ -30,7 +30,7 @@ public partial class EdDsa : EDAlgorithm
                 // Sign
                 signature = new byte[Ed25519PrivateKeyParameters.SignatureSize];
                 _PrivateKey25519.Sign(algorithm: _Context.Length > 0 ? Ed25519.Algorithm.Ed25519ctx : Ed25519.Algorithm.Ed25519,
-                                     ctx: _Context, msg: data, msgOff: 0, msgLen: data.Length, sig: signature, sigOff: 0);
+                                     ctx: _Context.Length  > 0 ? _Context : null, msg: data, msgOff: 0, msgLen: data.Length, sig: signature, sigOff: 0);
 
                 break;
             case EdAlgorithm.Ed448:

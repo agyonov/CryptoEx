@@ -30,7 +30,7 @@ public partial class EdDsa : EDAlgorithm
 
                 // Veryfy
                 result = _PublicKey25519.Verify(algorithm: _Context.Length > 0 ? Ed25519.Algorithm.Ed25519ctx : Ed25519.Algorithm.Ed25519,
-                                                 ctx: _Context, msg: data, msgOff: 0, msgLen: data.Length, sig: signature, sigOff: 0);
+                                                 ctx: _Context.Length > 0 ? _Context : null, msg: data, msgOff: 0, msgLen: data.Length, sig: signature, sigOff: 0);
                 break;
             case EdAlgorithm.Ed448:
                 // Check verifier

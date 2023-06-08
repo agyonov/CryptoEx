@@ -41,7 +41,7 @@ public class TestEdDsaExtentions
     }
 
     [Fact(DisplayName = "Sign with private key from pfx")]
-    public void TestSign() 
+    public void TestSign()
     {
         using (FileStream fs = File.Open(@"source\cert.pfx", FileMode.Open, FileAccess.Read)) {
             X509Certificate2Ed[] certs = fs.LoadEdCertificatesFromPfx("pass.123");
@@ -97,7 +97,7 @@ public class TestEdDsaExtentions
 
         // Read private key from PEM
         using (FileStream fs = File.Open(@"source\cert.key", FileMode.Open, FileAccess.Read))
-        using (StreamReader sr = new (fs)) {
+        using (StreamReader sr = new(fs)) {
             // Import
             edDsa.ImportFromPem(sr.ReadToEnd());
 

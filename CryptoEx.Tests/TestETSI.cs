@@ -562,7 +562,7 @@ public class TestETSI
                 return new X509Certificate2(@"source\cerECC.pfx", "pass.123");
             case CertType.Ed:
                 using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read)) {
-                    X509Certificate2Ed[]  arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");
+                    X509Certificate2Ed[] arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");
                     if (arrCerts.Length > 0) {
                         return arrCerts[0].Certificate;
                     } else {

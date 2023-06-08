@@ -1,6 +1,5 @@
 ﻿using CryptoEx.Utils;
 using System.Collections.ObjectModel;
-using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -276,7 +275,7 @@ public class JWSSigner
     /// Do asymetric sign
     /// </summary>
     /// <param name="PSSRSA">True to use PSSRSA</param>
-    protected virtual void DoAsymetricSign(bool PSSRSA = false) 
+    protected virtual void DoAsymetricSign(bool PSSRSA = false)
     {
         switch (_signer) {
             case RSA rsa:

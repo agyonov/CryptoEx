@@ -1,7 +1,4 @@
-﻿
-using CryptoEx.Ed.EdDsa;
-using CryptoEx.JWS;
-using Org.BouncyCastle.Crypto;
+﻿using CryptoEx.JWS;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -11,7 +8,7 @@ public class JWSSignerEd : JWSSigner
     /// <summary>
     /// A constructor without a private key, used for verification
     /// </summary>
-    public JWSSignerEd(): base()
+    public JWSSignerEd() : base()
     {
     }
 
@@ -36,7 +33,7 @@ public class JWSSignerEd : JWSSigner
     public override void SetNewSigningKey(AsymmetricAlgorithm signer, HashAlgorithmName? hashAlgorithm = null, bool useRSAPSS = false)
     {
         // Check if the key is not EdDsa
-        if (signer is not EdDsa.EdDsa) { 
+        if (signer is not EdDsa.EdDsa) {
             // If it is not, call parent
             base.SetNewSigningKey(signer, hashAlgorithm, useRSAPSS);
         }
@@ -76,7 +73,7 @@ public class JWSSignerEd : JWSSigner
     /// <param name="protectedS">Protected part of the payload</param>
     /// <param name="signature">The signatures</param>
     /// <returns>True / false if it is valid / invalid</returns>
-    protected override bool DoVerify<T>(object key, T header, string protectedS, byte[] signature) 
+    protected override bool DoVerify<T>(object key, T header, string protectedS, byte[] signature)
     {
         // Get the key
         EdDsa.EdDsa? edDsa = _signer as EdDsa.EdDsa;

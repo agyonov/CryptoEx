@@ -86,7 +86,7 @@ public static class JwkExtentions
     /// <param name="key">The EdDsa key</param>
     /// <param name="includePrivateKey">True / Flase to include or not to include private key. Default is 'false'.</param>
     /// <returns>The JWK that holds the EdKey</returns>
-    public static JwkEd GetJwk(this EdDsa.EdDsa key, bool includePrivateKey=false)
+    public static JwkEd GetJwk(this EdDsa.EdDsa key, bool includePrivateKey = false)
     {
         //get the parameters
         EDParameters param = key.ExportParameters(includePrivateKey);

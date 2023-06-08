@@ -15,6 +15,9 @@
     <None Remove="source\cert.pem" />
     <None Remove="source\cert.pfx" />
     <None Remove="source\cert.pub" />
+    <None Remove="source\cert448.key" />
+    <None Remove="source\cert448.pem" />
+    <None Remove="source\cert448.pub" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +34,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="source\cert.pub">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="source\cert448.key">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="source\cert448.pem">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="source\cert448.pub">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

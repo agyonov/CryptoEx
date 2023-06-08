@@ -20,6 +20,7 @@
     <None Remove="source\cert448.pem" />
     <None Remove="source\cert448.pfx" />
     <None Remove="source\cert448.pub" />
+    <None Remove="source\issuer_root.crt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,6 +52,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="source\cert448.pub">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="source\issuer_root.crt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

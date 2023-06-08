@@ -1,4 +1,5 @@
-﻿using CryptoEx.JWK;
+﻿using CryptoEx.Ed.EdDsa;
+using CryptoEx.JWK;
 using CryptoEx.JWS;
 using CryptoEx.JWS.ETSI;
 using System.Net.Http.Headers;
@@ -553,7 +554,23 @@ public class TestETSI
         //    })
         //    .FirstOrDefault();
 
-        switch()
+        // Check what we need
+        switch (certType) {
+            case CertType.RSA:
+                return new X509Certificate2(@"source\cerRSA.pfx", "pass.123");
+            case CertType.EC:
+                return new X509Certificate2(@"source\cerECC.pfx", "pass.123");
+            case CertType.Ed:
+                using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read)) {
+                    X509Certificate2Ed[]  arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");
+                    if (arrCerts.Length > 0) {
+                        return arrCerts[0].Certificate;
+                    } else {
+                        return null;
+                    }
+                }
+            default:
+                return null;
         }
     }
 }

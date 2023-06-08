@@ -8,10 +8,22 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="source\cerECC.pfx" />
+    <None Remove="source\cerRSA.pfx" />
+    <None Remove="source\cert.pfx" />
     <None Remove="source\testLarge.zip" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="source\cerECC.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="source\cerRSA.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="source\cert.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="source\testLarge.zip">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -22,6 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CryptoEx.EdDSA\CryptoEx.Ed.csproj" />
     <ProjectReference Include="..\CryptoEx\CryptoEx.csproj" />
   </ItemGroup>
 

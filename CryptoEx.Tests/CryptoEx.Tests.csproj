@@ -10,6 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="source\cerECC.pfx" />
+    <None Remove="source\cerRSA.pfx" />
     <None Remove="source\cert.crt" />
     <None Remove="source\cert.key" />
     <None Remove="source\cert.pem" />
@@ -24,6 +26,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="source\cerECC.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="source\cerRSA.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="source\cert.crt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

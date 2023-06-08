@@ -1,0 +1,57 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 37 (0x25)
+        Signature Algorithm: ecdsa-with-SHA384
+        Issuer: C=BG, ST=Sofia-grad, L=Sofia, O=Internal-CA, OU=Software, CN=Internal-CA
+        Validity
+            Not Before: Jun  8 07:27:44 2023 GMT
+            Not After : Jun  7 07:27:44 2028 GMT
+        Subject: C=BG, ST=Sofia, O=Global Consulting Ltd., CN=Aleksandar Ivanov Gyonov/emailAddress=tazz@globalcons.com
+        Subject Public Key Info:
+            Public Key Algorithm: ED448
+                ED448 Public-Key:
+                pub:
+                    26:1d:23:91:1e:19:4e:d0:cb:7f:92:33:56:8e:90:
+                    6d:6a:bc:f4:d6:0f:73:45:1c:a8:07:63:6d:8f:a6:
+                    e4:ea:5c:a1:2f:51:d2:40:29:9a:0b:86:a6:1c:cb:
+                    21:74:ce:4e:d2:a8:c4:f7:a8:cc:ed:00
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            X509v3 Subject Key Identifier: 
+                0A:49:A1:95:26:33:13:2A:96:9E:50:C6:AF:DD:C0:3D:E6:07:D2:90
+            X509v3 Authority Key Identifier: 
+                05:3C:6F:E6:56:A8:BB:B5:4F:19:BF:04:02:6D:DD:B7:68:B0:23:AA
+            X509v3 Key Usage: 
+                Digital Signature, Non Repudiation, Key Encipherment, Data Encipherment, Key Agreement
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication, TLS Web Client Authentication, E-mail Protection, Code Signing, Time Stamping
+            X509v3 Subject Alternative Name: 
+                DNS:www.globalcons.com, DNS:*.globalcons.com, DNS:localhost, email:tazz@globalcons.com
+    Signature Algorithm: ecdsa-with-SHA384
+    Signature Value:
+        30:65:02:31:00:e7:2f:d4:62:6a:90:8b:f9:22:3f:28:df:24:
+        ad:97:96:56:9a:f1:35:67:26:f7:49:3a:35:49:bf:c5:7e:a6:
+        ca:8c:cd:c5:6a:8d:85:37:bd:de:6b:c6:39:88:e6:eb:fb:02:
+        30:20:50:f3:78:a8:dc:3a:b7:aa:80:b9:fd:c5:db:93:d9:4b:
+        4f:49:9b:dc:95:83:0c:7c:34:5a:4e:1f:82:24:4b:19:ca:d8:
+        a0:9f:bd:5d:f8:4c:af:63:15:20:7e:72:19
+-----BEGIN CERTIFICATE-----
+MIIC2jCCAmCgAwIBAgIBJTAKBggqhkjOPQQDAzBxMQswCQYDVQQGEwJCRzETMBEG
+A1UECAwKU29maWEtZ3JhZDEOMAwGA1UEBwwFU29maWExFDASBgNVBAoMC0ludGVy
+bmFsLUNBMREwDwYDVQQLDAhTb2Z0d2FyZTEUMBIGA1UEAwwLSW50ZXJuYWwtQ0Ew
+HhcNMjMwNjA4MDcyNzQ0WhcNMjgwNjA3MDcyNzQ0WjCBhTELMAkGA1UEBhMCQkcx
+DjAMBgNVBAgMBVNvZmlhMR8wHQYDVQQKDBZHbG9iYWwgQ29uc3VsdGluZyBMdGQu
+MSEwHwYDVQQDDBhBbGVrc2FuZGFyIEl2YW5vdiBHeW9ub3YxIjAgBgkqhkiG9w0B
+CQEWE3RhenpAZ2xvYmFsY29ucy5jb20wQzAFBgMrZXEDOgAmHSORHhlO0Mt/kjNW
+jpBtarz01g9zRRyoB2Ntj6bk6lyhL1HSQCmaC4amHMshdM5O0qjE96jM7QCjgekw
+geYwCQYDVR0TBAIwADAdBgNVHQ4EFgQUCkmhlSYzEyqWnlDGr93APeYH0pAwHwYD
+VR0jBBgwFoAUBTxv5laou7VPGb8EAm3dt2iwI6owCwYDVR0PBAQDAgP4MDsGA1Ud
+JQQ0MDIGCCsGAQUFBwMBBggrBgEFBQcDAgYIKwYBBQUHAwQGCCsGAQUFBwMDBggr
+BgEFBQcDCDBPBgNVHREESDBGghJ3d3cuZ2xvYmFsY29ucy5jb22CECouZ2xvYmFs
+Y29ucy5jb22CCWxvY2FsaG9zdIETdGF6ekBnbG9iYWxjb25zLmNvbTAKBggqhkjO
+PQQDAwNoADBlAjEA5y/UYmqQi/kiPyjfJK2Xllaa8TVnJvdJOjVJv8V+psqMzcVq
+jYU3vd5rxjmI5uv7AjAgUPN4qNw6t6qAuf3F25PZS09Jm9yVgwx8NFpOH4IkSxnK
+2KCfvV34TK9jFSB+chk=
+-----END CERTIFICATE-----

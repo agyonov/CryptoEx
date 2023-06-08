@@ -79,4 +79,41 @@ public static class JwkExtentions
             return null;
         }
     }
+
+    /// <summary>
+    /// Get Jwk from EdDsa key
+    /// </summary>
+    /// <param name="key">The EdDsa key</param>
+    /// <param name="includePrivateKey">True / Flase to include or not to include private key. Default is 'false'.</param>
+    /// <returns>The JWK that holds the EdKey</returns>
+    public static JwkEd GetJwk(this EdDsa.EdDsa key, bool includePrivateKey=false)
+    {
+        //get the parameters
+        EDParameters param = key.ExportParameters(includePrivateKey);
+
+        //create the jwk
+        JwkEd jwk = new();
+
+        //set the key type
+        jwk.Kty = JwkConstants.OKP;
+
+        //set the curve
+        jwk.Crv = param.Crv.Value switch
+        {
+            EdConstants.Ed25519_Oid => JwkConstants.CurveEd25519,
+            EdConstants.Ed448_Oid => JwkConstants.CurveEd448,
+            _ => throw new Exception($"Unknown curve name {param.Crv}")
+        };
+
+        //set the x
+        jwk.X = Base64UrlEncoder.Encode(param.X);
+
+        //set the d
+        if (param.D != null && includePrivateKey) {
+            jwk.D = Base64UrlEncoder.Encode(param.D);
+        }
+
+        //return the jwk
+        return jwk;
+    }
 }

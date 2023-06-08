@@ -155,6 +155,89 @@ public class TestEdDsaExtentions
         }
     }
 
+    [Fact(DisplayName = "Get public key 448 from Crt/Cer File")]
+    public void TestGetPublicKey448FromCrt()
+    {
+        using (FileStream fs = File.Open(@"source\cert448.crt", FileMode.Open, FileAccess.Read)) {
+            X509Certificate2? cert = fs.LoadEdCertificateFromCrt();
+
+            // Check
+            Assert.NotNull(cert);
+
+            // Get public key
+            EdDsa? edDsa = cert.GetEdDsaPublicKey();
+
+            // Check
+            Assert.NotNull(edDsa);
+        }
+    }
+
+    [Fact(DisplayName = "Get private key 448 from Pfx/P12 File")]
+    public void TestGetPrivateKey448FromPfx()
+    {
+        using (FileStream fs = File.Open(@"source\cert448.pfx", FileMode.Open, FileAccess.Read)) {
+            X509Certificate2Ed[] certs = fs.LoadEdCertificatesFromPfx("pass.123");
+
+            // Check
+            Assert.NotEmpty(certs);
+
+            // Get private key
+            EdDsa? edDsa = certs[0].GetEdDsaPrivateKey();
+
+            // Check
+            Assert.NotNull(edDsa);
+        }
+    }
+
+    [Fact(DisplayName = "Sign with private key 448 from pfx")]
+    public void TestSign448()
+    {
+        using (FileStream fs = File.Open(@"source\cert448.pfx", FileMode.Open, FileAccess.Read)) {
+            X509Certificate2Ed[] certs = fs.LoadEdCertificatesFromPfx("pass.123");
+
+            // Check
+            Assert.NotEmpty(certs);
+
+            // Get private key
+            EdDsa? edDsa = certs[0].GetEdDsaPrivateKey();
+
+            // Check
+            Assert.NotNull(edDsa);
+
+            // Sign
+            byte[] signature = edDsa.Sign(System.Text.Encoding.UTF8.GetBytes(testMessage448));
+
+            // Get signature as hex string
+            string signatureHex = PemEd.ByteToHex(signature);
+
+            // Check
+            Assert.Equal(signature448, signatureHex);
+        }
+    }
+
+    [Fact(DisplayName = "Verify with public key 448 from crt")]
+    public void TestVerify448()
+    {
+        using (FileStream fs = File.Open(@"source\cert448.crt", FileMode.Open, FileAccess.Read)) {
+            X509Certificate2? cert = fs.LoadEdCertificateFromCrt();
+
+            // Check
+            Assert.NotNull(cert);
+
+            // Get public key
+            EdDsa? edDsa = cert.GetEdDsaPublicKey();
+
+            // Check
+            Assert.NotNull(edDsa);
+
+            // Verify
+            bool result = edDsa.Verify(System.Text.Encoding.UTF8.GetBytes(testMessage448), PemEd.HexToByte(signature448));
+
+            // Check
+            Assert.True(result);
+        }
+    }
+
     [Fact(DisplayName = "Get private key 448 from PEM and sign")]
     public void TestGetPrivateKey448FromPemAndSign()
     {

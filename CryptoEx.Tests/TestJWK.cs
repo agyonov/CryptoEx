@@ -1,4 +1,6 @@
-﻿using CryptoEx.JWK;
+﻿using CryptoEx.Ed.EdDsa;
+using CryptoEx.Ed.JWK;
+using CryptoEx.JWK;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
@@ -29,6 +31,16 @@ public class TestJWK
         }
         """;
 
+    public const string JWK_PUBLIC_3 =
+        """
+        {
+         "kty":"OKP",
+         "crv":"Ed25519",
+         "x":"11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+         "kid":"JWK_PUB_3"
+        }
+        """;
+
     public const string JWK_PRIVATE_1 =
         """
         {
@@ -56,6 +68,18 @@ public class TestJWK
         "qi":"GyM_p6JrXySiz1toFgKbWV-JdI3jQ4ypu9rbMWx3rQJBfmt0FoYzgUIZEVFEcOqwemRN81zoDAaa-Bk0KWNGDjJHZDdDmFhW3AN7lI-puxk_mHZGJ11rxyR8O55XLSe3SPmRfKwZI6yU24ZxvQKFYItdldUKGzO6Ia6zTKhAVRU",
         "alg":"RS256",
         "kid":"2011-04-29"
+        }
+        """;
+
+    public const string JWK_PRIVATE_3 =
+        """
+        {
+        "kty":"OKP",
+        "crv":"Ed25519",
+        "x":"11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+        "d":"nWGxne_9WmC6hEr0kuwsxERJxWl7MmkZcDusAxyuf2A",
+        "use":"sig",
+        "kid":"3"
         }
         """;
 
@@ -175,6 +199,52 @@ public class TestJWK
         Assert.Equal("MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4", jwk.X);
         Assert.Equal("4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM", jwk.Y);
         Assert.Equal("870MB6gfuTJ4HtUnUvYMyJpr5eUZNP4Bk43bVdj3eAE", jwk.D);
+    }
+
+    [Fact(DisplayName = "Decode ED key public one")]
+    public void DecodeEDPublic()
+    {
+        JwkEd? jwk = JsonSerializer.Deserialize<Jwk>(JWK_PUBLIC_3, JwkConstants.jsonOptions) as JwkEd;
+
+        Assert.NotNull(jwk);
+        Assert.Equal("OKP", jwk.Kty);
+        Assert.Equal("Ed25519", jwk.Crv);
+        Assert.Equal("11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo", jwk.X);
+        Assert.Equal("JWK_PUB_3", jwk.Kid);
+
+        EdDsa? eddsa = jwk.GetEdDsaPublicKey();
+        Assert.NotNull(eddsa);
+
+        jwk = eddsa.GetJwk();
+
+        Assert.NotNull(jwk);
+        Assert.Equal("OKP", jwk.Kty);
+        Assert.Equal("Ed25519", jwk.Crv);
+        Assert.Equal("11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo", jwk.X);
+    }
+
+    [Fact(DisplayName = "Decode ED key private one")]
+    public void DecodeEDPrivate()
+    {
+        JwkEd? jwk = JsonSerializer.Deserialize<Jwk>(JWK_PRIVATE_3, JwkConstants.jsonOptions) as JwkEd;
+
+        Assert.NotNull(jwk);
+        Assert.Equal("OKP", jwk.Kty);
+        Assert.Equal("Ed25519", jwk.Crv);
+        Assert.Equal("11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo", jwk.X);
+        Assert.Equal("nWGxne_9WmC6hEr0kuwsxERJxWl7MmkZcDusAxyuf2A", jwk.D);
+        Assert.Equal("sig", jwk.Use);
+        Assert.Equal("3", jwk.Kid);
+
+        EdDsa? eddsa = jwk.GetEdDsaPrivateKey();
+        Assert.NotNull(eddsa);
+
+        jwk = eddsa.GetJwk(true);
+        Assert.NotNull(jwk);
+        Assert.Equal("OKP", jwk.Kty);
+        Assert.Equal("Ed25519", jwk.Crv);
+        Assert.Equal("11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo", jwk.X);
+        Assert.Equal("nWGxne_9WmC6hEr0kuwsxERJxWl7MmkZcDusAxyuf2A", jwk.D);
     }
 
     [Fact(DisplayName = "Decode RSA key private one")]

@@ -60,6 +60,11 @@ public static class JWSConstants
     /// </summary>
     public const string PS512 = "PS512";
 
+    /// <summary>
+    /// EdDSA
+    /// </summary>
+    public const string EdDSA = "EdDSA";
+
 
     /// <summary>
     /// JWS in compact serialization format

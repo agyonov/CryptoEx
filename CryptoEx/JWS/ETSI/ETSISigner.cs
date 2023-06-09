@@ -157,7 +157,7 @@ public class ETSISigner : JWSSigner
     /// </summary>
     /// <param name="calc">The signature input</param>
     /// <param name="PSSRSA">Is PSS for RSA</param>
-    protected virtual void DoSignDetached(string calc, bool PSSRSA = false) 
+    protected virtual void DoSignDetached(string calc, bool PSSRSA = false)
     {
         if (_signer is RSA) {
             _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, PSSRSA ? RSASignaturePadding.Pss : RSASignaturePadding.Pkcs1));
@@ -321,7 +321,7 @@ public class ETSISigner : JWSSigner
     /// </summary>
     /// <param name="x5c">The certificate</param>
     /// <returns>The public key</returns>
-    protected virtual AsymmetricAlgorithm? GetPublicKeyFromCertificate(string? x5c) 
+    protected virtual AsymmetricAlgorithm? GetPublicKeyFromCertificate(string? x5c)
     {
         if (x5c != null) {
             // Get the public key
@@ -340,7 +340,7 @@ public class ETSISigner : JWSSigner
 
         // General return
         return null;
-    } 
+    }
 
     /// <summary>
     /// Verify the detached signature

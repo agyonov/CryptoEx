@@ -149,6 +149,16 @@ public class ETSISigner : JWSSigner
         }
         _protecteds.Add(_header);
         string calc = optionalPayload == null ? $"{_header}." : $"{_header}.{_payload}";
+        DoSignDetached(calc, PSSRSA);
+    }
+
+    /// <summary>
+    /// Do the actual signing
+    /// </summary>
+    /// <param name="calc">The signature input</param>
+    /// <param name="PSSRSA">Is PSS for RSA</param>
+    protected virtual void DoSignDetached(string calc, bool PSSRSA = false) 
+    {
         if (_signer is RSA) {
             _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, PSSRSA ? RSASignaturePadding.Pss : RSASignaturePadding.Pkcs1));
         } else if (_signer is ECDsa) {
@@ -206,13 +216,7 @@ public class ETSISigner : JWSSigner
         }
         _protecteds.Add(_header);
         string calc = optionalPayload == null ? $"{_header}." : $"{_header}.{_payload}";
-        if (_signer is RSA) {
-            _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, PSSRSA ? RSASignaturePadding.Pss : RSASignaturePadding.Pkcs1));
-        } else if (_signer is ECDsa) {
-            _signatures.Add(((ECDsa)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName));
-        } else {
-            throw new Exception("As of ETSI TS 119 312 V1.3.1, p. 6.2.2 it shall be RSA or ECDSA");
-        }
+        DoSignDetached(calc, PSSRSA);
     }
 
     /// <summary>
@@ -300,20 +304,9 @@ public class ETSISigner : JWSSigner
         for (int loop = 0; loop < eTSIHeaders.Count; loop++) {
             // Tre get the public key
             string? x5c = eTSIHeaders[loop].X5c?.FirstOrDefault();
-            if (x5c != null) {
-                // Get the public key
-                try {
-                    X509Certificate2 cert = new(Convert.FromBase64String(x5c));
-                    RSA? rsa = cert.GetRSAPublicKey();
-                    if (rsa != null) {
-                        pubKeys.Add(rsa);
-                        continue;
-                    }
-                    ECDsa? ecdsa = cert.GetECDsaPublicKey();
-                    if (ecdsa != null) {
-                        pubKeys.Add(ecdsa);
-                    }
-                } catch { }
+            AsymmetricAlgorithm? pubKey = GetPublicKeyFromCertificate(x5c);
+            if (pubKey != null) {
+                pubKeys.Add(pubKey);
             }
         }
 
@@ -322,6 +315,32 @@ public class ETSISigner : JWSSigner
             return Verify<ETSIHeader>(pubKeys, ETSIResolutor);
         } finally { Clear(); }
     }
+
+    /// <summary>
+    /// Tryies to retrieve the public key from the certificate
+    /// </summary>
+    /// <param name="x5c">The certificate</param>
+    /// <returns>The public key</returns>
+    protected virtual AsymmetricAlgorithm? GetPublicKeyFromCertificate(string? x5c) 
+    {
+        if (x5c != null) {
+            // Get the public key
+            try {
+                X509Certificate2 cert = new(Convert.FromBase64String(x5c));
+                RSA? rsa = cert.GetRSAPublicKey();
+                if (rsa != null) {
+                    return rsa;
+                }
+                ECDsa? ecdsa = cert.GetECDsaPublicKey();
+                if (ecdsa != null) {
+                    return ecdsa;
+                }
+            } catch { }
+        }
+
+        // General return
+        return null;
+    } 
 
     /// <summary>
     /// Verify the detached signature
@@ -353,20 +372,9 @@ public class ETSISigner : JWSSigner
         for (int loop = 0; loop < eTSIHeaders.Count; loop++) {
             // Tre get the public key
             string? x5c = eTSIHeaders[loop].X5c?.FirstOrDefault();
-            if (x5c != null) {
-                // Get the public key
-                try {
-                    X509Certificate2 cert = new(Convert.FromBase64String(x5c));
-                    RSA? rsa = cert.GetRSAPublicKey();
-                    if (rsa != null) {
-                        pubKeys.Add(rsa);
-                        continue;
-                    }
-                    ECDsa? ecdsa = cert.GetECDsaPublicKey();
-                    if (ecdsa != null) {
-                        pubKeys.Add(ecdsa);
-                    }
-                } catch { }
+            AsymmetricAlgorithm? pubKey = GetPublicKeyFromCertificate(x5c);
+            if (pubKey != null) {
+                pubKeys.Add(pubKey);
             }
         }
 
@@ -401,20 +409,9 @@ public class ETSISigner : JWSSigner
         for (int loop = 0; loop < eTSIHeaders.Count; loop++) {
             // Tre get the public key
             string? x5c = eTSIHeaders[loop].X5c?.FirstOrDefault();
-            if (x5c != null) {
-                // Get the public key
-                try {
-                    X509Certificate2 cert = new(Convert.FromBase64String(x5c));
-                    RSA? rsa = cert.GetRSAPublicKey();
-                    if (rsa != null) {
-                        pubKeys.Add(rsa);
-                        continue;
-                    }
-                    ECDsa? ecdsa = cert.GetECDsaPublicKey();
-                    if (ecdsa != null) {
-                        pubKeys.Add(ecdsa);
-                    }
-                } catch { }
+            AsymmetricAlgorithm? pubKey = GetPublicKeyFromCertificate(x5c);
+            if (pubKey != null) {
+                pubKeys.Add(pubKey);
             }
         }
 

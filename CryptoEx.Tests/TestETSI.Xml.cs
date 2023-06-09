@@ -495,49 +495,53 @@ public class TestETSIXml
         }
     }
 
-    // Get some certificate from the store for testing
+    // Get some certificate from Windows store for testing
+    private static X509Certificate2? GetCertificateOnWindows(CertType certType)
+    {
+        var now = DateTime.Now;
+        using (X509Store store = new X509Store(StoreLocation.CurrentUser)) {
+            store.Open(OpenFlags.ReadOnly);
+
+            var coll = store.Certificates
+                            .Where(cert => cert.HasPrivateKey && cert.NotBefore < now && cert.NotAfter > now)
+                            .ToList();
+
+            List<X509Certificate2> valColl = new List<X509Certificate2>();
+
+            foreach (var c in coll) {
+                using (var chain = new X509Chain()) {
+
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                    chain.ChainPolicy.DisableCertificateDownloads = true;
+                    if (chain.Build(c)) {
+                        valColl.Add(c);
+                    } else {
+                        c.Dispose();
+                    }
+
+                    for (int i = 0; i < chain.ChainElements.Count; i++) {
+                        chain.ChainElements[i].Certificate.Dispose();
+                    }
+                }
+            }
+
+            return valColl.Where(c =>
+            {
+                string frName = certType switch
+                {
+                    CertType.RSA => "RSA",
+                    CertType.EC => "ECC",
+                    _ => "Ed"
+                };
+                return c.PublicKey.Oid.FriendlyName == frName;
+            })
+            .FirstOrDefault();
+        }
+    }
+
+    // Get some certificate from PFX store for testing
     private static X509Certificate2? GetCertificate(CertType certType)
     {
-        //var now = DateTime.Now;
-        //using (X509Store store = new X509Store(StoreLocation.CurrentUser)) {
-        //    store.Open(OpenFlags.ReadOnly);
-
-        //    var coll = store.Certificates
-        //                    .Where(cert => cert.HasPrivateKey && cert.NotBefore < now && cert.NotAfter > now)
-        //                    .ToList();
-
-        //    List<X509Certificate2> valColl = new List<X509Certificate2>();
-
-        //    foreach (var c in coll) {
-        //        using (var chain = new X509Chain()) {
-
-        //            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-        //            chain.ChainPolicy.DisableCertificateDownloads = true;
-        //            if (chain.Build(c)) {
-        //                valColl.Add(c);
-        //            } else {
-        //                c.Dispose();
-        //            }
-
-        //            for (int i = 0; i < chain.ChainElements.Count; i++) {
-        //                chain.ChainElements[i].Certificate.Dispose();
-        //            }
-        //        }
-        //    }
-
-        //    return valColl.Where(c =>
-        //    {
-        //        string frName = certType switch
-        //        {
-        //            CertType.RSA => "RSA",
-        //            CertType.EC => "ECC",
-        //            _ => "Ed"
-        //        };
-        //        return c.PublicKey.Oid.FriendlyName == frName;
-        //    })
-        //    .FirstOrDefault();
-        //}
-
         // Check what we need
         switch (certType) {
             case CertType.RSA:
@@ -558,6 +562,7 @@ public class TestETSIXml
         }
     }
 
+    // Call Timestamp server
     private async Task<byte[]> CreateRfc3161RequestAsync(byte[] data, CancellationToken ct = default)
     {
         Rfc3161TimestampRequest req = Rfc3161TimestampRequest.CreateFromData(data, HashAlgorithmName.SHA512, null, null, true, null);

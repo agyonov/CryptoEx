@@ -5,8 +5,17 @@ using CryptoEx.Ed.Utils;
 using System.Security.Cryptography.X509Certificates;
 
 namespace CryptoEx.Tests;
-public class TestEdDsaExtentions
+public class TestEdDsa
 {
+    [Fact(DisplayName = "Create EdDsa ephimeral")]
+    public void TestCreateEdDsaEphimeral()
+    {
+        _ = EdDsa.Create();
+        _ = EdDsa.Create(EdAlgorithm.Ed448);
+
+        Assert.True(true);
+    }
+
     [Fact(DisplayName = "Get public key from Crt/Cer File")]
     public void TestGetPublicKeyFromCrt()
     {

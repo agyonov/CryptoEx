@@ -2,11 +2,15 @@
 using System.Security.Cryptography;
 
 namespace CryptoEx.Ed.EdDH;
-public class EdDH : EDAlgorithm
+
+/// <summary>
+/// Key exchanges over the Edwards-curve Digital Signature Algorithm (EdDSA)
+/// </summary>
+public partial class EdDH : EDAlgorithm
 {
     // Key sizes
     private const int KeySize25519 = 256;
-    private const int KeySize448 = 456;
+    private const int KeySize448 = 448;
 
     // Ed25519 key pair
     private X25519PrivateKeyParameters? _PrivateKey25519 = null;
@@ -36,13 +40,13 @@ public class EdDH : EDAlgorithm
         EdDH res = new EdDH();
 
         // See what we have
-        if (alg == EdAlgorithm.Ed25519) {
+        if (alg == EdAlgorithm.X25519) {
             // Generate a new key pair
             Span<byte> key = stackalloc byte[KeySize25519 / 8];
             RandomNumberGenerator.Fill(key);
             res._PrivateKey25519 = new X25519PrivateKeyParameters(key);
             res._PublicKey25519 = res._PrivateKey25519.GeneratePublicKey();
-        } else if (alg == EdAlgorithm.Ed448) {
+        } else if (alg == EdAlgorithm.X448) {
             // Generate a new key pair
             Span<byte> key = stackalloc byte[KeySize448 / 8];
             RandomNumberGenerator.Fill(key);
@@ -153,7 +157,12 @@ public class EdDH : EDAlgorithm
     /// Gets the name of the key exchange algorithm
     /// </summary>
     public override string? KeyExchangeAlgorithm =>
-        throw new NotImplementedException("EdDsa is for signatures, not for key exchange");
+        _EdAlgorithm switch
+        {
+            EdAlgorithm.X25519 => EdConstants.X25519_Oid,
+            EdAlgorithm.X448 => EdConstants.X448_Oid,
+            _ => throw new NotSupportedException($"Curve {_EdAlgorithm} not supported for Key Exchange")
+        };
 
     /// <summary>
     /// Gets or sets the size, in bits, of the key modulus used by the asymmetric algorithm
@@ -185,12 +194,7 @@ public class EdDH : EDAlgorithm
     /// The name of the signature algorithm
     /// </summary>
     public override string SignatureAlgorithm =>
-         _EdAlgorithm switch
-         {
-             EdAlgorithm.X25519 => EdConstants.X25519_Oid,
-             EdAlgorithm.X448 => EdConstants.X448_Oid,
-             _ => throw new NotSupportedException($"Curve {_EdAlgorithm} not supported for Key Exchange")
-         };
+        throw new NotImplementedException("EdDH is for key exchange, not for signatures");
 
     /// <summary>
     /// Get what is it

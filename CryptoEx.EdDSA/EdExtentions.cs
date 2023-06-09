@@ -1,10 +1,12 @@
-﻿using CryptoEx.Ed.EdDsa;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Math.EC.Rfc8032;
+﻿using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 
 namespace CryptoEx.Ed;
+
+/// <summary>
+/// Extentions for EdDSA / EdDH and X509Certificate2
+/// </summary>
 public static class EdExtentions
 {
     /// <summary>

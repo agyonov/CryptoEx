@@ -1,5 +1,4 @@
 ﻿using CryptoEx.Ed;
-using CryptoEx.Ed.EdDsa;
 using CryptoEx.XML.ETSI;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;

@@ -1,6 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
 using CryptoEx.Ed;
-using CryptoEx.Ed.EdDsa;
 using CryptoEx.XML.ETSI;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;

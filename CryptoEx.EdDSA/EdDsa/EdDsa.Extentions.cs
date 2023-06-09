@@ -1,6 +1,4 @@
-﻿using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Pkcs;
-using System.Security.Cryptography.X509Certificates;
+﻿using System.Security.Cryptography.X509Certificates;
 
 namespace CryptoEx.Ed.EdDsa;
 

@@ -11,6 +11,7 @@
     <None Remove="source\cerECC.pfx" />
     <None Remove="source\cerRSA.pfx" />
     <None Remove="source\cert.pfx" />
+    <None Remove="source\cert448.pfx" />
     <None Remove="source\testLarge.zip" />
   </ItemGroup>
 
@@ -22,6 +23,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="source\cert.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="source\cert448.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="source\testLarge.zip">

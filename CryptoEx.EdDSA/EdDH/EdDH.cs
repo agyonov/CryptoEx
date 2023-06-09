@@ -1,62 +1,55 @@
 ﻿using Org.BouncyCastle.Crypto.Parameters;
 using System.Security.Cryptography;
 
-namespace CryptoEx.Ed.EdDsa;
-
-/// <summary>
-/// Digital signatures over the Edwards-curve Digital Signature Algorithm (EdDSA)
-/// </summary>
-public partial class EdDsa : EDAlgorithm
+namespace CryptoEx.Ed.EdDH;
+public class EdDH : EDAlgorithm
 {
     // Key sizes
     private const int KeySize25519 = 256;
     private const int KeySize448 = 456;
 
     // Ed25519 key pair
-    private Ed25519PrivateKeyParameters? _PrivateKey25519 = null;
-    private Ed25519PublicKeyParameters? _PublicKey25519 = null;
+    private X25519PrivateKeyParameters? _PrivateKey25519 = null;
+    private X25519PublicKeyParameters? _PublicKey25519 = null;
 
     // Ed448 key pair
-    private Ed448PrivateKeyParameters? _PrivateKey448 = null;
-    private Ed448PublicKeyParameters? _PublicKey448 = null;
-
-    // Context
-    private byte[] _Context = Array.Empty<byte>();
+    private X448PrivateKeyParameters? _PrivateKey448 = null;
+    private X448PublicKeyParameters? _PublicKey448 = null;
 
     /// <summary>
     /// Stop public to be able to create directly this class.
-    /// Mainly to confoirm to the .NET way - look at ECDsa
+    /// Mainly to confoirm to the .NET way - look at EDDiffieHellman
     /// </summary>
-    protected internal EdDsa()
+    protected internal EdDH()
     {
     }
 
     /// <summary>
-    /// Create Signer / Verifier
+    /// Create EdDH
     /// Generate a new key pair 
     /// </summary>
-    /// <param name="alg">Algorithm to use. By default it is Ed25519. Can also be Ed448</param>
-    /// <returns>The EdDsa that can be used to sign / verify data</returns>
-    public static EdDsa Create(EdAlgorithm alg = EdAlgorithm.Ed25519)
+    /// <param name="alg">Algorithm to use. By default it is X25519. Can also be X448</param>
+    /// <returns>The EdDH that can be used to exchange keys</returns>
+    public static EdDH Create(EdAlgorithm alg = EdAlgorithm.X25519)
     {
         // Create some
-        EdDsa res = new EdDsa();
+        EdDH res = new EdDH();
 
         // See what we have
         if (alg == EdAlgorithm.Ed25519) {
             // Generate a new key pair
             Span<byte> key = stackalloc byte[KeySize25519 / 8];
             RandomNumberGenerator.Fill(key);
-            res._PrivateKey25519 = new Ed25519PrivateKeyParameters(key);
+            res._PrivateKey25519 = new X25519PrivateKeyParameters(key);
             res._PublicKey25519 = res._PrivateKey25519.GeneratePublicKey();
         } else if (alg == EdAlgorithm.Ed448) {
             // Generate a new key pair
             Span<byte> key = stackalloc byte[KeySize448 / 8];
             RandomNumberGenerator.Fill(key);
-            res._PrivateKey448 = new Ed448PrivateKeyParameters(key);
+            res._PrivateKey448 = new X448PrivateKeyParameters(key);
             res._PublicKey448 = res._PrivateKey448.GeneratePublicKey();
         } else {
-            throw new NotSupportedException($"Curve {alg} not supported for EdDsa");
+            throw new NotSupportedException($"Curve {alg} not supported for EdDH");
         }
 
         // return
@@ -64,14 +57,14 @@ public partial class EdDsa : EDAlgorithm
     }
 
     /// <summary>
-    ///  Create EdDsa from parameters
+    ///  Create EdDH from parameters
     /// </summary>
     /// <param name="parameters">The parameters</param>
-    /// <returns>The EdDsa Algorythm</returns>
-    public static EdDsa Create(EDParameters parameters)
+    /// <returns>The EdDH Algorythm</returns>
+    public static EdDH Create(EDParameters parameters)
     {
         // Create some
-        EdDsa res = new EdDsa();
+        EdDH res = new EdDH();
 
         res.ImportParameters(parameters);
 
@@ -93,8 +86,8 @@ public partial class EdDsa : EDAlgorithm
 
         // Check what is it
         switch (_EdAlgorithm) {
-            case EdAlgorithm.Ed25519:
-                eDParameters.Crv = new Oid(EdConstants.Ed25519_Oid);
+            case EdAlgorithm.X25519:
+                eDParameters.Crv = new Oid(EdConstants.X25519_Oid);
                 eDParameters.X = _PublicKey25519 != null ? _PublicKey25519.GetEncoded() : Array.Empty<byte>();
                 if (includePrivateParameters) {
                     eDParameters.D = _PrivateKey25519 != null ? _PrivateKey25519.GetEncoded() : null;
@@ -102,8 +95,8 @@ public partial class EdDsa : EDAlgorithm
                     eDParameters.D = null;
                 }
                 break;
-            case EdAlgorithm.Ed448:
-                eDParameters.Crv = new Oid(EdConstants.Ed448_Oid);
+            case EdAlgorithm.X448:
+                eDParameters.Crv = new Oid(EdConstants.X448_Oid);
                 eDParameters.X = _PublicKey448 != null ? _PublicKey448.GetEncoded() : Array.Empty<byte>();
                 if (includePrivateParameters) {
                     eDParameters.D = _PrivateKey448 != null ? _PrivateKey448.GetEncoded() : null;
@@ -112,9 +105,8 @@ public partial class EdDsa : EDAlgorithm
                 }
                 break;
             default:
-                throw new NotSupportedException($"Curve {_EdAlgorithm} not supported for Dsa");
+                throw new NotSupportedException($"Curve {_EdAlgorithm} not supported for Key Exchange Exchange");
         }
-        eDParameters.Ctx = _Context;
 
         // Clear some
         ClearData();
@@ -134,28 +126,27 @@ public partial class EdDsa : EDAlgorithm
 
         // Import crypto parameters
         switch (parameters.Crv.Value) {
-            // Case Ed25519
-            case EdConstants.Ed25519_Oid:
-                _PrivateKey25519 = parameters.D != null ? new Ed25519PrivateKeyParameters(parameters.D) : null;
+            // Case X25519
+            case EdConstants.X25519_Oid:
+                _PrivateKey25519 = parameters.D != null ? new X25519PrivateKeyParameters(parameters.D) : null;
                 if (parameters.X.Length > 0) {
-                    _PublicKey25519 = new Ed25519PublicKeyParameters(parameters.X);
+                    _PublicKey25519 = new X25519PublicKeyParameters(parameters.X);
                 } else if (_PrivateKey25519 != null) {
                     _PublicKey25519 = _PrivateKey25519.GeneratePublicKey();
                 }
                 break;
-            // Case Ed448
-            case EdConstants.Ed448_Oid:
-                _PrivateKey448 = parameters.D != null ? new Ed448PrivateKeyParameters(parameters.D) : null;
+            // Case X448
+            case EdConstants.X448_Oid:
+                _PrivateKey448 = parameters.D != null ? new X448PrivateKeyParameters(parameters.D) : null;
                 if (parameters.X.Length > 0) {
-                    _PublicKey448 = new Ed448PublicKeyParameters(parameters.X);
+                    _PublicKey448 = new X448PublicKeyParameters(parameters.X);
                 } else if (_PrivateKey448 != null) {
                     _PublicKey448 = _PrivateKey448.GeneratePublicKey();
                 }
                 break;
             default:
-                throw new NotSupportedException($"Curve {parameters.Crv.Value} not supported for Dsa");
+                throw new NotSupportedException($"Curve {parameters.Crv.Value} not supported for Key exchange");
         }
-        _Context = parameters.Ctx;
     }
 
     /// <summary>
@@ -171,12 +162,12 @@ public partial class EdDsa : EDAlgorithm
     {
         get => _EdAlgorithm switch
         {
-            EdAlgorithm.Ed25519 => KeySize25519,
-            EdAlgorithm.Ed448 => KeySize448,
-            _ => throw new NotSupportedException($"Curve {_EdAlgorithm} not supported for Dsa")
+            EdAlgorithm.X25519 => KeySize25519,
+            EdAlgorithm.X448 => KeySize448,
+            _ => throw new NotSupportedException($"Curve {_EdAlgorithm} not supported for Key Exchange")
         };
         set =>
-            throw new Exception("EdDsa has a fixed key size.");
+            throw new Exception("EdDH has a fixed key size.");
     }
 
     /// <summary>
@@ -185,9 +176,9 @@ public partial class EdDsa : EDAlgorithm
     public override KeySizes[] LegalKeySizes =>
         _EdAlgorithm switch
         {
-            EdAlgorithm.Ed25519 => new KeySizes[] { new KeySizes(KeySize25519, KeySize25519, 0) },
-            EdAlgorithm.Ed448 => new KeySizes[] { new KeySizes(KeySize448, KeySize448, 0) },
-            _ => throw new NotSupportedException($"Curve {_EdAlgorithm} not supported for Dsa")
+            EdAlgorithm.X25519 => new KeySizes[] { new KeySizes(KeySize25519, KeySize25519, 0) },
+            EdAlgorithm.X448 => new KeySizes[] { new KeySizes(KeySize448, KeySize448, 0) },
+            _ => throw new NotSupportedException($"Curve {_EdAlgorithm} not supported for Key Exchange")
         };
 
     /// <summary>
@@ -196,9 +187,9 @@ public partial class EdDsa : EDAlgorithm
     public override string SignatureAlgorithm =>
          _EdAlgorithm switch
          {
-             EdAlgorithm.Ed25519 => EdConstants.Ed25519_Oid,
-             EdAlgorithm.Ed448 => EdConstants.Ed448_Oid,
-             _ => throw new NotSupportedException($"Curve {_EdAlgorithm} not supported for Dsa")
+             EdAlgorithm.X25519 => EdConstants.X25519_Oid,
+             EdAlgorithm.X448 => EdConstants.X448_Oid,
+             _ => throw new NotSupportedException($"Curve {_EdAlgorithm} not supported for Key Exchange")
          };
 
     /// <summary>
@@ -209,11 +200,11 @@ public partial class EdDsa : EDAlgorithm
         // Get what is it
         get {
             if (_PublicKey25519 != null) {
-                return EdAlgorithm.Ed25519;
+                return EdAlgorithm.X25519;
             } else if (_PublicKey448 != null) {
-                return EdAlgorithm.Ed448;
+                return EdAlgorithm.X448;
             } else {
-                throw new NotSupportedException("No EdDSA algorithm found");
+                throw new NotSupportedException("No EdDH algorithm found");
             }
         }
     }
@@ -239,6 +230,6 @@ public partial class EdDsa : EDAlgorithm
         _PrivateKey25519 = null;
         _PrivateKey448 = null;
         _PublicKey448 = null;
-        _Context = Array.Empty<byte>();
     }
+
 }

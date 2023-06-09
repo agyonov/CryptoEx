@@ -1,4 +1,5 @@
 ﻿
+using CryptoEx.Ed;
 using CryptoEx.Ed.EdDsa;
 using CryptoEx.Ed.Utils;
 using System.Security.Cryptography.X509Certificates;

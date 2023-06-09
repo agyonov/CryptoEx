@@ -1,4 +1,5 @@
-﻿using CryptoEx.Ed.EdDsa;
+﻿using CryptoEx.Ed;
+using CryptoEx.Ed.EdDsa;
 using CryptoEx.JWK;
 using CryptoEx.JWS;
 using CryptoEx.JWS.ETSI;

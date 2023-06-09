@@ -93,9 +93,9 @@ public class EcdsaSignVerify
     [Benchmark]
     public void SignETSI_EdDSA_Enveloped()
     {
-        if (edDsa is not EdDsa) {
+        if (edDsa != null && edDsa is EdDsa) {
             // Create signer 
-            ETSISigner signer = new ETSISignerEd((EdDsa)edDsa!);
+            ETSISigner signer = new ETSISignerEd((EdDsa)edDsa);
 
             // Sign payload
             signer.AttachSignersCertificate(certEd!);

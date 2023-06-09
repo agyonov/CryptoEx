@@ -76,7 +76,7 @@ public class JWSSignerEd : JWSSigner
     protected override bool DoVerify<T>(object key, T header, string protectedS, byte[] signature)
     {
         // Get the key
-        EdDsa.EdDsa? edDsa = _signer as EdDsa.EdDsa;
+        EdDsa.EdDsa? edDsa = key as EdDsa.EdDsa;
 
         // Check
         if (edDsa == null) {

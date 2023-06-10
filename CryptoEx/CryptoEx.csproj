@@ -13,7 +13,7 @@
     <Copyright>MIT</Copyright>
     <PackageProjectUrl>https://github.com/agyonov/CryptoEx</PackageProjectUrl>
     <RepositoryUrl>https://github.com/agyonov/CryptoEx</RepositoryUrl>
-    <PackageTags>digital;rsa;;ecdsa;jws;xades;xmldsig;jades;signhing</PackageTags>
+    <PackageTags>digital;signing;rsa;ecdsa;jws;xades;xmldsig;jades;verifing;</PackageTags>
     <PackageIcon>logo_lib.png</PackageIcon>
   </PropertyGroup>
 

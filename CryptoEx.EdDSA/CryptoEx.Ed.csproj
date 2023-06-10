@@ -4,7 +4,25 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Leveraging Ed25519, X25519, Ed448 and Ed448 in .NET</Title>
+    <Authors>CryptoEx's developers</Authors>
+    <Company>CryptoEx's developers</Company>
+    <Copyright>MIT</Copyright>
+    <PackageProjectUrl>https://github.com/agyonov/CryptoEx</PackageProjectUrl>
+    <Description>A .NET library to serve as extension of standard .NET libraries and example how to use Ed25519 and Ed448 to sign / verify signatures of  JSONs, especially in regards to JAdES.
+Also may be used by parties to exchnage private key material using X25519 and X448. </Description>
+    <PackageIcon>logo_lib.png</PackageIcon>
+    <RepositoryUrl>https://github.com/agyonov/CryptoEx</RepositoryUrl>
+    <PackageTags>digital;signing;eddsa;jws;jades;verifing;key-exchamge;EDDiffieHellman</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\logo_lib.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />

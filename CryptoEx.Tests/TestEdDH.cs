@@ -1,6 +1,6 @@
 ﻿
-using CryptoEx.Ed.EdDH;
 using CryptoEx.Ed;
+using CryptoEx.Ed.EdDH;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -54,7 +54,7 @@ public class TestEdDH
     }
 
     [Fact(DisplayName = "Test EdDH Get Bytes")]
-    public void Test_EdDH_Get_Bytes() 
+    public void Test_EdDH_Get_Bytes()
     {
         // Create some Keys
         EdDH alice = EdDH.Create(EdAlgorithm.X25519);
@@ -113,7 +113,7 @@ public class TestEdDH
     }
 
     [Fact(DisplayName = "Test EdDH Get Bytes NISP's way, with a KDM function")]
-    public void Test_EdDH_Get_Bytes_KDM() 
+    public void Test_EdDH_Get_Bytes_KDM()
     {
         // Create some Keys
         EdDH alice = EdDH.Create(EdAlgorithm.X25519);
@@ -168,7 +168,7 @@ public class TestEdDH
     }
 
     [Fact(DisplayName = "Test EdDH Get Bytes NISP's way and actually encrypt / decrypt with AES")]
-    public void Test_EdDH_AES_X25519() 
+    public void Test_EdDH_AES_X25519()
     {
         // Create some asymetric keys
         EdDH alice = EdDH.Create(EdAlgorithm.X25519);

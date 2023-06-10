@@ -1,7 +1,6 @@
 ﻿
 using BenchmarkDotNet.Attributes;
 using CryptoEx.Ed.EdDH;
-using CryptoEx.Utils;
 using System.Security.Cryptography;
 
 namespace CryptoEx.Benchmark.Basic;
@@ -13,9 +12,8 @@ public class EdDHTests
     public void GetBytes_X25519_SHA256()
     {
         // Create some Keys
-        using (EdDH alice = EdDH.Create()) 
-        using (EdDH bob = EdDH.Create())
-        {
+        using (EdDH alice = EdDH.Create())
+        using (EdDH bob = EdDH.Create()) {
             Span<byte> aliceBuffer = stackalloc byte[32];
             Span<byte> BobBuffer = stackalloc byte[32];
 

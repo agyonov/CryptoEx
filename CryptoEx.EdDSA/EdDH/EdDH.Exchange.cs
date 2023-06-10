@@ -1,12 +1,9 @@
-﻿
-using System;
-using System.Diagnostics.Metrics;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 
 namespace CryptoEx.Ed.EdDH;
 
 /// <summary>
-/// Key exchanges over the Edwards-curve Digital Signature Algorithm (EdDSA)
+/// Key exchanges over the X25519 and X448 curves
 /// </summary>
 public partial class EdDH
 {

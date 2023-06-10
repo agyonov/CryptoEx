@@ -18,17 +18,17 @@ public partial class EdDH
     public byte[] GetSharedSecret(EdDH publicKey)
     {
         // Result
-        byte[] sharedSecret;
+        byte[] sharedSecret = Array.Empty<byte>();
 
-        if (_PrivateKey25519 != null && publicKey._PublicKey25519 != null) {
-            sharedSecret = new byte[KeySize25519 / 8];
-            _PrivateKey25519.GenerateSecret(publicKey._PublicKey25519, sharedSecret);
-        } else if (_PrivateKey448 != null && publicKey._PublicKey448 != null) {
-            sharedSecret = new byte[KeySize448 / 8];
-            _PrivateKey448.GenerateSecret(publicKey._PublicKey448, sharedSecret);
-        } else {
-            throw new NotSupportedException($"Not supported key pairs for EdDH");
-        }
+        try {
+            if (_PrivateKey25519 != null && publicKey._PublicKey25519 != null) {
+                sharedSecret = new byte[KeySize25519 / 8];
+                _PrivateKey25519.GenerateSecret(publicKey._PublicKey25519, sharedSecret);
+            } else if (_PrivateKey448 != null && publicKey._PublicKey448 != null) {
+                sharedSecret = new byte[KeySize448 / 8];
+                _PrivateKey448.GenerateSecret(publicKey._PublicKey448, sharedSecret);
+            }
+        } catch { }
 
         // return
         return sharedSecret;
@@ -44,15 +44,21 @@ public partial class EdDH
     /// <returns>The number of byte written to the result.</returns>
     public int GetSharedSecret(EdDH publicKey, Span<byte> sharedSecret)
     {
-        if (_PrivateKey25519 != null && publicKey._PublicKey25519 != null) {
-            _PrivateKey25519.GenerateSecret(publicKey._PublicKey25519, sharedSecret);
-            return KeySize25519 / 8;
-        } else if (_PrivateKey448 != null && publicKey._PublicKey448 != null) {
-            _PrivateKey448.GenerateSecret(publicKey._PublicKey448, sharedSecret);
-            return KeySize448 / 8;
-        } else {
-            throw new NotSupportedException($"Not supported key pairs for EdDH");
-        }
+        // Result
+        int success = 0;
+
+        try {
+            if (_PrivateKey25519 != null && publicKey._PublicKey25519 != null) {
+                _PrivateKey25519.GenerateSecret(publicKey._PublicKey25519, sharedSecret);
+                success = KeySize25519 / 8;
+            } else if (_PrivateKey448 != null && publicKey._PublicKey448 != null) {
+                _PrivateKey448.GenerateSecret(publicKey._PublicKey448, sharedSecret);
+                success = KeySize448 / 8;
+            }
+        } catch { }
+
+        // return
+        return success;
     }
 
     /// <summary>
@@ -92,12 +98,14 @@ public partial class EdDH
                                     Span<byte> result)
     {
         // Set the result
-        int success;
+        int success = 0;
 
         // prepare some buffer
         Span<byte> sharedSecret = stackalloc byte[KeySize / 8 + secretPrepend.Length + secretAppend.Length];
         secretPrepend.CopyTo(sharedSecret);
-        GetSharedSecret(publicKey, sharedSecret[secretPrepend.Length..]);
+        if (GetSharedSecret(publicKey, sharedSecret[secretPrepend.Length..]) != KeySize / 8) {
+            return success;
+        };
         secretAppend.CopyTo(sharedSecret[(secretPrepend.Length + KeySize / 8)..]);
 
         // hash

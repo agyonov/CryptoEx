@@ -146,46 +146,6 @@ public class EcdsSignVerify
     // Get some certificate from the store for testing
     private static X509Certificate2? GetCertificate(CertType certType)
     {
-        //var now = DateTime.Now;
-        //using (X509Store store = new X509Store(StoreLocation.CurrentUser)) {
-        //    store.Open(OpenFlags.ReadOnly);
-
-        //    var coll = store.Certificates
-        //                    .Where(cert => cert.HasPrivateKey && cert.NotBefore < now && cert.NotAfter > now)
-        //                    .ToList();
-
-        //    List<X509Certificate2> valColl = new List<X509Certificate2>();
-
-        //    foreach (var c in coll) {
-        //        using (var chain = new X509Chain()) {
-
-        //            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-        //            chain.ChainPolicy.DisableCertificateDownloads = true;
-        //            if (chain.Build(c)) {
-        //                valColl.Add(c);
-        //            } else {
-        //                c.Dispose();
-        //            }
-
-        //            for (int i = 0; i < chain.ChainElements.Count; i++) {
-        //                chain.ChainElements[i].Certificate.Dispose();
-        //            }
-        //        }
-        //    }
-
-        //    return valColl.Where(c =>
-        //    {
-        //        string frName = certType switch
-        //        {
-        //            CertType.RSA => "RSA",
-        //            CertType.EC => "ECC",
-        //            _ => "Ed"
-        //        };
-        //        return c.PublicKey.Oid.FriendlyName == frName;
-        //    })
-        //    .FirstOrDefault();
-        //}
-
         // Check what we need
         switch (certType) {
             case CertType.RSA:
@@ -193,7 +153,7 @@ public class EcdsSignVerify
             case CertType.EC:
                 return new X509Certificate2(@"source\cerECC.pfx", "pass.123");
             case CertType.Ed:
-                using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read)) {
+                using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     X509Certificate2Ed[] arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");
                     if (arrCerts.Length > 0) {
                         return arrCerts[0].Certificate;

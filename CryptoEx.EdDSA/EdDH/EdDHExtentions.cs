@@ -12,7 +12,7 @@ public static class EdDHExtentions
     /// </summary>
     /// <param name="cert">The certificate with a private key</param>
     /// <returns>The EdDH Algorithm</returns>
-    public static EdDH? GetEdDsaPrivateKey(this X509Certificate2Ed cert)
+    public static EdDH? GetEdDHPrivateKey(this X509Certificate2Ed cert)
     {
         return cert.PrivateKey as EdDH;
     }
@@ -22,7 +22,7 @@ public static class EdDHExtentions
     /// </summary>
     /// <param name="cert">The certificate with a public key</param>
     /// <returns>The EdDH Algorithm</returns>
-    public static EdDH? GetEdDsaPublicKey(this X509Certificate2 cert)
+    public static EdDH? GetEdDHPublicKey(this X509Certificate2 cert)
     {
         // Create parameters
         EDParameters eDParameters = new();

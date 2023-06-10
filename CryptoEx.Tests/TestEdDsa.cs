@@ -19,7 +19,7 @@ public class TestEdDsa
     [Fact(DisplayName = "Get public key from Crt/Cer File")]
     public void TestGetPublicKeyFromCrt()
     {
-        using (FileStream fs = File.Open(@"source\cert.crt", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"source\cert.crt", FileMode.Open, FileAccess.Read, FileShare.Read)) {
             X509Certificate2? cert = fs.LoadEdCertificateFromCrt();
 
             // Check
@@ -36,7 +36,7 @@ public class TestEdDsa
     [Fact(DisplayName = "Get private key from Pfx/P12 File")]
     public void TestGetPrivateKeyFromPfx()
     {
-        using (FileStream fs = File.Open(@"source\cert.pfx", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"source\cert.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
             X509Certificate2Ed[] certs = fs.LoadEdCertificatesFromPfx("pass.123");
 
             // Check
@@ -53,7 +53,7 @@ public class TestEdDsa
     [Fact(DisplayName = "Sign with private key from pfx")]
     public void TestSign()
     {
-        using (FileStream fs = File.Open(@"source\cert.pfx", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"source\cert.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
             X509Certificate2Ed[] certs = fs.LoadEdCertificatesFromPfx("pass.123");
 
             // Check
@@ -79,7 +79,7 @@ public class TestEdDsa
     [Fact(DisplayName = "Verify with public key from crt")]
     public void TestVerify()
     {
-        using (FileStream fs = File.Open(@"source\cert.crt", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"source\cert.crt", FileMode.Open, FileAccess.Read, FileShare.Read)) {
             X509Certificate2? cert = fs.LoadEdCertificateFromCrt();
 
             // Check
@@ -106,7 +106,7 @@ public class TestEdDsa
         EdDsa edDsa = EdDsa.Create();
 
         // Read private key from PEM
-        using (FileStream fs = File.Open(@"source\cert.key", FileMode.Open, FileAccess.Read))
+        using (FileStream fs = File.Open(@"source\cert.key", FileMode.Open, FileAccess.Read, FileShare.Read))
         using (StreamReader sr = new(fs)) {
             // Import
             edDsa.ImportFromPem(sr.ReadToEnd());
@@ -129,7 +129,7 @@ public class TestEdDsa
         EdDsa edDsa = EdDsa.Create();
 
         // Read private key from PEM
-        using (FileStream fs = File.Open(@"source\cert.pem", FileMode.Open, FileAccess.Read))
+        using (FileStream fs = File.Open(@"source\cert.pem", FileMode.Open, FileAccess.Read, FileShare.Read))
         using (StreamReader sr = new(fs)) {
             // Import
             edDsa.ImportFromEncryptedPem(sr.ReadToEnd(), "pass.123");
@@ -152,7 +152,7 @@ public class TestEdDsa
         EdDsa edDsa = EdDsa.Create();
 
         // Read private key from PEM
-        using (FileStream fs = File.Open(@"source\cert.pub", FileMode.Open, FileAccess.Read))
+        using (FileStream fs = File.Open(@"source\cert.pub", FileMode.Open, FileAccess.Read, FileShare.Read))
         using (StreamReader sr = new(fs)) {
             // Import
             edDsa.ImportFromPem(sr.ReadToEnd());
@@ -168,7 +168,7 @@ public class TestEdDsa
     [Fact(DisplayName = "Get public key 448 from Crt/Cer File")]
     public void TestGetPublicKey448FromCrt()
     {
-        using (FileStream fs = File.Open(@"source\cert448.crt", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"source\cert448.crt", FileMode.Open, FileAccess.Read, FileShare.Read)) {
             X509Certificate2? cert = fs.LoadEdCertificateFromCrt();
 
             // Check
@@ -185,7 +185,7 @@ public class TestEdDsa
     [Fact(DisplayName = "Get private key 448 from Pfx/P12 File")]
     public void TestGetPrivateKey448FromPfx()
     {
-        using (FileStream fs = File.Open(@"source\cert448.pfx", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"source\cert448.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
             X509Certificate2Ed[] certs = fs.LoadEdCertificatesFromPfx("pass.123");
 
             // Check
@@ -202,7 +202,7 @@ public class TestEdDsa
     [Fact(DisplayName = "Sign with private key 448 from pfx")]
     public void TestSign448()
     {
-        using (FileStream fs = File.Open(@"source\cert448.pfx", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"source\cert448.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
             X509Certificate2Ed[] certs = fs.LoadEdCertificatesFromPfx("pass.123");
 
             // Check
@@ -228,7 +228,7 @@ public class TestEdDsa
     [Fact(DisplayName = "Verify with public key 448 from crt")]
     public void TestVerify448()
     {
-        using (FileStream fs = File.Open(@"source\cert448.crt", FileMode.Open, FileAccess.Read)) {
+        using (FileStream fs = File.Open(@"source\cert448.crt", FileMode.Open, FileAccess.Read, FileShare.Read)) {
             X509Certificate2? cert = fs.LoadEdCertificateFromCrt();
 
             // Check
@@ -255,7 +255,7 @@ public class TestEdDsa
         EdDsa edDsa = EdDsa.Create();
 
         // Read private key from PEM
-        using (FileStream fs = File.Open(@"source\cert448.key", FileMode.Open, FileAccess.Read))
+        using (FileStream fs = File.Open(@"source\cert448.key", FileMode.Open, FileAccess.Read, FileShare.Read))
         using (StreamReader sr = new(fs)) {
             // Import
             edDsa.ImportFromPem(sr.ReadToEnd());
@@ -278,7 +278,7 @@ public class TestEdDsa
         EdDsa edDsa = EdDsa.Create();
 
         // Read private key from PEM
-        using (FileStream fs = File.Open(@"source\cert448.pem", FileMode.Open, FileAccess.Read))
+        using (FileStream fs = File.Open(@"source\cert448.pem", FileMode.Open, FileAccess.Read, FileShare.Read))
         using (StreamReader sr = new(fs)) {
             // Import
             edDsa.ImportFromEncryptedPem(sr.ReadToEnd(), "pass.123");
@@ -301,7 +301,7 @@ public class TestEdDsa
         EdDsa edDsa = EdDsa.Create();
 
         // Read private key from PEM
-        using (FileStream fs = File.Open(@"source\cert448.pub", FileMode.Open, FileAccess.Read))
+        using (FileStream fs = File.Open(@"source\cert448.pub", FileMode.Open, FileAccess.Read, FileShare.Read))
         using (StreamReader sr = new(fs)) {
             // Import
             edDsa.ImportFromPem(sr.ReadToEnd());

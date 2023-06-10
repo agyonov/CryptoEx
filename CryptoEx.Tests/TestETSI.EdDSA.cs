@@ -282,7 +282,7 @@ public class TestETSIEdDSA
         // Check what we need
         switch (alg) {
             case EdAlgorithm.Ed25519:
-                using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read)) {
+                using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     X509Certificate2Ed[] arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");
                     if (arrCerts.Length > 0) {
                         privateKey = arrCerts[0].PrivateKey;
@@ -292,7 +292,7 @@ public class TestETSIEdDSA
                     }
                 }
             case EdAlgorithm.Ed448:
-                using (FileStream fs = new(@"source\cert448.pfx", FileMode.Open, FileAccess.Read)) {
+                using (FileStream fs = new(@"source\cert448.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     X509Certificate2Ed[] arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");
                     if (arrCerts.Length > 0) {
                         privateKey = arrCerts[0].PrivateKey;

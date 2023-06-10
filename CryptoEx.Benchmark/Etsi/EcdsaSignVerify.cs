@@ -146,7 +146,7 @@ public class EcdsaSignVerify
         ECDsa? ecKey = cert!.GetECDsaPrivateKey();
         if (ecKey != null) {
             // Get payload 
-            using (FileStream ms = new(@"source\testLarge.zip", FileMode.Open, FileAccess.Read)) {
+            using (FileStream ms = new(@"source\testLarge.zip", FileMode.Open, FileAccess.Read, FileShare.Read)) {
                 // Create signer 
                 ETSISigner signer = new ETSISigner(ecKey);
 
@@ -179,7 +179,7 @@ public class EcdsaSignVerify
     public void VerifyETSI_Detached_large()
     {
         // Get payload 
-        using (FileStream msCheck = new(@"source\testLarge.zip", FileMode.Open, FileAccess.Read)) {
+        using (FileStream msCheck = new(@"source\testLarge.zip", FileMode.Open, FileAccess.Read, FileShare.Read)) {
             // Create signer 
             ETSISigner signer = new ETSISigner();
 
@@ -244,7 +244,7 @@ public class EcdsaSignVerify
             case CertType.EC:
                 return new X509Certificate2(@"source\cerECC.pfx", "pass.123");
             case CertType.Ed:
-                using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read)) {
+                using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     X509Certificate2Ed[] arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");
                     if (arrCerts.Length > 0) {
                         return arrCerts[0].Certificate;
@@ -265,7 +265,7 @@ public class EcdsaSignVerify
         // Check what we need
         switch (alg) {
             case EdAlgorithm.Ed25519:
-                using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read)) {
+                using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     X509Certificate2Ed[] arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");
                     if (arrCerts.Length > 0) {
                         privateKey = arrCerts[0].PrivateKey;
@@ -275,7 +275,7 @@ public class EcdsaSignVerify
                     }
                 }
             case EdAlgorithm.Ed448:
-                using (FileStream fs = new(@"source\cert448.pfx", FileMode.Open, FileAccess.Read)) {
+                using (FileStream fs = new(@"source\cert448.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     X509Certificate2Ed[] arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");
                     if (arrCerts.Length > 0) {
                         privateKey = arrCerts[0].PrivateKey;

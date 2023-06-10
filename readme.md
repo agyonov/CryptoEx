@@ -70,7 +70,7 @@ The individual .NET projects are:
 - CryptoEx.Test - test for the core library
 - CryptoEx.Benchmark - Micro-benchmark for the core library
 - CryptoEx.Ed - Extension of the logic in the core library to support Ed25519 & Ed448
-  cryptographic algorithms. Also, to support X25519 & X448 Diffie-Hellman key agreement.
+  cryptographic algorithms for digital signatures. Also, to support X25519 & X448 for Diffie-Hellman key agreement.
 
 ### CryptoEx
 

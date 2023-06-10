@@ -15,10 +15,15 @@ Also may be used by parties to exchnage private key material using X25519 and X4
     <PackageIcon>logo_lib.png</PackageIcon>
     <RepositoryUrl>https://github.com/agyonov/CryptoEx</RepositoryUrl>
     <PackageTags>digital;signing;eddsa;jws;jades;verifing;key-exchamge;EDDiffieHellman</PackageTags>
+    <PackageReadmeFile>readme_nuget_ed.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\logo_lib.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\readme_nuget_ed.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>

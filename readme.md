@@ -9,6 +9,7 @@ As the name ***CryptoEx*** suggests, it can be think of both as *Extension of* a
 - XML digital signatures - [XML Signature Syntax and Processing Version 1.1](https://www.w3.org/TR/xmldsig-core/)
 - JSON digital signatures - [JSON Web Signature (JWS)](https://www.rfc-editor.org/rfc/rfc7515)
 - EdDsa (Ed25519 and Ed448)
+- EdDiffieHellman (X25519 and X448)
 - Advanced Electronic Signatures and Infrastructures standardized by the European Union,
   so called ***jAdES*** & ***xAdES*** 
 
@@ -68,8 +69,8 @@ The individual .NET projects are:
 - CryptoEx - the main project / library of the repository, with core program logic
 - CryptoEx.Test - test for the core library
 - CryptoEx.Benchmark - Micro-benchmark for the core library
-- CryptoEx.EdDSA - Extension of the logic in the core library to support Ed25519 & Ed448
-  cryptographic algorithms. TODO!
+- CryptoEx.Ed - Extension of the logic in the core library to support Ed25519 & Ed448
+  cryptographic algorithms. Also, to support X25519 & X448 Diffie-Hellman key agreement.
 
 ### CryptoEx
 
@@ -92,14 +93,19 @@ external files in detached mode - for time and memory allocations.
 
 Also for other micro-benchmarking for example for Base64Url encoding and decoding.
 
-### CryptoEx.EdDSA
+### CryptoEx.Ed
 
-Extension of the logic in the core library to support Ed25519 & Ed448 cryptographic algorithms.
+Extension of the logic in the core library (CryptoEx) to support Ed25519 & Ed448 cryptographic algorithms for digital signatures and X25519 & X448 algorithms for Diffie-Hellman key agreement.
 
-**THIS IS STILL WORK IN PROGRESS !** :)
-
-I have decided to put it on a different project, mainly because Ed25519 & Ed448 are still not implemented in main-stream .NET. So I need to rely on third-party libraries, such as:
+I have decided to put these on a different project, mainly because Ed25519, Ed448, X25519 & X448 are still not implemented in main-stream .NET. So, I need to rely on third-party libraries, such as:
 
     - Bouncy Castle
     - libsodium
 
+At the moment I have decided to use Bounty Castle, because it is 100% managed code and it is also performance optimized. The CryptoEx.Ed project has a dependency on Bounty Castle.
+
+The project implements Ed signatures and key-exchanges in an similar to the standard .NET way and it can be used by .NET developers in a familiar way - as EC (Elliptic curves) are being used.
+
+As a practical example of the usage of the Ed classes in the library, I have also extended the classes for JWSs (JSON Web Signatures) and for the jAdES (Advanced JSON Web Signatures) from the core library to implement EdDSA algorithm for them.
+
+You can check the code and some pages in the [Wiki](https://github.com/agyonov/CryptoEx/wiki), for HOWTOs.

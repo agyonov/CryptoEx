@@ -8,7 +8,6 @@ As the name ***CryptoEx*** suggests, it can be think of both as *Extension of* a
 
 - XML digital signatures - [XML Signature Syntax and Processing Version 1.1](https://www.w3.org/TR/xmldsig-core/)
 - JSON digital signatures - [JSON Web Signature (JWS)](https://www.rfc-editor.org/rfc/rfc7515)
-- EdDsa (Ed25519 and Ed448)
 - Advanced Electronic Signatures and Infrastructures standardized by the European Union,
   so called ***jAdES*** & ***xAdES*** 
 

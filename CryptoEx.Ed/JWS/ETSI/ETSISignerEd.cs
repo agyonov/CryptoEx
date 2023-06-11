@@ -1,6 +1,5 @@
 ﻿
 using CryptoEx.Ed.EdDsa;
-using CryptoEx.JWS;
 using CryptoEx.JWS.ETSI;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;

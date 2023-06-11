@@ -85,8 +85,8 @@ public class JWSSignerEd : JWSSigner
         /// <param name="signer">The private key</param>
         /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
         /// <param name="useRSAPSS">In case of RSA, whether to use RSA-PSS</param>
-        /// <exception cref="ArgumentException">Invalid private key type</exception>
-        public override (string, HashAlgorithmName) SetNewSigningKey(AsymmetricAlgorithm signer, HashAlgorithmName? hashAlgorithm = null, bool useRSAPSS = false)
+        /// <returns>Some naming pairs</returns>
+        public override KeyTypeAlgorithmResult SetNewSigningKey(AsymmetricAlgorithm signer, HashAlgorithmName? hashAlgorithm = null, bool useRSAPSS = false)
         {
             // Check if the key is not EdDsa
             if (signer is not EdDsa.EdDsa) {
@@ -95,7 +95,7 @@ public class JWSSignerEd : JWSSigner
             }
 
             // return the algorithm
-            return (JWSConstants.EdDSA, hashAlgorithm != null ? hashAlgorithm.Value : HashAlgorithmName.SHA512);
+            return new KeyTypeAlgorithmResult(JWSConstants.EdDSA, hashAlgorithm != null ? hashAlgorithm.Value : HashAlgorithmName.SHA512);
         }
     }
 }

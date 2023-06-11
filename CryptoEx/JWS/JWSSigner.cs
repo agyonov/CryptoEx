@@ -131,8 +131,8 @@ public class JWSSigner
 
         // call switch operation
         var res = cryptoOperations.SetNewSigningKey(signer, hashAlgorithm, useRSAPSS);
-        _algorithmNameJws = res.Item1;
-        _algorithmName = res.Item2;
+        _algorithmNameJws = res.JwsName;
+        _algorithmName = res.DotnetName;
     }
 
     /// <summary>
@@ -406,7 +406,6 @@ public class JWSSigner
         }
     }
 
-
     // Decode compact encoded signature
     private void DecodeCompact(ReadOnlySpan<char> signature)
     {
@@ -579,8 +578,8 @@ public class JWSSigner
         /// <param name="signer">The private key</param>
         /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
         /// <param name="useRSAPSS">In case of RSA, whether to use RSA-PSS</param>
-        /// <exception cref="ArgumentException">Invalid private key type</exception>
-        public virtual (string, HashAlgorithmName) SetNewSigningKey(AsymmetricAlgorithm signer, HashAlgorithmName? hashAlgorithm = null, bool useRSAPSS = false) 
+        /// <returns>Some naming pairs</returns>
+        public virtual KeyTypeAlgorithmResult SetNewSigningKey(AsymmetricAlgorithm signer, HashAlgorithmName? hashAlgorithm = null, bool useRSAPSS = false)
         {
             // locals
             string? algorithmNameJws;
@@ -650,7 +649,14 @@ public class JWSSigner
             }
 
             // return
-            return (algorithmNameJws, algorithmName.Value);
+            return new KeyTypeAlgorithmResult(algorithmNameJws, algorithmName.Value);
         }
     }
+
+    /// <summary>
+    /// Some result of the key type algorithm
+    /// </summary>
+    /// <param name="JwsName">JWS name</param>
+    /// <param name="DotnetName">Dotnet name</param>
+    public record class KeyTypeAlgorithmResult(string JwsName, HashAlgorithmName DotnetName);
 }

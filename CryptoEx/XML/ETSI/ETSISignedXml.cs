@@ -137,7 +137,7 @@ public class ETSISignedXml
     /// <param name="payload">The payload - original XML file</param>
     /// <param name="cert">The certificate. ONLY Public part is used! The PrivateKey is proided in constructor!</param>
     /// <returns>The Xml Signature element</returns>
-    public virtual XmlElement Sign(XmlDocument payload, X509Certificate2 cert)
+    public XmlElement Sign(XmlDocument payload, X509Certificate2 cert)
     {
         // Check
         if (_signer == null) {
@@ -195,7 +195,7 @@ public class ETSISignedXml
     /// <param name="payload">The payload - original XML file</param>
     /// <param name="cert">The certificate. ONLY Public part is used! The PrivateKey is proided in constructor!</param>
     /// <returns>The Xml Signature element</returns>
-    public virtual XmlElement SignEnveloping(XmlDocument payload, X509Certificate2 cert)
+    public XmlElement SignEnveloping(XmlDocument payload, X509Certificate2 cert)
     {
         // Check
         if (_signer == null) {
@@ -264,7 +264,7 @@ public class ETSISignedXml
     /// <param name="cert">The certificate. ONLY Public part is used! The PrivateKey is proided in constructor!</param>
     /// <param name="payload">OPTIONAL payload - XML file</param>
     /// <returns>The Xml Signature element</returns>
-    public virtual XmlElement SignDetached(Stream attachement, X509Certificate2 cert, XmlDocument? payload = null)
+    public XmlElement SignDetached(Stream attachement, X509Certificate2 cert, XmlDocument? payload = null)
     {
         // Check
         if (_signer == null) {
@@ -329,7 +329,7 @@ public class ETSISignedXml
     /// <param name="payload">The XML signature document</param>
     /// <param name="cInfo">returns the context info about the signature</param>
     /// <returns>True signature is valid. False - no it is invalid</returns>
-    public virtual bool Verify(XmlDocument payload, out ETSIContextInfo cInfo)
+    public bool Verify(XmlDocument payload, out ETSIContextInfo cInfo)
     {
         // set initially
         cInfo = new ETSIContextInfo();
@@ -393,7 +393,7 @@ public class ETSISignedXml
     /// <param name="payload">The XML signature document</param>
     /// <param name="cert">returns the signing certificate</param>
     /// <returns>True signature is valid. False - no it is invalid</returns>
-    public virtual bool VerifyDetached(Stream attachement, XmlDocument payload, out ETSIContextInfo cInfo)
+    public bool VerifyDetached(Stream attachement, XmlDocument payload, out ETSIContextInfo cInfo)
     {
         // set initially
         cInfo = new ETSIContextInfo();
@@ -475,7 +475,7 @@ public class ETSISignedXml
     /// response from the server
     /// </param>
     /// <param name="signedDoc">The signed document</param>
-    public virtual async Task AddTimestampAsync(Func<byte[], CancellationToken, Task<byte[]>> funcAsync, XmlDocument signedDoc, CancellationToken ct = default)
+    public async Task AddTimestampAsync(Func<byte[], CancellationToken, Task<byte[]>> funcAsync, XmlDocument signedDoc, CancellationToken ct = default)
     {
         // locals
         byte[] timeStamp;
@@ -544,7 +544,7 @@ public class ETSISignedXml
     /// <param name="certificate">The signing certificate - public part</param>
     /// <param name="mimeType">Mime type - default is text/xml</param>
     /// <returns>The XmlNodeList that hold the qualifing parameters to be added to a DataObject</returns>
-    protected virtual XmlNodeList CreateQualifyingPropertiesXML(X509Certificate2 certificate, HashAlgorithmName hashAlgorithm, string mimeType = "text/xml", bool hasDetachedAndXML = false)
+    protected XmlNodeList CreateQualifyingPropertiesXML(X509Certificate2 certificate, HashAlgorithmName hashAlgorithm, string mimeType = "text/xml", bool hasDetachedAndXML = false)
     {
         XNamespace xades = XadesNamespaceUri;
         XNamespace ds = SignedXml.XmlDsigNamespaceUrl;
@@ -680,7 +680,7 @@ public class ETSISignedXml
     /// </summary>
     /// <param name="signature">The signature</param>
     /// <param name="info">The info to hold the properties</param>
-    protected virtual void ExtractQualifyingProperties(XmlElement signature, ETSIContextInfo info)
+    protected void ExtractQualifyingProperties(XmlElement signature, ETSIContextInfo info)
     {
         // Some namespaces
         XNamespace xades = XadesNamespaceUri;

@@ -151,7 +151,7 @@ public class TestEdDsa
         // Create EdDsa
         EdDsa edDsa = EdDsa.Create();
 
-        // Read private key from PEM
+        // Read public key from PEM
         using (FileStream fs = File.Open(@"source\cert.pub", FileMode.Open, FileAccess.Read, FileShare.Read))
         using (StreamReader sr = new(fs)) {
             // Import

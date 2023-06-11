@@ -45,7 +45,7 @@ You can freely use it as an example and further amend or extend the code to suit
 needs as possible applications are vast.
 
 **Other example is the JSON Web signatures** area. In this domain there are few open source
-libraries but either their focus is JSON Web Tokens (that are private case of the broader JSON
+libraries, but either their focus is JSON Web Tokens (that are private case of the broader JSON
 Web Signatures) or they are limited in application for [jAdES](https://www.etsi.org/deliver/etsi_ts/119100_119199/11918201/01.01.01_60/ts_11918201v010101p.pdf).
 
 In the current project you can find an implementation of the [RFC 7515 (JSON Web Signatures)](https://www.rfc-editor.org/rfc/rfc7515.html)

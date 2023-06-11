@@ -11,8 +11,8 @@ namespace CryptoEx.JWS.ETSI;
 public class ETSISigner : JWSSigner
 {
     // hashed data - used in detached mode
-    protected byte[]? hashedData = null;
-    protected string? mimeTypePayload = null;
+    private byte[]? hashedData = null;
+    private string? mimeTypePayload = null;
 
     /// <summary>
     /// A constructor without a private key, used for verification
@@ -113,7 +113,7 @@ public class ETSISigner : JWSSigner
     /// <param name="typHeaderparameter">Optionally the 'typ' header parameter https://www.rfc-editor.org/rfc/rfc7515#section-4.1.9,
     /// to put in the header.
     /// </param>
-    public virtual void SignDetached(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null, string? typHeaderparameter = null)
+    public void SignDetached(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null, string? typHeaderparameter = null)
     {
         // PSS RSA
         bool PSSRSA = false;
@@ -170,7 +170,7 @@ public class ETSISigner : JWSSigner
     /// <param name="typHeaderparameter">Optionally the 'typ' header parameter https://www.rfc-editor.org/rfc/rfc7515#section-4.1.9,
     /// to put in the header.
     /// </param>
-    public virtual async Task SignDetachedAsync(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null, string? typHeaderparameter = null)
+    public async Task SignDetachedAsync(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null, string? typHeaderparameter = null)
     {
         // PSS RSA
         bool PSSRSA = false;
@@ -216,62 +216,6 @@ public class ETSISigner : JWSSigner
     }
 
     /// <summary>
-    /// Validates crytical header values, for an ETSI signature
-    /// </summary>
-    /// <param name="header">The header</param>
-    /// <returns>True - present and understood. Flase - other case</returns>
-    protected static bool ETSIResolutor(ETSIHeader header)
-    {
-        // No header crit
-        if (header.Crit == null) {
-            return false;
-        }
-
-        // Cycle through crit
-        for (int loop = 0; loop < header.Crit.Length; loop++) {
-            switch (header.Crit[loop]) {
-                case "sigT":
-                    // Check
-                    if (!DateTimeOffset.TryParseExact(header.SigT, "yyyy-MM-ddTHH:mm:ssZ", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out DateTimeOffset _)) {
-                        return false;
-                    }
-                    break;
-                case "x5t#o":
-                    return false; // TODO: Implement in future
-                case "sigX5ts":
-                    return false; // TODO: Implement in future
-                case "srCms":
-                    return false; // TODO: Implement in future
-                case "sigPl":
-                    return false; // TODO: Implement in future
-                case "srAts":
-                    return false; // TODO: Implement in future
-                case "adoTst":
-                    // Chech
-                    if (header.AdoTst == null) {
-                        // Not provided
-                        return false;
-                    } // If not null, then it is parsed and processed by a consumer
-                    break;
-                case "sigPId":
-                    return false; // TODO: Implement in future
-                case "sigD":
-                    // Check
-                    if (header.SigD == null) {
-                        // Not provided
-                        return false;
-                    } // If not null, then it is checked in detached verification
-                    break;
-                default:
-                    return false;
-            }
-        }
-
-        // All good
-        return true;
-    }
-
-    /// <summary>
     /// Verify the signature of an enveloped JWS
     /// </summary>
     /// <param name="signature">The JWS signature</param>
@@ -279,7 +223,7 @@ public class ETSISigner : JWSSigner
     /// <param name="cInfo">returns the context info about the signature</param>
     /// <returns>True signature is valid. False - no it is invalid</returns>
     /// <exception cref="NotSupportedException">Some more advanced ETSI detached signatures, that are not yet implemented</exception>
-    public virtual bool Verify(ReadOnlySpan<char> signature, out byte[] payload, out ETSIContextInfo cInfo)
+    public bool Verify(ReadOnlySpan<char> signature, out byte[] payload, out ETSIContextInfo cInfo)
     {
         // locals
         cInfo = new ETSIContextInfo();
@@ -313,32 +257,6 @@ public class ETSISigner : JWSSigner
     }
 
     /// <summary>
-    /// Tryies to retrieve the public key from the certificate
-    /// </summary>
-    /// <param name="x5c">The certificate</param>
-    /// <returns>The public key</returns>
-    protected virtual AsymmetricAlgorithm? GetPublicKeyFromCertificate(string? x5c)
-    {
-        if (x5c != null) {
-            // Get the public key
-            try {
-                X509Certificate2 cert = new(Convert.FromBase64String(x5c));
-                RSA? rsa = cert.GetRSAPublicKey();
-                if (rsa != null) {
-                    return rsa;
-                }
-                ECDsa? ecdsa = cert.GetECDsaPublicKey();
-                if (ecdsa != null) {
-                    return ecdsa;
-                }
-            } catch { }
-        }
-
-        // General return
-        return null;
-    }
-
-    /// <summary>
     /// Verify the detached signature
     /// </summary>
     /// <param name="attachement">The dettached file</param>
@@ -347,7 +265,7 @@ public class ETSISigner : JWSSigner
     /// <param name="cInfo">Etsi headers returnd by Decode method</param>
     /// <returns>True / false = valid / invalid signature check</returns>
     /// <exception cref="NotSupportedException">Some more advanced ETSI detached signatures, that are not yet implemented</exception>
-    public virtual bool VerifyDetached(Stream attachement, ReadOnlySpan<char> signature, out byte[] payload, out ETSIContextInfo cInfo)
+    public bool VerifyDetached(Stream attachement, ReadOnlySpan<char> signature, out byte[] payload, out ETSIContextInfo cInfo)
     {
         // locals
         cInfo = new ETSIContextInfo();
@@ -395,7 +313,7 @@ public class ETSISigner : JWSSigner
     /// <param name="cInfo">Etsi headers returnd by Decode method</param>
     /// <returns>True / false = valid / invalid signature check</returns>
     /// <exception cref="NotSupportedException">Some more advanced ETSI detached signatures, that are not yet implemented</exception>
-    public virtual async Task<bool> VerifyDetachedAsync(Stream attachement, string signature)
+    public async Task<bool> VerifyDetachedAsync(Stream attachement, string signature)
     {
         // Decode
         ReadOnlyCollection<ETSIHeader> eTSIHeaders = Decode<ETSIHeader>(signature, out byte[] _);
@@ -439,168 +357,6 @@ public class ETSISigner : JWSSigner
         }
 
         // Return   
-        return res;
-    }
-
-    // Extract the context info from the ETSI header
-    protected virtual void ExtractETSIContextInfo(ETSIHeader eTSIHeader, ETSIContextInfo cInfo)
-    {
-        // Try to extract the signing time
-        if (DateTimeOffset.TryParseExact(eTSIHeader.SigT, "yyyy-MM-ddTHH:mm:ssZ", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out DateTimeOffset dto)) {
-            cInfo.SigningDateTime = dto;
-        }
-        // Try to extract the signing certificate
-        if (eTSIHeader.X5c != null && eTSIHeader.X5c.Length > 0) {
-            try {
-                cInfo.SigningCertificate = new X509Certificate2(Convert.FromBase64String(eTSIHeader.X5c[0]));
-            } catch { }
-            if (eTSIHeader.X5c.Length > 1) {
-                cInfo.x509Certificate2s = new X509Certificate2Collection();
-                for (int loop = 1; loop < eTSIHeader.X5c.Length; loop++) {
-                    try {
-                        cInfo.x509Certificate2s.Add(new X509Certificate2(Convert.FromBase64String(eTSIHeader.X5c[loop])));
-                    } catch { }
-                }
-            }
-        }
-        // Try to extract the signing certificate digest
-        if (!string.IsNullOrEmpty(eTSIHeader.X5)) {
-            cInfo.SigningCertificateDigestValue = Base64UrlEncoder.Decode(eTSIHeader.X5);
-            cInfo.SigningCertificateDagestMethod = HashAlgorithmName.SHA256;
-        }
-        // Try to set content info
-        cInfo.PayloadContentType = eTSIHeader.Cty;
-    }
-
-    // Verify detached ETSI signature
-    protected virtual bool VerifyDetached(Stream attachement, IReadOnlyList<AsymmetricAlgorithm> publicKeys, ReadOnlyCollection<ETSIHeader> etsiHeaders)
-    {
-        if (etsiHeaders.Count != publicKeys.Count) {
-            return false;
-        }
-
-        // Call general verify
-        bool res = base.Verify<ETSIHeader>(publicKeys, ETSIResolutor);
-
-        // Check
-        if (res != true) {
-            return res;
-        }
-
-        // for each public key - verify attachement
-        for (int loop = 0; loop < publicKeys.Count; loop++) {
-            // get header
-            ETSIHeader header = etsiHeaders[loop];
-
-            // Check. This method allows just one signed attachement. ETSI generally allows more.
-            // Someone can implement it in future - New method with first parameter as array of streams
-            if (header.SigD == null || header.SigD.Pars.Length != 1 || header.SigD.HashV == null || header.SigD.HashV.Length != 1) {
-                return false;
-            }
-            if (header.SigD.MId != ETSIConstants.ETSI_DETACHED_PARTS_OBJECT_HASH) {
-                throw new NotSupportedException($"For now only {ETSIConstants.ETSI_DETACHED_PARTS_OBJECT_HASH} is supported.");
-            }
-
-            // Hash attachemnt
-            byte[] lHashedData;
-            using (HashAlgorithm hAlg = header.SigD.HashM switch
-            {
-                ETSIConstants.SHA512 => SHA512.Create(),
-                ETSIConstants.SHA384 => SHA384.Create(),
-                ETSIConstants.SHA256 => SHA256.Create(),
-                _ => throw new NotSupportedException($"Hash algorithm {header.SigD.HashM} is not supported.")
-            })
-            using (AnonymousPipeServerStream apss = new(PipeDirection.In))
-            using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
-                _ = Task.Run(() =>
-                {
-                    try {
-                        // Encode
-                        Base64UrlEncoder.Encode(attachement, apcs);
-                    } finally {
-                        // Close the pipe
-                        apcs.Close(); // To avoid blocking of the pipe.
-                    }
-                });
-                lHashedData = hAlg.ComputeHash(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
-            }
-
-            // Get sent data
-            byte[] sentHash = Base64UrlEncoder.Decode(header.SigD.HashV[0]);
-
-            // Compare
-            if (!sentHash.SequenceEqual(lHashedData)) {
-                return false;
-            }
-        }
-
-        // return 
-        return res;
-    }
-
-    // Verify detached ETSI signature - aync version
-    protected virtual async Task<bool> VerifyDetachedAsync(Stream attachement, IReadOnlyList<AsymmetricAlgorithm> publicKeys, ReadOnlyCollection<ETSIHeader> etsiHeaders)
-    {
-        if (etsiHeaders.Count != publicKeys.Count) {
-            return false;
-        }
-
-        // Call general verify
-        bool res = base.Verify<ETSIHeader>(publicKeys, ETSIResolutor);
-
-        // Check
-        if (res != true) {
-            return res;
-        }
-
-        // for each public key - verify attachement
-        for (int loop = 0; loop < publicKeys.Count; loop++) {
-            // get header
-            ETSIHeader header = etsiHeaders[loop];
-
-            // Check. This method allows just one signed attachement. ETSI generally allows more.
-            // Someone can implement it in future - New method with first parameter as array of streams
-            if (header.SigD == null || header.SigD.Pars.Length != 1 || header.SigD.HashV == null || header.SigD.HashV.Length != 1) {
-                return false;
-            }
-            if (header.SigD.MId != ETSIConstants.ETSI_DETACHED_PARTS_OBJECT_HASH) {
-                throw new NotSupportedException($"For now only {ETSIConstants.ETSI_DETACHED_PARTS_OBJECT_HASH} is supported.");
-            }
-
-            // Hash attachemnt
-            byte[] lHashedData;
-            using (HashAlgorithm hAlg = header.SigD.HashM switch
-            {
-                ETSIConstants.SHA512 => SHA512.Create(),
-                ETSIConstants.SHA384 => SHA384.Create(),
-                ETSIConstants.SHA256 => SHA256.Create(),
-                _ => throw new NotSupportedException($"Hash algorithm {header.SigD.HashM} is not supported.")
-            })
-            using (AnonymousPipeServerStream apss = new(PipeDirection.In))
-            using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
-                _ = Task.Run(async () =>
-                {
-                    try {
-                        // Encode
-                        await Base64UrlEncoder.EncodeAsync(attachement, apcs);
-                    } finally {
-                        // Close the pipe
-                        apcs.Close(); // To avoid blocking of the pipe.
-                    }
-                });
-                lHashedData = await hAlg.ComputeHashAsync(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
-            }
-
-            // Get sent data
-            byte[] sentHash = Base64UrlEncoder.Decode(header.SigD.HashV[0]);
-
-            // Compare
-            if (!sentHash.SequenceEqual(lHashedData)) {
-                return false;
-            }
-        }
-
-        // return 
         return res;
     }
 
@@ -690,5 +446,249 @@ public class ETSISigner : JWSSigner
             JsonSerializer.Serialize(ms, etsHeader, JWSConstants.jsonOptions);
             _header = Base64UrlEncoder.Encode(ms.ToArray());
         }
+    }
+
+    /// <summary>
+    /// Tryies to retrieve the public key from the certificate
+    /// </summary>
+    /// <param name="x5c">The certificate</param>
+    /// <returns>The public key</returns>
+    protected virtual AsymmetricAlgorithm? GetPublicKeyFromCertificate(string? x5c)
+    {
+        if (x5c != null) {
+            // Get the public key
+            try {
+                X509Certificate2 cert = new(Convert.FromBase64String(x5c));
+                RSA? rsa = cert.GetRSAPublicKey();
+                if (rsa != null) {
+                    return rsa;
+                }
+                ECDsa? ecdsa = cert.GetECDsaPublicKey();
+                if (ecdsa != null) {
+                    return ecdsa;
+                }
+            } catch { }
+        }
+
+        // General return
+        return null;
+    }
+
+    /// <summary>
+    /// Validates crytical header values, for an ETSI signature
+    /// </summary>
+    /// <param name="header">The header</param>
+    /// <returns>True - present and understood. Flase - other case</returns>
+    private static bool ETSIResolutor(ETSIHeader header)
+    {
+        // No header crit
+        if (header.Crit == null) {
+            return false;
+        }
+
+        // Cycle through crit
+        for (int loop = 0; loop < header.Crit.Length; loop++) {
+            switch (header.Crit[loop]) {
+                case "sigT":
+                    // Check
+                    if (!DateTimeOffset.TryParseExact(header.SigT, "yyyy-MM-ddTHH:mm:ssZ", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out DateTimeOffset _)) {
+                        return false;
+                    }
+                    break;
+                case "x5t#o":
+                    return false; // TODO: Implement in future
+                case "sigX5ts":
+                    return false; // TODO: Implement in future
+                case "srCms":
+                    return false; // TODO: Implement in future
+                case "sigPl":
+                    return false; // TODO: Implement in future
+                case "srAts":
+                    return false; // TODO: Implement in future
+                case "adoTst":
+                    // Chech
+                    if (header.AdoTst == null) {
+                        // Not provided
+                        return false;
+                    } // If not null, then it is parsed and processed by a consumer
+                    break;
+                case "sigPId":
+                    return false; // TODO: Implement in future
+                case "sigD":
+                    // Check
+                    if (header.SigD == null) {
+                        // Not provided
+                        return false;
+                    } // If not null, then it is checked in detached verification
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        // All good
+        return true;
+    }
+
+    // Extract the context info from the ETSI header
+    private void ExtractETSIContextInfo(ETSIHeader eTSIHeader, ETSIContextInfo cInfo)
+    {
+        // Try to extract the signing time
+        if (DateTimeOffset.TryParseExact(eTSIHeader.SigT, "yyyy-MM-ddTHH:mm:ssZ", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out DateTimeOffset dto)) {
+            cInfo.SigningDateTime = dto;
+        }
+        // Try to extract the signing certificate
+        if (eTSIHeader.X5c != null && eTSIHeader.X5c.Length > 0) {
+            try {
+                cInfo.SigningCertificate = new X509Certificate2(Convert.FromBase64String(eTSIHeader.X5c[0]));
+            } catch { }
+            if (eTSIHeader.X5c.Length > 1) {
+                cInfo.x509Certificate2s = new X509Certificate2Collection();
+                for (int loop = 1; loop < eTSIHeader.X5c.Length; loop++) {
+                    try {
+                        cInfo.x509Certificate2s.Add(new X509Certificate2(Convert.FromBase64String(eTSIHeader.X5c[loop])));
+                    } catch { }
+                }
+            }
+        }
+        // Try to extract the signing certificate digest
+        if (!string.IsNullOrEmpty(eTSIHeader.X5)) {
+            cInfo.SigningCertificateDigestValue = Base64UrlEncoder.Decode(eTSIHeader.X5);
+            cInfo.SigningCertificateDagestMethod = HashAlgorithmName.SHA256;
+        }
+        // Try to set content info
+        cInfo.PayloadContentType = eTSIHeader.Cty;
+    }
+
+    // Verify detached ETSI signature
+    private bool VerifyDetached(Stream attachement, IReadOnlyList<AsymmetricAlgorithm> publicKeys, ReadOnlyCollection<ETSIHeader> etsiHeaders)
+    {
+        if (etsiHeaders.Count != publicKeys.Count) {
+            return false;
+        }
+
+        // Call general verify
+        bool res = base.Verify<ETSIHeader>(publicKeys, ETSIResolutor);
+
+        // Check
+        if (res != true) {
+            return res;
+        }
+
+        // for each public key - verify attachement
+        for (int loop = 0; loop < publicKeys.Count; loop++) {
+            // get header
+            ETSIHeader header = etsiHeaders[loop];
+
+            // Check. This method allows just one signed attachement. ETSI generally allows more.
+            // Someone can implement it in future - New method with first parameter as array of streams
+            if (header.SigD == null || header.SigD.Pars.Length != 1 || header.SigD.HashV == null || header.SigD.HashV.Length != 1) {
+                return false;
+            }
+            if (header.SigD.MId != ETSIConstants.ETSI_DETACHED_PARTS_OBJECT_HASH) {
+                throw new NotSupportedException($"For now only {ETSIConstants.ETSI_DETACHED_PARTS_OBJECT_HASH} is supported.");
+            }
+
+            // Hash attachemnt
+            byte[] lHashedData;
+            using (HashAlgorithm hAlg = header.SigD.HashM switch
+            {
+                ETSIConstants.SHA512 => SHA512.Create(),
+                ETSIConstants.SHA384 => SHA384.Create(),
+                ETSIConstants.SHA256 => SHA256.Create(),
+                _ => throw new NotSupportedException($"Hash algorithm {header.SigD.HashM} is not supported.")
+            })
+            using (AnonymousPipeServerStream apss = new(PipeDirection.In))
+            using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
+                _ = Task.Run(() =>
+                {
+                    try {
+                        // Encode
+                        Base64UrlEncoder.Encode(attachement, apcs);
+                    } finally {
+                        // Close the pipe
+                        apcs.Close(); // To avoid blocking of the pipe.
+                    }
+                });
+                lHashedData = hAlg.ComputeHash(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+            }
+
+            // Get sent data
+            byte[] sentHash = Base64UrlEncoder.Decode(header.SigD.HashV[0]);
+
+            // Compare
+            if (!sentHash.SequenceEqual(lHashedData)) {
+                return false;
+            }
+        }
+
+        // return 
+        return res;
+    }
+
+    // Verify detached ETSI signature - aync version
+    private async Task<bool> VerifyDetachedAsync(Stream attachement, IReadOnlyList<AsymmetricAlgorithm> publicKeys, ReadOnlyCollection<ETSIHeader> etsiHeaders)
+    {
+        if (etsiHeaders.Count != publicKeys.Count) {
+            return false;
+        }
+
+        // Call general verify
+        bool res = base.Verify<ETSIHeader>(publicKeys, ETSIResolutor);
+
+        // Check
+        if (res != true) {
+            return res;
+        }
+
+        // for each public key - verify attachement
+        for (int loop = 0; loop < publicKeys.Count; loop++) {
+            // get header
+            ETSIHeader header = etsiHeaders[loop];
+
+            // Check. This method allows just one signed attachement. ETSI generally allows more.
+            // Someone can implement it in future - New method with first parameter as array of streams
+            if (header.SigD == null || header.SigD.Pars.Length != 1 || header.SigD.HashV == null || header.SigD.HashV.Length != 1) {
+                return false;
+            }
+            if (header.SigD.MId != ETSIConstants.ETSI_DETACHED_PARTS_OBJECT_HASH) {
+                throw new NotSupportedException($"For now only {ETSIConstants.ETSI_DETACHED_PARTS_OBJECT_HASH} is supported.");
+            }
+
+            // Hash attachemnt
+            byte[] lHashedData;
+            using (HashAlgorithm hAlg = header.SigD.HashM switch
+            {
+                ETSIConstants.SHA512 => SHA512.Create(),
+                ETSIConstants.SHA384 => SHA384.Create(),
+                ETSIConstants.SHA256 => SHA256.Create(),
+                _ => throw new NotSupportedException($"Hash algorithm {header.SigD.HashM} is not supported.")
+            })
+            using (AnonymousPipeServerStream apss = new(PipeDirection.In))
+            using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
+                _ = Task.Run(async () =>
+                {
+                    try {
+                        // Encode
+                        await Base64UrlEncoder.EncodeAsync(attachement, apcs);
+                    } finally {
+                        // Close the pipe
+                        apcs.Close(); // To avoid blocking of the pipe.
+                    }
+                });
+                lHashedData = await hAlg.ComputeHashAsync(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+            }
+
+            // Get sent data
+            byte[] sentHash = Base64UrlEncoder.Decode(header.SigD.HashV[0]);
+
+            // Compare
+            if (!sentHash.SequenceEqual(lHashedData)) {
+                return false;
+            }
+        }
+
+        // return 
+        return res;
     }
 }

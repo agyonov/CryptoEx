@@ -23,7 +23,7 @@ public class JWSSigner
     // .NET algorithm name
     protected HashAlgorithmName _algorithmName;
 
-    // Possibli the certificate
+    // Possibly the certificate
     protected X509Certificate2? _certificate;
 
     // pssibly additional certificates 
@@ -49,7 +49,6 @@ public class JWSSigner
 
     // Internal class signer
     protected CryptoOperations cryptoOperations;
-
 
     /// <summary>
     /// A constructor without a private key, used for verification
@@ -124,75 +123,16 @@ public class JWSSigner
     /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
     /// <param name="useRSAPSS">In case of RSA, whether to use RSA-PSS</param>
     /// <exception cref="ArgumentException">Invalid private key type</exception>
-    public virtual void SetNewSigningKey(AsymmetricAlgorithm signer, HashAlgorithmName? hashAlgorithm = null, bool useRSAPSS = false)
+    public void SetNewSigningKey(AsymmetricAlgorithm signer, HashAlgorithmName? hashAlgorithm = null, bool useRSAPSS = false)
     {
         // Store
         _signer = signer;
         _signerHmac = null;
 
-        //// call switch operation
-        //var res = cryptoOperations.SetNewSigningKey(signer, hashAlgorithm, useRSAPSS);
-        //_algorithmNameJws = res.Item1;
-        //_algorithmName = res.Item2;
-
-        // Determine the algorithm
-        switch (signer) {
-            case RSA rsa:
-                _algorithmNameJws = rsa.KeySize switch
-                {
-                    2048 => useRSAPSS ? JWSConstants.PS256 : JWSConstants.RS256,
-                    3072 => useRSAPSS ? JWSConstants.PS384 : JWSConstants.RS384,
-                    4096 => useRSAPSS ? JWSConstants.PS384 : JWSConstants.RS512,
-                    _ => throw new ArgumentException("Invalid RSA key size")
-                };
-                _algorithmName = rsa.KeySize switch
-                {
-                    2048 => HashAlgorithmName.SHA256,
-                    3072 => HashAlgorithmName.SHA384,
-                    4096 => HashAlgorithmName.SHA512,
-                    _ => throw new ArgumentException("Invalid RSA key size")
-                };
-                break;
-            case ECDsa ecdsa:
-                _algorithmNameJws = ecdsa.KeySize switch
-                {
-                    256 => JWSConstants.ES256,
-                    384 => JWSConstants.ES384,
-                    521 => JWSConstants.ES512,
-                    _ => throw new ArgumentException("Invalid ECDSA key size")
-                };
-                _algorithmName = ecdsa.KeySize switch
-                {
-                    256 => HashAlgorithmName.SHA256,
-                    384 => HashAlgorithmName.SHA384,
-                    521 => HashAlgorithmName.SHA512,
-                    _ => throw new ArgumentException("Invalid ECDSA key size")
-                };
-                break;
-            default:
-                throw new ArgumentException("Invalid key type");
-        }
-
-        // Determine the algorithm
-        if (hashAlgorithm != null) {
-            switch (signer) {
-                case RSA:
-                    // Allow set of hash algorithm
-                    _algorithmNameJws = hashAlgorithm.Value.Name switch
-                    {
-                        "SHA256" => useRSAPSS ? JWSConstants.PS256 : JWSConstants.RS256,
-                        "SHA384" => useRSAPSS ? JWSConstants.PS384 : JWSConstants.RS384,
-                        "SHA512" => useRSAPSS ? JWSConstants.PS512 : JWSConstants.RS512,
-                        _ => throw new ArgumentException("Invalid RSA hash algorithm")
-                    };
-                    _algorithmName = hashAlgorithm.Value;
-                    break;
-                case ECDsa:
-                    break;
-                default:
-                    throw new ArgumentException("Invalid key type");
-            }
-        }
+        // call switch operation
+        var res = cryptoOperations.SetNewSigningKey(signer, hashAlgorithm, useRSAPSS);
+        _algorithmNameJws = res.Item1;
+        _algorithmName = res.Item2;
     }
 
     /// <summary>
@@ -202,7 +142,7 @@ public class JWSSigner
     /// </summary>
     /// <param name="signer">The private key</param>
     /// <exception cref="ArgumentException">Invalid private key type</exception>
-    public virtual void SetNewSigningKey(HMAC signer)
+    public void SetNewSigningKey(HMAC signer)
     {
         // Store
         _signer = null;
@@ -250,7 +190,7 @@ public class JWSSigner
     /// <param name="typHeaderparameter">Optionally the 'typ' header parameter https://www.rfc-editor.org/rfc/rfc7515#section-4.1.9,
     /// to put in the header.
     /// </param>
-    public virtual void Sign(ReadOnlySpan<byte> payload, string? mimeType = null, string? typHeaderparameter = null)
+    public void Sign(ReadOnlySpan<byte> payload, string? mimeType = null, string? typHeaderparameter = null)
     {
         // PSS RSA
         bool PSSRSA = false;
@@ -297,7 +237,7 @@ public class JWSSigner
     /// </param>
     /// <returns>True / false = valid / invalid signature check</returns>
     /// <exception cref="ArgumentException">Some issues exists with the arguments and/or keys provided to this method</exception>
-    public virtual bool Verify<T>(IReadOnlyList<object> keys, Func<T, bool>? resolutor = null) where T : JWSHeader
+    public bool Verify<T>(IReadOnlyList<object> keys, Func<T, bool>? resolutor = null) where T : JWSHeader
     {
         // Declare result
         bool result = true;
@@ -389,7 +329,7 @@ public class JWSSigner
     /// <param name="payload">The payload in JWS</param>
     /// <returns>A collection of JWS headers. Generally will be one, unless JWS is signed by multiple signer.
     /// If signed by multiple signers will return more then one header - for each signer</returns>
-    public virtual ReadOnlyCollection<T> Decode<T>(ReadOnlySpan<char> signature, out byte[] payload) where T : JWSHeader
+    public ReadOnlyCollection<T> Decode<T>(ReadOnlySpan<char> signature, out byte[] payload) where T : JWSHeader
     {
         // Clear
         Clear();
@@ -413,69 +353,6 @@ public class JWSSigner
                           .Where(p => p != null)
                           .ToList()
                           .AsReadOnly()!;
-    }
-
-    // Decode compact encoded signature
-    protected void DecodeCompact(ReadOnlySpan<char> signature)
-    {
-        // Read protected
-        int index = signature.IndexOf('.');
-        if (index < -1) {
-            return;
-        } else {
-            // Add protected
-            _protecteds.Add(signature.Slice(0, index).ToString());
-        }
-
-        // Read payload
-        if (index + 1 < signature.Length) {
-            // Get index of next dot
-            signature = signature.Slice(index + 1);
-            index = signature.IndexOf('.');
-            if (index < -1) {
-                return;
-            } else {
-                // Add protected
-                _payload = signature.Slice(0, index).ToString();
-            }
-
-            // Get signature
-            if (index + 1 < signature.Length) {
-                _signatures.Add(Base64UrlEncoder.Decode(signature.Slice(index + 1).ToString()));
-            }
-        }
-    }
-
-    // Decode flattened or full encoded signature
-    protected void DecodeFull(ReadOnlySpan<char> signature)
-    {
-        // Firts check if we have "flattened" encoded signature
-        JWSFlattened? resFalttened = JsonSerializer.Deserialize<JWSFlattened>(signature, JWSConstants.jsonOptions);
-        if (resFalttened != null) {
-            // We have flattened
-            if (!string.IsNullOrEmpty(resFalttened.Protected) && !string.IsNullOrEmpty(resFalttened.Signature)) {
-                _protecteds.Add(resFalttened.Protected);
-                _payload = resFalttened.Payload;
-                _unprotectedHeader = resFalttened.Header;
-                _signatures.Add(Base64UrlEncoder.Decode(resFalttened.Signature));
-                return;
-            }
-        }
-
-        // Check if we have "full" encoded signature
-        JWS? res = JsonSerializer.Deserialize<JWS>(signature, JWSConstants.jsonOptions);
-        if (res != null) {
-            // We have full
-            if (res.Signatures != null && res.Signatures.Length > 0) {
-                _payload = res.Payload;
-                foreach (JWSSignature sig in res.Signatures) {
-                    _protecteds.Add(sig.Protected);
-                    _unprotectedHeader = sig.Header;
-                    _signatures.Add(Base64UrlEncoder.Decode(sig.Signature));
-                }
-                return;
-            }
-        }
     }
 
     // Prepare header values
@@ -526,6 +403,70 @@ public class JWSSigner
         using (MemoryStream ms = new(8192)) {
             JsonSerializer.Serialize(ms, jWSHeader, JWSConstants.jsonOptions);
             _header = Base64UrlEncoder.Encode(ms.ToArray());
+        }
+    }
+
+
+    // Decode compact encoded signature
+    private void DecodeCompact(ReadOnlySpan<char> signature)
+    {
+        // Read protected
+        int index = signature.IndexOf('.');
+        if (index < -1) {
+            return;
+        } else {
+            // Add protected
+            _protecteds.Add(signature.Slice(0, index).ToString());
+        }
+
+        // Read payload
+        if (index + 1 < signature.Length) {
+            // Get index of next dot
+            signature = signature.Slice(index + 1);
+            index = signature.IndexOf('.');
+            if (index < -1) {
+                return;
+            } else {
+                // Add protected
+                _payload = signature.Slice(0, index).ToString();
+            }
+
+            // Get signature
+            if (index + 1 < signature.Length) {
+                _signatures.Add(Base64UrlEncoder.Decode(signature.Slice(index + 1).ToString()));
+            }
+        }
+    }
+
+    // Decode flattened or full encoded signature
+    private void DecodeFull(ReadOnlySpan<char> signature)
+    {
+        // Firts check if we have "flattened" encoded signature
+        JWSFlattened? resFalttened = JsonSerializer.Deserialize<JWSFlattened>(signature, JWSConstants.jsonOptions);
+        if (resFalttened != null) {
+            // We have flattened
+            if (!string.IsNullOrEmpty(resFalttened.Protected) && !string.IsNullOrEmpty(resFalttened.Signature)) {
+                _protecteds.Add(resFalttened.Protected);
+                _payload = resFalttened.Payload;
+                _unprotectedHeader = resFalttened.Header;
+                _signatures.Add(Base64UrlEncoder.Decode(resFalttened.Signature));
+                return;
+            }
+        }
+
+        // Check if we have "full" encoded signature
+        JWS? res = JsonSerializer.Deserialize<JWS>(signature, JWSConstants.jsonOptions);
+        if (res != null) {
+            // We have full
+            if (res.Signatures != null && res.Signatures.Length > 0) {
+                _payload = res.Payload;
+                foreach (JWSSignature sig in res.Signatures) {
+                    _protecteds.Add(sig.Protected);
+                    _unprotectedHeader = sig.Header;
+                    _signatures.Add(Base64UrlEncoder.Decode(sig.Signature));
+                }
+                return;
+            }
         }
     }
 
@@ -680,7 +621,9 @@ public class JWSSigner
                     };
                     break;
                 default:
-                    throw new ArgumentException("Invalid key type");
+                    algorithmNameJws = JWSConstants.RS256;
+                    algorithmName = HashAlgorithmName.SHA256;
+                    break;
             }
 
             // Determine the algorithm
@@ -700,7 +643,9 @@ public class JWSSigner
                     case ECDsa:
                         break;
                     default:
-                        throw new ArgumentException("Invalid key type");
+                        algorithmNameJws = JWSConstants.RS256;
+                        algorithmName = hashAlgorithm.Value;
+                        break;
                 }
             }
 

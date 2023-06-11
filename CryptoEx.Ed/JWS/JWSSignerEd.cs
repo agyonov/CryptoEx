@@ -22,30 +22,7 @@ public class JWSSignerEd : JWSSigner
     {
         // Set the crypto operations
         cryptoOperations = new CryptoOperationsEd();
-    }
-
-    /// <summary>
-    /// Change the signing key. This is useful for example when you want to sign with a new key.
-    /// When you want to add a new signature, you set it with this method and then can use 'Sign' method to actually sign with
-    /// the newly stetted key.
-    /// </summary>
-    /// <param name="signer">The private key</param>
-    /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
-    /// <param name="useRSAPSS">In case of RSA, whether to use RSA-PSS</param>
-    /// <exception cref="ArgumentException">Invalid private key type</exception>
-    public override void SetNewSigningKey(AsymmetricAlgorithm signer, HashAlgorithmName? hashAlgorithm = null, bool useRSAPSS = false)
-    {
-        // Check if the key is not EdDsa
-        if (signer is not EdDsa.EdDsa) {
-            // If it is not, call parent
-            base.SetNewSigningKey(signer, hashAlgorithm, useRSAPSS);
-        }
-
-        // Store
-        _signer = signer;
-        _signerHmac = null;
-        _algorithmNameJws = JWSConstants.EdDSA;
-        _algorithmName = hashAlgorithm != null ? hashAlgorithm.Value : HashAlgorithmName.SHA512;
+        SetNewSigningKey(privateKey);
     }
 
     /// <summary>
@@ -98,6 +75,27 @@ public class JWSSignerEd : JWSSigner
                 // Sign
                 return edDsa.Verify(data, signature);
             }
+        }
+
+        /// <summary>
+        /// Change the signing key. This is useful for example when you want to sign with a new key.
+        /// When you want to add a new signature, you set it with this method and then can use 'Sign' method to actually sign with
+        /// the newly stetted key.
+        /// </summary>
+        /// <param name="signer">The private key</param>
+        /// <param name="hashAlgorithm">Hash algorithm, mainly for RSA</param>
+        /// <param name="useRSAPSS">In case of RSA, whether to use RSA-PSS</param>
+        /// <exception cref="ArgumentException">Invalid private key type</exception>
+        public override (string, HashAlgorithmName) SetNewSigningKey(AsymmetricAlgorithm signer, HashAlgorithmName? hashAlgorithm = null, bool useRSAPSS = false)
+        {
+            // Check if the key is not EdDsa
+            if (signer is not EdDsa.EdDsa) {
+                // If it is not, call parent
+                return base.SetNewSigningKey(signer, hashAlgorithm, useRSAPSS);
+            }
+
+            // return the algorithm
+            return (JWSConstants.EdDSA, hashAlgorithm != null ? hashAlgorithm.Value : HashAlgorithmName.SHA512);
         }
     }
 }

@@ -121,7 +121,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CryptoEx.EdDSA\CryptoEx.Ed.csproj" />
+    <ProjectReference Include="..\CryptoEx.Ed\CryptoEx.Ed.csproj" />
     <ProjectReference Include="..\CryptoEx\CryptoEx.csproj" />
   </ItemGroup>
 

@@ -1,6 +1,5 @@
 ﻿using CryptoEx.JWS;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace CryptoEx.Ed.JWS;
 public class JWSSignerEd : JWSSigner
@@ -10,6 +9,8 @@ public class JWSSignerEd : JWSSigner
     /// </summary>
     public JWSSignerEd() : base()
     {
+        // Set the crypto operations
+        cryptoOperations = new CryptoOperationsEd();
     }
 
     /// <summary>
@@ -19,6 +20,8 @@ public class JWSSignerEd : JWSSigner
     /// <exception cref="ArgumentException">Invalid private key type</exception>
     public JWSSignerEd(EdDsa.EdDsa privateKey) : base(privateKey)
     {
+        // Set the crypto operations
+        cryptoOperations = new CryptoOperationsEd();
     }
 
     /// <summary>
@@ -46,45 +49,55 @@ public class JWSSignerEd : JWSSigner
     }
 
     /// <summary>
-    /// Do asymetric sign
+    /// Do asymetric sign and verify in extensible way
     /// </summary>
-    /// <param name="PSSRSA">True to use PSSRSA</param>
-    protected override void DoAsymetricSign(bool PSSRSA = false)
+    public class CryptoOperationsEd : CryptoOperations
     {
-        // Get the key
-        EdDsa.EdDsa? edDsa = _signer as EdDsa.EdDsa;
+        /// <summary>
+        /// Do asymetric sign
+        /// </summary>
+        /// <param name="signer">The signer - private key</param>
+        /// <param name="data">Data to sign</param>
+        /// <param name="hashName">Hash name to use</param>
+        /// <param name="PSSRSA">For RSA - to use PSS or not</param>
+        /// <returns>The signature</returns>
+        public override byte[] DoAsymetricSign(AsymmetricAlgorithm signer, byte[] data, HashAlgorithmName hashName, bool PSSRSA = false)
+        {
+            // Get the key
+            EdDsa.EdDsa? edDsa = signer as EdDsa.EdDsa;
 
-        // Check
-        if (edDsa == null) {
-            // call parent
-            base.DoAsymetricSign(PSSRSA);
-        } else {
-            // Sign
-            _signatures.Add(edDsa.Sign(Encoding.ASCII.GetBytes($"{_header}.{_payload}")));
+            // Check
+            if (edDsa == null) {
+                // call parent
+                return base.DoAsymetricSign(signer, data, hashName, PSSRSA);
+            } else {
+                // Sign
+                return edDsa.Sign(data);
+            }
         }
-    }
 
-    /// <summary>
-    /// Do verify the JWS
-    /// </summary>
-    /// <typeparam name="T">The type of the Header</typeparam>
-    /// <param name="key">The Key</param>
-    /// <param name="header">The header value</param>
-    /// <param name="protectedS">Protected part of the payload</param>
-    /// <param name="signature">The signatures</param>
-    /// <returns>True / false if it is valid / invalid</returns>
-    protected override bool DoVerify<T>(object key, T header, string protectedS, byte[] signature)
-    {
-        // Get the key
-        EdDsa.EdDsa? edDsa = key as EdDsa.EdDsa;
+        /// <summary>
+        /// Do verify the JWS
+        /// </summary>
+        /// <typeparam name="T">The type of the Header</typeparam>
+        /// <param name="key">The Key</param>
+        /// <param name="header">The header value</param>
+        /// <param name="data">The data to verify</param>
+        /// <param name="signature">The signatures</param>
+        /// <returns>True / false if it is valid / invalid</returns>
+        public override bool DoVerify<T>(object key, T header, byte[] data, byte[] signature)
+        {
+            // Get the key
+            EdDsa.EdDsa? edDsa = key as EdDsa.EdDsa;
 
-        // Check
-        if (edDsa == null) {
-            // call parent
-            return base.DoVerify(key, header, protectedS, signature);
-        } else {
-            // Sign
-            return edDsa.Verify(Encoding.ASCII.GetBytes($"{protectedS}.{_payload}"), signature);
+            // Check
+            if (edDsa == null) {
+                // call parent
+                return base.DoVerify(key, header, data, signature);
+            } else {
+                // Sign
+                return edDsa.Verify(data, signature);
+            }
         }
     }
 }

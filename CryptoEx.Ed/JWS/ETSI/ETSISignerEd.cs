@@ -4,7 +4,6 @@ using CryptoEx.JWS;
 using CryptoEx.JWS.ETSI;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace CryptoEx.Ed.JWS.ETSI;
 public class ETSISignerEd : ETSISigner
@@ -14,6 +13,8 @@ public class ETSISignerEd : ETSISigner
     /// </summary>
     public ETSISignerEd() : base()
     {
+        // Set the crypto operations
+        cryptoOperations = new JWSSignerEd.CryptoOperationsEd();
     }
 
     /// <summary>
@@ -23,6 +24,8 @@ public class ETSISignerEd : ETSISigner
     /// <exception cref="ArgumentException">Invalid private key type</exception>
     public ETSISignerEd(EdDsa.EdDsa privateKey) : base(privateKey)
     {
+        // Set the crypto operations
+        cryptoOperations = new JWSSignerEd.CryptoOperationsEd();
     }
 
     /// <summary>
@@ -69,68 +72,5 @@ public class ETSISignerEd : ETSISigner
 
         // General return
         return base.GetPublicKeyFromCertificate(x5c);
-    }
-
-    /// <summary>
-    /// Do the actual signing
-    /// </summary>
-    /// <param name="calc">The signature input</param>
-    /// <param name="PSSRSA">Is PSS for RSA</param>
-    protected override void DoSignDetached(string calc, bool PSSRSA = false)
-    {
-        // Get the key
-        EdDsa.EdDsa? edDsa = _signer as EdDsa.EdDsa;
-
-        // Check
-        if (edDsa == null) {
-            // call parent
-            base.DoSignDetached(calc, PSSRSA);
-        } else {
-            // Sign
-            _signatures.Add(edDsa.Sign(Encoding.ASCII.GetBytes(calc)));
-        }
-    }
-
-    /// <summary>
-    /// Do asymetric sign
-    /// </summary>
-    /// <param name="PSSRSA">True to use PSSRSA</param>
-    protected override void DoAsymetricSign(bool PSSRSA = false)
-    {
-        // Get the key
-        EdDsa.EdDsa? edDsa = _signer as EdDsa.EdDsa;
-
-        // Check
-        if (edDsa == null) {
-            // call parent
-            base.DoAsymetricSign(PSSRSA);
-        } else {
-            // Sign
-            _signatures.Add(edDsa.Sign(Encoding.ASCII.GetBytes($"{_header}.{_payload}")));
-        }
-    }
-
-    /// <summary>
-    /// Do verify the JWS
-    /// </summary>
-    /// <typeparam name="T">The type of the Header</typeparam>
-    /// <param name="key">The Key</param>
-    /// <param name="header">The header value</param>
-    /// <param name="protectedS">Protected part of the payload</param>
-    /// <param name="signature">The signatures</param>
-    /// <returns>True / false if it is valid / invalid</returns>
-    protected override bool DoVerify<T>(object key, T header, string protectedS, byte[] signature)
-    {
-        // Get the key
-        EdDsa.EdDsa? edDsa = key as EdDsa.EdDsa;
-
-        // Check
-        if (edDsa == null) {
-            // call parent
-            return base.DoVerify(key, header, protectedS, signature);
-        } else {
-            // Sign
-            return edDsa.Verify(Encoding.ASCII.GetBytes($"{protectedS}.{_payload}"), signature);
-        }
     }
 }

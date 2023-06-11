@@ -149,20 +149,10 @@ public class ETSISigner : JWSSigner
         }
         _protecteds.Add(_header);
         string calc = optionalPayload == null ? $"{_header}." : $"{_header}.{_payload}";
-        DoSignDetached(calc, PSSRSA);
-    }
 
-    /// <summary>
-    /// Do the actual signing
-    /// </summary>
-    /// <param name="calc">The signature input</param>
-    /// <param name="PSSRSA">Is PSS for RSA</param>
-    protected virtual void DoSignDetached(string calc, bool PSSRSA = false)
-    {
-        if (_signer is RSA) {
-            _signatures.Add(((RSA)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName, PSSRSA ? RSASignaturePadding.Pss : RSASignaturePadding.Pkcs1));
-        } else if (_signer is ECDsa) {
-            _signatures.Add(((ECDsa)_signer).SignData(Encoding.ASCII.GetBytes(calc), _algorithmName));
+        // Sign
+        if (_signer != null) {
+            _signatures.Add(cryptoOperations.DoAsymetricSign(_signer, Encoding.ASCII.GetBytes(calc), _algorithmName, PSSRSA));
         } else {
             throw new Exception("As of ETSI TS 119 312 V1.3.1, p. 6.2.2 it shall be RSA or ECDSA");
         }
@@ -216,7 +206,13 @@ public class ETSISigner : JWSSigner
         }
         _protecteds.Add(_header);
         string calc = optionalPayload == null ? $"{_header}." : $"{_header}.{_payload}";
-        DoSignDetached(calc, PSSRSA);
+
+        // Sign
+        if (_signer != null) {
+            _signatures.Add(cryptoOperations.DoAsymetricSign(_signer, Encoding.ASCII.GetBytes(calc), _algorithmName, PSSRSA));
+        } else {
+            throw new Exception("As of ETSI TS 119 312 V1.3.1, p. 6.2.2 it shall be RSA or ECDSA");
+        }
     }
 
     /// <summary>

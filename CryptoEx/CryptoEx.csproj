@@ -16,6 +16,8 @@
     <PackageTags>digital;signing;rsa;ecdsa;jws;xades;xmldsig;jades;verifing;</PackageTags>
     <PackageIcon>logo_lib.png</PackageIcon>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>Just initial publishing</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

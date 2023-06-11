@@ -17,6 +17,8 @@ Also may be used by parties to exchnage private key material using X25519 and X4
     <PackageTags>digital;signing;eddsa;jws;jades;verifing;key-exchamge;EDDiffieHellman</PackageTags>
     <PackageReadmeFile>readme_nuget_ed.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>Just initial publishing</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

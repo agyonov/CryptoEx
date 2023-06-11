@@ -10,14 +10,19 @@
     <Title>Extended and Examples Difital signatures in .NET</Title>
     <Authors>CryptoEx's developers</Authors>
     <Description>An extension of and example how to use the standard .NET libraries to sign / verify signatures of XMLs and JSONs, especially in regards to  XAdES, JAdES</Description>
-    <Copyright>MIT</Copyright>
+    <Copyright>CryptoEx's developers</Copyright>
     <PackageProjectUrl>https://github.com/agyonov/CryptoEx</PackageProjectUrl>
     <RepositoryUrl>https://github.com/agyonov/CryptoEx</RepositoryUrl>
     <PackageTags>digital;signing;rsa;ecdsa;jws;xades;xmldsig;jades;verifing;</PackageTags>
     <PackageIcon>logo_lib.png</PackageIcon>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Include="..\logo_lib.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>

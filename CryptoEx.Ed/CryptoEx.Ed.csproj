@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>Leveraging Ed25519, X25519, Ed448 and Ed448 in .NET</Title>
+    <Title>Leveraging Ed25519, X25519, Ed448 and Ed448 in .NET. JWSs with EdDSA.</Title>
     <Authors>CryptoEx's developers</Authors>
     <Company>CryptoEx's developers</Company>
     <Copyright>CryptoEx's developers</Copyright>

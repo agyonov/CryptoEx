@@ -99,8 +99,8 @@ Extension of the logic in the core library (CryptoEx) to support Ed25519 & Ed448
 
 I have decided to put these on a different project, mainly because Ed25519, Ed448, X25519 & X448 are still not implemented in main-stream .NET. So, I need to rely on third-party libraries, such as:
 
-    - Bouncy Castle
-    - libsodium
+- Bouncy Castle
+- *libsodium* based wrappers
 
 At the moment I have decided to use Bounty Castle, because it is 100% managed code and it is also performance optimized. The CryptoEx.Ed project has a dependency on Bounty Castle.
 
@@ -108,4 +108,4 @@ The project implements Ed signatures and key-exchanges in an similar to the stan
 
 As a practical example of the usage of the Ed classes in the library, I have also extended the classes for JWSs (JSON Web Signatures) and for the jAdES (Advanced JSON Web Signatures) from the core library to implement EdDSA algorithm for them.
 
-You can check the code and some pages in the [Wiki](https://github.com/agyonov/CryptoEx/wiki), for HOWTOs.
+You can check the code and some documentation pages in the [Wiki](https://github.com/agyonov/CryptoEx/wiki), for HOWTOs.

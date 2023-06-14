@@ -37,4 +37,7 @@ public record class JWSHeader
 
     [JsonPropertyName("crit")]
     public virtual string[]? Crit { get; set; } = null;
+
+    [JsonPropertyName("b64")]
+    public bool? B64 { get; set; } = null;
 }

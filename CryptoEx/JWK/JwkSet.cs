@@ -5,7 +5,7 @@ namespace CryptoEx.JWK;
 /// <summary>
 /// JWK Set
 /// </summary>
-public record JwkSet
+public record class JwkSet
 {
     /// <summary>
     /// Keys

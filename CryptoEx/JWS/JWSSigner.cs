@@ -450,6 +450,37 @@ public class JWSSigner
         return result;
     }
 
+
+    /// <summary>
+    /// Validates crytical header values, for an B64 signature
+    /// </summary>
+    /// <param name="header">The header</param>
+    /// <returns>True - present and understood. Flase - other case</returns>
+    public static bool B64Resolutor(JWSHeader header)
+    {
+        // No header crit
+        if (header.Crit == null) {
+            return false;
+        }
+
+        // Cycle through crit
+        for (int loop = 0; loop < header.Crit.Length; loop++) {
+            switch (header.Crit[loop]) {
+                case "b64":
+                    // Check
+                    if (header.B64 == null) {
+                        return false;
+                    }
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        // All good
+        return true;
+    }
+
     // Prepare header values
     protected virtual void PrepareHeader(string? mimeType = null)
     {

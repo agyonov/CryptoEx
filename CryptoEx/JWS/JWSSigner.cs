@@ -450,7 +450,6 @@ public class JWSSigner
         return result;
     }
 
-
     /// <summary>
     /// Validates crytical header values, for an B64 signature
     /// </summary>

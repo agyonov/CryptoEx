@@ -387,7 +387,10 @@ public class ETSISigner : JWSSigner
                 SigT = $"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH:mm:ssZ}",
                 X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
                 X5c = new string[] { Convert.ToBase64String(_certificate.RawData) },
-                Typ = _signatureTypHeaderParameter
+                Typ = _signatureTypHeaderParameter,
+                Jku = _keyUrl,
+                Jwk = _key,
+                X5u = _certificateUrl
             };
         } else {
             // Prepare header
@@ -410,7 +413,10 @@ public class ETSISigner : JWSSigner
                         },
                         Ctys = new string[] { mimeType ?? "octed-stream" }
                     },
-                    Typ = _signatureTypHeaderParameter
+                    Typ = _signatureTypHeaderParameter,
+                    Jku = _keyUrl,
+                    Jwk = _key,
+                    X5u = _certificateUrl
                 };
             } else {
                 string[] strX5c = new string[_additionalCertificates.Count + 1];
@@ -436,7 +442,10 @@ public class ETSISigner : JWSSigner
                         },
                         Ctys = new string[] { mimeType ?? "octed-stream" }
                     },
-                    Typ = _signatureTypHeaderParameter
+                    Typ = _signatureTypHeaderParameter,
+                    Jku = _keyUrl,
+                    Jwk = _key,
+                    X5u = _certificateUrl
                 };
             }
         }
@@ -520,6 +529,13 @@ public class ETSISigner : JWSSigner
                         // Not provided
                         return false;
                     } // If not null, then it is checked in detached verification
+                    break;
+                case "b64":
+                    // Check
+                    if (header.B64 == null) {
+                        // Not provided
+                        return false;
+                    }
                     break;
                 default:
                     return false;

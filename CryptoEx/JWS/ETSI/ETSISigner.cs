@@ -376,47 +376,34 @@ public class ETSISigner : JWSSigner
         ETSIHeader etsHeader;
         _header = string.Empty;
 
+        // Prepare general header
+        etsHeader = new ETSIHeader
+        {
+            Alg = _algorithmNameJws,
+            Jku = _keyUrl,
+            Jwk = _key,
+            Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
+            SigT = $"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH:mm:ssZ}",
+            X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
+            X5c = new string[] { Convert.ToBase64String(_certificate.RawData) },
+            X5u = _certificateUrl,
+            Typ = _signatureTypHeaderParameter,
+            Cty = mimeType
+        };
+
         // Attached
-        if (hashedData == null) {
-            // Prepare header
-            etsHeader = new ETSIHeader
-            {
-                Alg = _algorithmNameJws,
-                Cty = mimeType,
-                Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
-                SigT = $"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH:mm:ssZ}",
-                X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-                X5c = new string[] { Convert.ToBase64String(_certificate.RawData) },
-                Typ = _signatureTypHeaderParameter,
-                Jku = _keyUrl,
-                Jwk = _key,
-                X5u = _certificateUrl
-            };
-        } else {
+        if (hashedData != null) {
             // Prepare header
             if (_additionalCertificates == null || _additionalCertificates.Count < 1) {
-                etsHeader = new ETSIHeader
+                etsHeader.SigD = new ETSIDetachedParts
                 {
-                    Alg = _algorithmNameJws,
-                    Cty = mimeTypePayload,
-                    Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
-                    SigT = $"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH:mm:ssZ}",
-                    X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-                    X5c = new string[] { Convert.ToBase64String(_certificate.RawData) },
-                    SigD = new ETSIDetachedParts
-                    {
-                        Pars = new string[] { "attachement" },
-                        HashM = ETSIConstants.SHA512,
-                        HashV = new string[]
+                    Pars = new string[] { "attachement" },
+                    HashM = ETSIConstants.SHA512,
+                    HashV = new string[]
                         {
                             Base64UrlEncoder.Encode(hashedData)
                         },
-                        Ctys = new string[] { mimeType ?? "octed-stream" }
-                    },
-                    Typ = _signatureTypHeaderParameter,
-                    Jku = _keyUrl,
-                    Jwk = _key,
-                    X5u = _certificateUrl
+                    Ctys = new string[] { mimeType ?? "octed-stream" }
                 };
             } else {
                 string[] strX5c = new string[_additionalCertificates.Count + 1];
@@ -424,29 +411,17 @@ public class ETSISigner : JWSSigner
                 for (int loop = 0; loop < _additionalCertificates.Count; loop++) {
                     strX5c[loop + 1] = Convert.ToBase64String(_additionalCertificates[loop].RawData);
                 }
-                etsHeader = new ETSIHeader
+                etsHeader.SigD = new ETSIDetachedParts
                 {
-                    Alg = _algorithmNameJws,
-                    Cty = mimeTypePayload,
-                    Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
-                    SigT = $"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH:mm:ssZ}",
-                    X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-                    X5c = strX5c,
-                    SigD = new ETSIDetachedParts
-                    {
-                        Pars = new string[] { "attachement" },
-                        HashM = ETSIConstants.SHA512,
-                        HashV = new string[]
+                    Pars = new string[] { "attachement" },
+                    HashM = ETSIConstants.SHA512,
+                    HashV = new string[]
                         {
                             Base64UrlEncoder.Encode(hashedData)
                         },
-                        Ctys = new string[] { mimeType ?? "octed-stream" }
-                    },
-                    Typ = _signatureTypHeaderParameter,
-                    Jku = _keyUrl,
-                    Jwk = _key,
-                    X5u = _certificateUrl
+                    Ctys = new string[] { mimeType ?? "octed-stream" }
                 };
+                etsHeader.X5c = strX5c;
             }
         }
 
@@ -528,7 +503,15 @@ public class ETSISigner : JWSSigner
                     if (header.SigD == null) {
                         // Not provided
                         return false;
-                    } // If not null, then it is checked in detached verification
+                    } else { // If not null, then it is checked in detached verification
+                        // Check values of B64 in case of detached headers
+                        if (header.SigD.MId == ETSIConstants.ETSI_DETACHED_PARTS_HTTP_HEADERS) {
+                            if (header.B64 == null || header.B64.Value) {
+                                // Not allowed
+                                return false;
+                            }
+                        }
+                    }
                     break;
                 case "b64":
                     // Check

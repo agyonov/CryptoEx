@@ -483,56 +483,43 @@ public class JWSSigner
     // Prepare header values
     protected virtual void PrepareHeader(string? mimeType = null)
     {
-        JWSHeader? jWSHeader;
+        // Set as empty
         _header = string.Empty;
 
+        // Check
         if (string.IsNullOrEmpty(_algorithmNameJws)) {
             throw new ArgumentNullException(nameof(_algorithmNameJws));
         }
 
-        if (_certificate == null) {
-            jWSHeader = new JWSHeader
-            {
-                Alg = _algorithmNameJws,
-                Cty = mimeType,
-                Typ = _signatureTypHeaderParameter,
-                Jku = _keyUrl,
-                Jwk = _key,
-                Kid = _keyId,
-                X5u = _certificateUrl
-            };
-        } else {
+        // Prepare general header
+        JWSHeader jWSHeader = new JWSHeader
+        {
+            Alg = _algorithmNameJws,
+            Jku = _keyUrl,
+            Jwk = _key,
+            Kid = _keyId,
+            X5u = _certificateUrl,
+            Typ = _signatureTypHeaderParameter,
+            Cty = mimeType
+        };
+
+        // If we have certificate
+        if (_certificate != null) {
+            // Set certificate sha256
+            jWSHeader.X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256));
+
+            // If we do not have additional certificates
             if (_additionalCertificates == null || _additionalCertificates.Count < 1) {
-                jWSHeader = new JWSHeader
-                {
-                    Alg = _algorithmNameJws,
-                    Cty = mimeType,
-                    X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-                    X5c = new string[] { Convert.ToBase64String(_certificate.RawData) },
-                    Typ = _signatureTypHeaderParameter,
-                    Jku = _keyUrl,
-                    Jwk = _key,
-                    Kid = _keyId,
-                    X5u = _certificateUrl
-                };
+                // Set just one
+                jWSHeader.X5c = new string[] { Convert.ToBase64String(_certificate.RawData) };
             } else {
+                // Set all
                 string[] strX5c = new string[_additionalCertificates.Count + 1];
                 strX5c[0] = Convert.ToBase64String(_certificate.RawData);
                 for (int loop = 0; loop < _additionalCertificates.Count; loop++) {
                     strX5c[loop + 1] = Convert.ToBase64String(_additionalCertificates[loop].RawData);
                 }
-                jWSHeader = new JWSHeader
-                {
-                    Alg = _algorithmNameJws,
-                    Cty = mimeType,
-                    X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-                    X5c = strX5c,
-                    Typ = _signatureTypHeaderParameter,
-                    Jku = _keyUrl,
-                    Jwk = _key,
-                    Kid = _keyId,
-                    X5u = _certificateUrl
-                };
+                jWSHeader.X5c = strX5c;
             }
         }
 

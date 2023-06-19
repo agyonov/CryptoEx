@@ -348,7 +348,7 @@ public class JWSSigner
                     Encoding.ASCII.GetBytes($"{_protecteds[loop]}.", data);
 
                     // Copy payload
-                    Span<byte> slice = new (data, _protecteds[loop].Length + 1, data.Length - (_protecteds[loop].Length + 1));
+                    Span<byte> slice = new(data, _protecteds[loop].Length + 1, data.Length - (_protecteds[loop].Length + 1));
                     Encoding.UTF8.GetBytes(_payload ?? string.Empty, slice);
                 }
 

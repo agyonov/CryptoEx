@@ -102,7 +102,7 @@ public class Test_B64_JWS_And_ETSI
     public void Test_B64_ETSI_RSA_Enveloped()
     {
         // Try get certificate
-        X509Certificate2? cert = GetCertificateOnWindows(CertType.RSA);
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
         if (cert == null) {
             Assert.Fail("NO RSA certificate available");
         }
@@ -131,7 +131,7 @@ public class Test_B64_JWS_And_ETSI
     public void Test_B64_ETSI_RSA_Detached()
     {
         // Try get certificate
-        X509Certificate2? cert = GetCertificateOnWindows(CertType.RSA);
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
         if (cert == null) {
             Assert.Fail("NO RSA certificate available");
         }
@@ -164,7 +164,7 @@ public class Test_B64_JWS_And_ETSI
     public async Task Test_B64_ETSI_RSA_Timestamp_Enveloped()
     {
         // Try get certificate
-        X509Certificate2? cert = GetCertificateOnWindows(CertType.RSA);
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
         if (cert == null) {
             Assert.Fail("NO RSA certificate available");
         }
@@ -194,7 +194,7 @@ public class Test_B64_JWS_And_ETSI
     public async Task Test_B64_ETSI_RSA_Timestamp_Detached()
     {
         // Try get certificate
-        X509Certificate2? cert = GetCertificateOnWindows(CertType.RSA);
+        X509Certificate2? cert = GetCertificate(CertType.RSA);
         if (cert == null) {
             Assert.Fail("NO RSA certificate available");
         }
@@ -210,7 +210,7 @@ public class Test_B64_JWS_And_ETSI
 
                 // Sign 
                 signer.AttachSignersCertificate(cert);
-                signer.SignDetached(ms, message, "text/plain", "text/json", JWSConstants.JOSE_JSON,  b64: false);
+                signer.SignDetached(ms, message, "text/plain", "text/json", JWSConstants.JOSE_JSON, b64: false);
                 await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
 
                 // Encode - produce JWS

@@ -271,7 +271,8 @@ public class JWSSigner
             Encoding.ASCII.GetBytes($"{_header}.", data);
 
             // Copy header and payload
-            payload.CopyTo(data[(_header.Length + 1)..]);
+            Span<byte> slice = new(data, _header.Length + 1, data.Length - (_header.Length + 1));
+            payload.CopyTo(slice);
         }
 
         // Sign
@@ -347,7 +348,8 @@ public class JWSSigner
                     Encoding.ASCII.GetBytes($"{_protecteds[loop]}.", data);
 
                     // Copy payload
-                    Encoding.UTF8.GetBytes(_payload ?? string.Empty, data[(_protecteds[loop].Length + 1)..]);
+                    Span<byte> slice = new (data, _protecteds[loop].Length + 1, data.Length - (_protecteds[loop].Length + 1));
+                    Encoding.UTF8.GetBytes(_payload ?? string.Empty, slice);
                 }
 
                 // Verify

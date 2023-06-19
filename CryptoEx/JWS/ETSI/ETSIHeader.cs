@@ -25,6 +25,9 @@ public record class ETSIHeader : JWSHeader
             if (AdoTst != null) {
                 build.Add("adoTst");
             }
+            if (B64 != null) {
+                build.Add("b64");
+            }
             return build.ToArray();
         }
 

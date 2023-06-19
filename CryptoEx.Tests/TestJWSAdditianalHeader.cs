@@ -1,17 +1,14 @@
 ﻿
 
-using CryptoEx.JWS;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Cryptography;
-using System.Text;
 using CryptoEx.Ed;
 using CryptoEx.JWK;
-using System.Text.Json;
-using CryptoEx.JWS.ETSI;
-using System.Globalization;
+using CryptoEx.JWS;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace CryptoEx.Tests;
-public  class TestJWSAdditianalHeader
+public class TestJWSAdditianalHeader
 {
     // Some test data for JADES
     public static string message = """

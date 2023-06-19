@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CryptoEx.JWS.ETSI;
 public class ETSISigner : JWSSigner
@@ -113,7 +114,11 @@ public class ETSISigner : JWSSigner
     /// <param name="typHeaderparameter">Optionally the 'typ' header parameter https://www.rfc-editor.org/rfc/rfc7515#section-4.1.9,
     /// to put in the header.
     /// </param>
-    public void SignDetached(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null, string? typHeaderparameter = null)
+    /// <param name="b64">Wheter to use an Unencoded Payload Option - https://www.rfc-editor.org/rfc/rfc7797.
+    /// By defult it is not used, so the payload is encoded. 
+    /// If you want to use it, set it to FALSE. And use it carefully and with understanding.
+    /// </param>
+    public void SignDetached(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null, string? typHeaderparameter = null, bool? b64 = null)
     {
         // PSS RSA
         bool PSSRSA = false;
@@ -121,21 +126,37 @@ public class ETSISigner : JWSSigner
             PSSRSA = true;
         }
 
+        // Once set, it cannot be changed
+        if (_b64 == null) {
+            _b64 = b64;
+        } else {
+            if (_b64 != null && (b64 == null || _b64.Value != b64.Value)) {
+                throw new Exception("b64 header parameter already set");
+            }
+        }
+
         // Hash attachemnt
-        using (HashAlgorithm hAlg = SHA512.Create())
-        using (AnonymousPipeServerStream apss = new(PipeDirection.In))
-        using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
-            _ = Task.Run(() =>
-            {
-                try {
-                    // Encode
-                    Base64UrlEncoder.Encode(attachement, apcs);
-                } finally {
-                    // Close the pipe
-                    apcs.Close(); // To avoid blocking of the pipe.
-                }
-            });
-            hashedData = hAlg.ComputeHash(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+        if (b64 == null || b64.Value) {
+            using (HashAlgorithm hAlg = SHA512.Create())
+            using (AnonymousPipeServerStream apss = new(PipeDirection.In))
+            using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
+                _ = Task.Run(() =>
+                {
+                    try {
+                        // Encode
+                        Base64UrlEncoder.Encode(attachement, apcs);
+                    } finally {
+                        // Close the pipe
+                        apcs.Close(); // To avoid blocking of the pipe.
+                    }
+                });
+                hashedData = hAlg.ComputeHash(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+            }
+        } else {
+            using (HashAlgorithm hAlg = SHA512.Create()) {
+                /// Hash it
+                hashedData = hAlg.ComputeHash(attachement);
+            }
         }
 
         // Prepare header
@@ -145,14 +166,33 @@ public class ETSISigner : JWSSigner
 
         // Form JOSE protected data 
         if (optionalPayload != null) {
-            _payload = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(optionalPayload));
+            _payload = _b64 == null || _b64.Value ? Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(optionalPayload)) : optionalPayload;
         }
         _protecteds.Add(_header);
-        string calc = optionalPayload == null ? $"{_header}." : $"{_header}.{_payload}";
+        byte[] calc;
+        // If we have a payload, we need to add it to the calc
+        if (optionalPayload == null) {
+            calc = Encoding.ASCII.GetBytes($"{_header}.");
+        } else {
+            // No b64
+            if (b64 == null || b64.Value) {
+                calc = Encoding.ASCII.GetBytes($"{_header}.{_payload}");
+            } else {
+                // Create sign data buffer
+                calc = new byte[_header.Length + Encoding.UTF8.GetByteCount(_payload ?? string.Empty) + 1];
+
+                // Copy header
+                Encoding.ASCII.GetBytes($"{_header}.", calc);
+
+                // Copy payload
+                Span<byte> slice = new(calc, _header.Length + 1, calc.Length - (_header.Length + 1));
+                Encoding.UTF8.GetBytes(_payload ?? string.Empty, slice);
+            }
+        }
 
         // Sign
         if (_signer != null) {
-            _signatures.Add(cryptoOperations.DoAsymetricSign(_signer, Encoding.ASCII.GetBytes(calc), _algorithmName, PSSRSA));
+            _signatures.Add(cryptoOperations.DoAsymetricSign(_signer, calc, _algorithmName, PSSRSA));
         } else {
             throw new Exception("As of ETSI TS 119 312 V1.3.1, p. 6.2.2 it shall be RSA or ECDSA");
         }
@@ -170,7 +210,11 @@ public class ETSISigner : JWSSigner
     /// <param name="typHeaderparameter">Optionally the 'typ' header parameter https://www.rfc-editor.org/rfc/rfc7515#section-4.1.9,
     /// to put in the header.
     /// </param>
-    public async Task SignDetachedAsync(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null, string? typHeaderparameter = null)
+    /// <param name="b64">Wheter to use an Unencoded Payload Option - https://www.rfc-editor.org/rfc/rfc7797.
+    /// By defult it is not used, so the payload is encoded. 
+    /// If you want to use it, set it to FALSE. And use it carefully and with understanding.
+    /// </param>
+    public async Task SignDetachedAsync(Stream attachement, string? optionalPayload = null, string mimeTypeAttachement = "octet-stream", string? mimeType = null, string? typHeaderparameter = null, bool? b64 = null)
     {
         // PSS RSA
         bool PSSRSA = false;
@@ -178,21 +222,37 @@ public class ETSISigner : JWSSigner
             PSSRSA = true;
         }
 
+        // Once set, it cannot be changed
+        if (_b64 == null) {
+            _b64 = b64;
+        } else {
+            if (_b64 != null && (b64 == null || _b64.Value != b64.Value)) {
+                throw new Exception("b64 header parameter already set");
+            }
+        }
+
         // Hash attachemnt
-        using (HashAlgorithm hAlg = SHA512.Create())
-        using (AnonymousPipeServerStream apss = new(PipeDirection.In))
-        using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
-            _ = Task.Run(async () =>
-            {
-                try {
-                    // Encode
-                    await Base64UrlEncoder.EncodeAsync(attachement, apcs);
-                } finally {
-                    // Close the pipe
-                    apcs.Close(); // To avoid blocking of the pipe.
-                }
-            });
-            hashedData = await hAlg.ComputeHashAsync(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+        if (b64 == null || b64.Value) {
+            using (HashAlgorithm hAlg = SHA512.Create())
+            using (AnonymousPipeServerStream apss = new(PipeDirection.In))
+            using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
+                _ = Task.Run(async () =>
+                {
+                    try {
+                        // Encode
+                        await Base64UrlEncoder.EncodeAsync(attachement, apcs);
+                    } finally {
+                        // Close the pipe
+                        apcs.Close(); // To avoid blocking of the pipe.
+                    }
+                });
+                hashedData = await hAlg.ComputeHashAsync(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+            }
+        } else {
+            using (HashAlgorithm hAlg = SHA512.Create()) {
+                /// Hash it
+                hashedData = hAlg.ComputeHash(attachement);
+            }
         }
 
         // Prepare header
@@ -202,14 +262,32 @@ public class ETSISigner : JWSSigner
 
         // Form JOSE protected data 
         if (optionalPayload != null) {
-            _payload = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(optionalPayload));
+            _payload = _b64 == null || _b64.Value ? Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(optionalPayload)) : optionalPayload;
         }
         _protecteds.Add(_header);
-        string calc = optionalPayload == null ? $"{_header}." : $"{_header}.{_payload}";
+        byte[] calc;
+        // If we have a payload, we need to add it to the calc
+        if (optionalPayload == null) {
+            calc = Encoding.ASCII.GetBytes($"{_header}.");
+        } else {
+            // No b64
+            if (b64 == null || b64.Value) {
+                calc = Encoding.ASCII.GetBytes($"{_header}.{_payload}");
+            } else {
+                // Create sign data buffer
+                calc = new byte[_header.Length + Encoding.UTF8.GetByteCount(_payload ?? string.Empty) + 1];
+
+                // Copy header
+                Encoding.ASCII.GetBytes($"{_header}.", calc);
+
+                // Copy payload
+                Encoding.UTF8.GetBytes(_payload ?? string.Empty, 0, _payload?.Length ?? 0, calc, _header.Length + 1);
+            }
+        }
 
         // Sign
         if (_signer != null) {
-            _signatures.Add(cryptoOperations.DoAsymetricSign(_signer, Encoding.ASCII.GetBytes(calc), _algorithmName, PSSRSA));
+            _signatures.Add(cryptoOperations.DoAsymetricSign(_signer, calc, _algorithmName, PSSRSA));
         } else {
             throw new Exception("As of ETSI TS 119 312 V1.3.1, p. 6.2.2 it shall be RSA or ECDSA");
         }
@@ -385,44 +463,48 @@ public class ETSISigner : JWSSigner
             Kid = Convert.ToBase64String(_certificate.IssuerName.RawData),
             SigT = $"{DateTimeOffset.UtcNow:yyyy-MM-ddTHH:mm:ssZ}",
             X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-            X5c = new string[] { Convert.ToBase64String(_certificate.RawData) },
             X5u = _certificateUrl,
             Typ = _signatureTypHeaderParameter,
-            Cty = mimeType
+            Cty = mimeType,
+            Crit = new string[] { "sigT" }
         };
 
-        // Attached
-        if (hashedData != null) {
-            // Prepare header
-            if (_additionalCertificates == null || _additionalCertificates.Count < 1) {
-                etsHeader.SigD = new ETSIDetachedParts
-                {
-                    Pars = new string[] { "attachement" },
-                    HashM = ETSIConstants.SHA512,
-                    HashV = new string[]
-                        {
-                            Base64UrlEncoder.Encode(hashedData)
-                        },
-                    Ctys = new string[] { mimeType ?? "octed-stream" }
-                };
-            } else {
-                string[] strX5c = new string[_additionalCertificates.Count + 1];
-                strX5c[0] = Convert.ToBase64String(_certificate.RawData);
-                for (int loop = 0; loop < _additionalCertificates.Count; loop++) {
-                    strX5c[loop + 1] = Convert.ToBase64String(_additionalCertificates[loop].RawData);
-                }
-                etsHeader.SigD = new ETSIDetachedParts
-                {
-                    Pars = new string[] { "attachement" },
-                    HashM = ETSIConstants.SHA512,
-                    HashV = new string[]
-                        {
-                            Base64UrlEncoder.Encode(hashedData)
-                        },
-                    Ctys = new string[] { mimeType ?? "octed-stream" }
-                };
-                etsHeader.X5c = strX5c;
+        // Prepare header - add signing certificate(s)
+        if (_additionalCertificates == null || _additionalCertificates.Count < 1) {
+            etsHeader.X5c = new string[] { Convert.ToBase64String(_certificate.RawData) };
+        } else {
+            string[] strX5c = new string[_additionalCertificates.Count + 1];
+            strX5c[0] = Convert.ToBase64String(_certificate.RawData);
+            for (int loop = 0; loop < _additionalCertificates.Count; loop++) {
+                strX5c[loop + 1] = Convert.ToBase64String(_additionalCertificates[loop].RawData);
             }
+            etsHeader.X5c = strX5c;
+        }
+
+        // De-Attached
+        if (hashedData != null) {
+            // Prepare header - add detached info
+            etsHeader.SigD = new ETSIDetachedParts
+            {
+                Pars = new string[] { "attachement" },
+                HashM = ETSIConstants.SHA512,
+                HashV = new string[]
+                       {
+                            Base64UrlEncoder.Encode(hashedData)
+                       },
+                Ctys = new string[] { mimeType ?? "octed-stream" }
+            };
+
+            // Add 
+            if (!etsHeader.Crit.Contains("sigD")) {
+                etsHeader.Crit = etsHeader.Crit.Append("sigD").ToArray();
+            }
+        }
+
+        // Do some logic for b64
+        if (_b64 != null) {
+            // Set b64 value
+            etsHeader.B64 = _b64.Value;
         }
 
         // Serialize header
@@ -590,26 +672,39 @@ public class ETSISigner : JWSSigner
 
             // Hash attachemnt
             byte[] lHashedData;
-            using (HashAlgorithm hAlg = header.SigD.HashM switch
-            {
-                ETSIConstants.SHA512 => SHA512.Create(),
-                ETSIConstants.SHA384 => SHA384.Create(),
-                ETSIConstants.SHA256 => SHA256.Create(),
-                _ => throw new NotSupportedException($"Hash algorithm {header.SigD.HashM} is not supported.")
-            })
-            using (AnonymousPipeServerStream apss = new(PipeDirection.In))
-            using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
-                _ = Task.Run(() =>
+            if (header.B64 == null || header.B64.Value) {
+                using (HashAlgorithm hAlg = header.SigD.HashM switch
                 {
-                    try {
-                        // Encode
-                        Base64UrlEncoder.Encode(attachement, apcs);
-                    } finally {
-                        // Close the pipe
-                        apcs.Close(); // To avoid blocking of the pipe.
-                    }
-                });
-                lHashedData = hAlg.ComputeHash(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+                    ETSIConstants.SHA512 => SHA512.Create(),
+                    ETSIConstants.SHA384 => SHA384.Create(),
+                    ETSIConstants.SHA256 => SHA256.Create(),
+                    _ => throw new NotSupportedException($"Hash algorithm {header.SigD.HashM} is not supported.")
+                })
+                using (AnonymousPipeServerStream apss = new(PipeDirection.In))
+                using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
+                    _ = Task.Run(() =>
+                    {
+                        try {
+                            // Encode
+                            Base64UrlEncoder.Encode(attachement, apcs);
+                        } finally {
+                            // Close the pipe
+                            apcs.Close(); // To avoid blocking of the pipe.
+                        }
+                    });
+                    lHashedData = hAlg.ComputeHash(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+                }
+            } else {
+                using (HashAlgorithm hAlg = header.SigD.HashM switch
+                {
+                    ETSIConstants.SHA512 => SHA512.Create(),
+                    ETSIConstants.SHA384 => SHA384.Create(),
+                    ETSIConstants.SHA256 => SHA256.Create(),
+                    _ => throw new NotSupportedException($"Hash algorithm {header.SigD.HashM} is not supported.")
+                }) {
+                    // Compute hash
+                    lHashedData = hAlg.ComputeHash(attachement);
+                }
             }
 
             // Get sent data
@@ -656,26 +751,39 @@ public class ETSISigner : JWSSigner
 
             // Hash attachemnt
             byte[] lHashedData;
-            using (HashAlgorithm hAlg = header.SigD.HashM switch
-            {
-                ETSIConstants.SHA512 => SHA512.Create(),
-                ETSIConstants.SHA384 => SHA384.Create(),
-                ETSIConstants.SHA256 => SHA256.Create(),
-                _ => throw new NotSupportedException($"Hash algorithm {header.SigD.HashM} is not supported.")
-            })
-            using (AnonymousPipeServerStream apss = new(PipeDirection.In))
-            using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
-                _ = Task.Run(async () =>
+            if (header.B64 == null || header.B64.Value) {
+                using (HashAlgorithm hAlg = header.SigD.HashM switch
                 {
-                    try {
-                        // Encode
-                        await Base64UrlEncoder.EncodeAsync(attachement, apcs);
-                    } finally {
-                        // Close the pipe
-                        apcs.Close(); // To avoid blocking of the pipe.
-                    }
-                });
-                lHashedData = await hAlg.ComputeHashAsync(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+                    ETSIConstants.SHA512 => SHA512.Create(),
+                    ETSIConstants.SHA384 => SHA384.Create(),
+                    ETSIConstants.SHA256 => SHA256.Create(),
+                    _ => throw new NotSupportedException($"Hash algorithm {header.SigD.HashM} is not supported.")
+                })
+                using (AnonymousPipeServerStream apss = new(PipeDirection.In))
+                using (AnonymousPipeClientStream apcs = new(PipeDirection.Out, apss.GetClientHandleAsString())) {
+                    _ = Task.Run(async () =>
+                    {
+                        try {
+                            // Encode
+                            await Base64UrlEncoder.EncodeAsync(attachement, apcs);
+                        } finally {
+                            // Close the pipe
+                            apcs.Close(); // To avoid blocking of the pipe.
+                        }
+                    });
+                    lHashedData = await hAlg.ComputeHashAsync(apss); // Read from the pipe. Blocks until the pipe is closed (Upper Task ends).
+                }
+            } else {
+                using (HashAlgorithm hAlg = header.SigD.HashM switch
+                {
+                    ETSIConstants.SHA512 => SHA512.Create(),
+                    ETSIConstants.SHA384 => SHA384.Create(),
+                    ETSIConstants.SHA256 => SHA256.Create(),
+                    _ => throw new NotSupportedException($"Hash algorithm {header.SigD.HashM} is not supported.")
+                }) {
+                    // Compute hash
+                    lHashedData = hAlg.ComputeHash(attachement);
+                }
             }
 
             // Get sent data

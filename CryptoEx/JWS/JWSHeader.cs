@@ -8,6 +8,9 @@ public record class JWSHeader
     [JsonPropertyName("alg")]
     public string Alg { get; set; } = string.Empty;
 
+    [JsonPropertyName("b64")]
+    public bool? B64 { get; set; } = null;
+
     [JsonPropertyName("jku")]
     public string? Jku { get; set; } = null;
 

@@ -1,4 +1,5 @@
-﻿using CryptoEx.Utils;
+﻿using CryptoEx.JWK;
+using CryptoEx.Utils;
 using System.Collections.ObjectModel;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -26,6 +27,18 @@ public class JWSSigner
     // Possibly the certificate
     protected X509Certificate2? _certificate;
 
+    // Possibly the certificate url
+    protected string? _certificateUrl;
+
+    // Possibly the key id
+    protected string? _keyId;
+
+    // Possibly the key url
+    protected string? _keyUrl;
+
+    // Possibly the key
+    protected Jwk? _key;
+
     // pssibly additional certificates 
     protected IReadOnlyList<X509Certificate2>? _additionalCertificates;
 
@@ -46,6 +59,9 @@ public class JWSSigner
 
     // The 'typ' header parameter as of https://www.rfc-editor.org/rfc/rfc7515#section-4.1.9
     protected string? _signatureTypHeaderParameter;
+
+    // The 'b64' header parameter as of https://www.rfc-editor.org/rfc/rfc7797
+    protected bool? _b64 = null;
 
     // Internal class signer
     protected CryptoOperations cryptoOperations;
@@ -112,6 +128,11 @@ public class JWSSigner
         _signatures.Clear();
         _unprotectedHeader = null;
         _signatureTypHeaderParameter = null;
+        _certificateUrl = null;
+        _keyId = null;
+        _keyUrl = null;
+        _key = null;
+        _b64 = null;
     }
 
     /// <summary>
@@ -170,6 +191,7 @@ public class JWSSigner
     /// <summary>
     /// Attach the signer's certificate to the JWS. ONLY public part of the certificate is used.
     /// This is optional and is only used to add the x5c, x5t header
+    /// An alternative to this method is to use 'AttachSignersOthersProperties' method.
     /// </summary>
     /// <param name="cert">The certificate</param>
     /// <param name="additionalCertificates">The additional certificates to add to the signature</param>
@@ -177,6 +199,22 @@ public class JWSSigner
     {
         _certificate = cert;
         _additionalCertificates = additionalCertificates;
+    }
+
+    /// <summary>
+    /// Attach the onter signer's properties to the JWS. This is optional and is only used to add the jku, jwk, kid, x5u header.
+    /// Can be tought as an alternative to 'AttachSignersCertificate' method.
+    /// </summary>
+    /// <param name="Jku"></param>
+    /// <param name="JwKey"></param>
+    /// <param name="Kid"></param>
+    /// <param name="X5u"></param>
+    public void AttachSignersOthersProperties(string? Jku = null, Jwk? JwKey = null, string? Kid = null, string? X5u = null)
+    {
+        _certificateUrl = X5u;
+        _keyId = Kid;
+        _keyUrl = Jku;
+        _key = JwKey;
     }
 
     /// <summary>
@@ -190,7 +228,11 @@ public class JWSSigner
     /// <param name="typHeaderparameter">Optionally the 'typ' header parameter https://www.rfc-editor.org/rfc/rfc7515#section-4.1.9,
     /// to put in the header.
     /// </param>
-    public void Sign(ReadOnlySpan<byte> payload, string? mimeType = null, string? typHeaderparameter = null)
+    /// <param name="b64">Wheter to use an Unencoded Payload Option - https://www.rfc-editor.org/rfc/rfc7797.
+    /// By defult it is not used, so the payload is encoded. 
+    /// If you want to use it, set it to FALSE. And use it carefully and with understanding.
+    /// </param>
+    public void Sign(ReadOnlySpan<byte> payload, string? mimeType = null, string? typHeaderparameter = null, bool? b64 = null)
     {
         // PSS RSA
         bool PSSRSA = false;
@@ -200,21 +242,46 @@ public class JWSSigner
 
         // Set it
         _signatureTypHeaderParameter = typHeaderparameter;
+        // Once set, it cannot be changed
+        if (_b64 == null) {
+            _b64 = b64;
+        } else {
+            if (_b64 != null && (b64 == null || _b64.Value != b64.Value)) {
+                throw new Exception("b64 header parameter already set");
+            }
+        }
 
         // Prepare header
         PrepareHeader(mimeType);
 
         // Form JOSE protected data
-        _payload = Base64UrlEncoder.Encode(payload);
+        _payload = _b64 == null || _b64.Value ? Base64UrlEncoder.Encode(payload) : Encoding.UTF8.GetString(payload);
         _protecteds.Add(_header);
+
+        // Prepare data to sign
+        byte[] data;
+        if (_b64 == null || _b64.Value) {
+            // Create the data to sign
+            data = Encoding.ASCII.GetBytes($"{_header}.{_payload}");
+        } else {
+            // Create sign data buffer
+            data = new byte[_header.Length + payload.Length + 1];
+
+            // Encode header
+            Encoding.ASCII.GetBytes($"{_header}.", data);
+
+            // Copy header and payload
+            Span<byte> slice = new(data, _header.Length + 1, data.Length - (_header.Length + 1));
+            payload.CopyTo(slice);
+        }
 
         // Sign
         if (_signer != null) {
             // Do the sign
-            _signatures.Add(cryptoOperations.DoAsymetricSign(_signer, Encoding.ASCII.GetBytes($"{_header}.{_payload}"), _algorithmName, PSSRSA));
+            _signatures.Add(cryptoOperations.DoAsymetricSign(_signer, data, _algorithmName, PSSRSA));
         } else if (_signerHmac != null) {
             // HMAC case
-            _signatures.Add(_signerHmac.ComputeHash(Encoding.ASCII.GetBytes($"{_header}.{_payload}")));
+            _signatures.Add(_signerHmac.ComputeHash(data));
         } else {
             throw new ArgumentNullException(nameof(_algorithmNameJws));
         }
@@ -268,8 +335,25 @@ public class JWSSigner
                     }
                 }
 
+                // Prepare data to verify
+                byte[] data;
+                if (headers[loop].B64 == null || headers[loop].B64!.Value) {
+                    // Standard case
+                    data = Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}");
+                } else {
+                    // Create sign data buffer
+                    data = new byte[_protecteds[loop].Length + Encoding.UTF8.GetByteCount(_payload ?? string.Empty) + 1];
+
+                    // Copy header
+                    Encoding.ASCII.GetBytes($"{_protecteds[loop]}.", data);
+
+                    // Copy payload
+                    Span<byte> slice = new(data, _protecteds[loop].Length + 1, data.Length - (_protecteds[loop].Length + 1));
+                    Encoding.UTF8.GetBytes(_payload ?? string.Empty, slice);
+                }
+
                 // Verify
-                result &= cryptoOperations.DoVerify(keys[loop], headers[loop], Encoding.ASCII.GetBytes($"{_protecteds[loop]}.{_payload}"), _signatures[loop]);
+                result &= cryptoOperations.DoVerify(keys[loop], headers[loop], data, _signatures[loop]);
             }
 
             return result;
@@ -288,6 +372,11 @@ public class JWSSigner
         // Check it
         if (_signatures.Count > 1) {
             type = JWSEncodeTypeEnum.Full;
+        } else {
+            // If unencoded header is present, we must use Flattened encoding or Full in case of more than 1 signature
+            if (_b64 != null && !_b64.Value && type == JWSEncodeTypeEnum.Compact) {
+                type = JWSEncodeTypeEnum.Flattened;
+            }
         }
 
         // Encode it
@@ -345,57 +434,111 @@ public class JWSSigner
             // Decode signature as full one
             DecodeFull(signature);
         }
-        // Load payload
-        payload = _payload != null ? Base64UrlEncoder.Decode(_payload) : Array.Empty<byte>();
 
-        // Return header
-        return _protecteds.Select(p => JsonSerializer.Deserialize<T>(Base64UrlEncoder.Decode(p), JWSConstants.jsonOptions))
+        // Load headers
+        ReadOnlyCollection<T> result = _protecteds.Select(p => JsonSerializer.Deserialize<T>(Base64UrlEncoder.Decode(p), JWSConstants.jsonOptions))
                           .Where(p => p != null)
                           .ToList()
                           .AsReadOnly()!;
+
+        // Load payload
+        if (result.Any(h => h.B64 != null && !h.B64.Value)) {
+            payload = _payload != null ? Encoding.UTF8.GetBytes(_payload) : Array.Empty<byte>();
+        } else {
+            payload = _payload != null ? Base64UrlEncoder.Decode(_payload) : Array.Empty<byte>();
+        }
+
+        // Return header
+        return result;
+    }
+
+    /// <summary>
+    /// Validates crytical header values, for an B64 signature
+    /// </summary>
+    /// <param name="header">The header</param>
+    /// <returns>True - present and understood. Flase - other case</returns>
+    public static bool B64Resolutor(JWSHeader header)
+    {
+        // No header crit
+        if (header.Crit == null) {
+            return false;
+        }
+
+        // Cycle through crit
+        for (int loop = 0; loop < header.Crit.Length; loop++) {
+            switch (header.Crit[loop]) {
+                case "b64":
+                    // Check
+                    if (header.B64 == null) {
+                        return false;
+                    }
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        // All good
+        return true;
     }
 
     // Prepare header values
     protected virtual void PrepareHeader(string? mimeType = null)
     {
-        JWSHeader? jWSHeader;
+        // Set as empty
         _header = string.Empty;
 
+        // Check
         if (string.IsNullOrEmpty(_algorithmNameJws)) {
             throw new ArgumentNullException(nameof(_algorithmNameJws));
         }
 
-        if (_certificate == null) {
-            jWSHeader = new JWSHeader
-            {
-                Alg = _algorithmNameJws,
-                Cty = mimeType,
-                Typ = _signatureTypHeaderParameter
-            };
-        } else {
+        // Prepare general header
+        JWSHeader jWSHeader = new JWSHeader
+        {
+            Alg = _algorithmNameJws,
+            Jku = _keyUrl,
+            Jwk = _key,
+            Kid = _keyId,
+            X5u = _certificateUrl,
+            Typ = _signatureTypHeaderParameter,
+            Cty = mimeType
+        };
+
+        // If we have certificate
+        if (_certificate != null) {
+            // Set certificate sha256
+            jWSHeader.X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256));
+
+            // If we do not have additional certificates
             if (_additionalCertificates == null || _additionalCertificates.Count < 1) {
-                jWSHeader = new JWSHeader
-                {
-                    Alg = _algorithmNameJws,
-                    Cty = mimeType,
-                    X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-                    X5c = new string[] { Convert.ToBase64String(_certificate.RawData) },
-                    Typ = _signatureTypHeaderParameter
-                };
+                // Set just one
+                jWSHeader.X5c = new string[] { Convert.ToBase64String(_certificate.RawData) };
             } else {
+                // Set all
                 string[] strX5c = new string[_additionalCertificates.Count + 1];
                 strX5c[0] = Convert.ToBase64String(_certificate.RawData);
                 for (int loop = 0; loop < _additionalCertificates.Count; loop++) {
                     strX5c[loop + 1] = Convert.ToBase64String(_additionalCertificates[loop].RawData);
                 }
-                jWSHeader = new JWSHeader
-                {
-                    Alg = _algorithmNameJws,
-                    Cty = mimeType,
-                    X5 = Base64UrlEncoder.Encode(_certificate.GetCertHash(HashAlgorithmName.SHA256)),
-                    X5c = strX5c,
-                    Typ = _signatureTypHeaderParameter
-                };
+                jWSHeader.X5c = strX5c;
+            }
+        }
+
+        // Do some logic for b64
+        if (_b64 != null) {
+            // Set b64 value
+            jWSHeader.B64 = _b64.Value;
+
+            // Make b64 is in crit
+            if (jWSHeader.Crit == null) {
+                // Just set it
+                jWSHeader.Crit = new string[] { "b64" };
+            } else {
+                // Append it, if not exists
+                if (!jWSHeader.Crit.Contains("b64")) {
+                    jWSHeader.Crit = jWSHeader.Crit.Append("b64").ToArray();
+                }
             }
         }
 

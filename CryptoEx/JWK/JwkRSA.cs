@@ -6,61 +6,61 @@ namespace CryptoEx.JWK;
 /// A Jeson Web Key (JWK) is a JavaScript Object Notation (JSON) data structure that represents a cryptographic key.
 /// For RSA keys
 /// </summary>
-public record JwkRSA : Jwk
+public record class JwkRSA : Jwk
 {
     /// <summary>
     /// Modulus part of public key
     /// </summary>
     [JsonPropertyName("n")]
-    public string? N { get; set; }
+    public string? N { get; set; } = null;
 
     /// <summary>
     /// Public exponent
     /// </summary>
     [JsonPropertyName("e")]
-    public string? E { get; set; }
+    public string? E { get; set; } = null;
 
     /// <summary>
     /// Private part of RSA key - private exponent
     /// </summary>
     [JsonPropertyName("d")]
-    public string? D { get; set; }
+    public string? D { get; set; } = null;
 
     /// <summary>
     /// (First Prime Factor) Parameter
     /// </summary>
     [JsonPropertyName("p")]
-    public string? P { get; set; }
+    public string? P { get; set; } = null;
 
     /// <summary>
     ///  (Second Prime Factor) Parameter
     /// </summary>
     [JsonPropertyName("q")]
-    public string? Q { get; set; }
+    public string? Q { get; set; } = null;
 
     /// <summary>
     /// (First Factor CRT Exponent) Parameter
     /// </summary>
     [JsonPropertyName("dp")]
-    public string? DP { get; set; }
+    public string? DP { get; set; } = null;
 
     /// <summary>
     /// (Second Factor CRT Exponent) ParameterSecond factor CRT exponent
     /// </summary>
     [JsonPropertyName("dq")]
-    public string? DQ { get; set; }
+    public string? DQ { get; set; } = null;
 
     /// <summary>
     ///(First CRT Coefficient) Parameter
     /// </summary>
     [JsonPropertyName("qi")]
-    public string? QI { get; set; }
+    public string? QI { get; set; } = null;
 
     /// <summary>
     /// (Other Primes Info) Parameter
     /// </summary>
     [JsonPropertyName("oth")]
-    public List<OtherPrimeInfo>? Oth { get; set; }
+    public List<OtherPrimeInfo>? Oth { get; set; } = null;
 }
 
 /// <summary>

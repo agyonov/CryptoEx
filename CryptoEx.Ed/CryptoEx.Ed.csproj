@@ -19,6 +19,7 @@ Also may be used by parties to exchnage private key material using X25519 and X4
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes>Just initial publishing</PackageReleaseNotes>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

@@ -171,7 +171,7 @@ public static class JwkExtentions
             return null;
         }
 
-        //try create the RSA key
+        //try create the Decode key
         try {
             return Base64UrlEncoder.Decode(jKey.K);
         } catch {

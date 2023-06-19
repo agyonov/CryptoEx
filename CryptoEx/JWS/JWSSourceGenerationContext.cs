@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace CryptoEx.JWS;
 
+[JsonSourceGenerationOptions(WriteIndented = false, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(JWS))]
 [JsonSerializable(typeof(JWSFlattened))]
 [JsonSerializable(typeof(JWSHeader))]

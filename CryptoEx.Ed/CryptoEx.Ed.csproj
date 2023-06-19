@@ -18,7 +18,9 @@ Also may be used by parties to exchnage private key material using X25519 and X4
     <PackageReadmeFile>readme_nuget_ed.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Just initial publishing</PackageReleaseNotes>
+    <PackageReleaseNotes>1. Added suport for b64 header - both in JWS and jAdES
+2. Support some other common header properties of JWS
+3. Some minor optimizations</PackageReleaseNotes>
     <Version>1.1.0</Version>
   </PropertyGroup>
 

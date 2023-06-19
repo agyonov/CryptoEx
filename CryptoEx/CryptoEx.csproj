@@ -17,7 +17,9 @@
     <PackageIcon>logo_lib.png</PackageIcon>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Just initial publishing</PackageReleaseNotes>
+    <PackageReleaseNotes>1. Added suport for b64 header - both in JWS and jAdES
+2. Support some other common header properties of JWS
+3. Some minor optimizations</PackageReleaseNotes>
     <Version>1.1.0</Version>
   </PropertyGroup>
 

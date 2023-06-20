@@ -205,10 +205,10 @@ public class JWSSigner
     /// Attach the onter signer's properties to the JWS. This is optional and is only used to add the jku, jwk, kid, x5u header.
     /// Can be tought as an alternative to 'AttachSignersCertificate' method.
     /// </summary>
-    /// <param name="Jku"></param>
-    /// <param name="JwKey"></param>
-    /// <param name="Kid"></param>
-    /// <param name="X5u"></param>
+    /// <param name="Jku">Optionally URL to download signer's JWK set</param>
+    /// <param name="JwKey">Optionally some JWK key to use for signature verification</param>
+    /// <param name="Kid">Optionally Key ID</param>
+    /// <param name="X5u">Optionally URL to download signer's certificate.</param>
     public void AttachSignersOthersProperties(string? Jku = null, Jwk? JwKey = null, string? Kid = null, string? X5u = null)
     {
         _certificateUrl = X5u;

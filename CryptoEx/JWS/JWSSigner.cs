@@ -103,7 +103,7 @@ public class JWSSigner
     }
 
     /// <summary>
-    /// A constructiror with an private key - RSA or ECDSA, used for signing
+    /// A constructiror with an private key - HMAC, used for signing
     /// </summary>
     /// <param name="signer">The private key</param>
     /// <exception cref="ArgumentException">Invalid private key type</exception>
@@ -116,7 +116,7 @@ public class JWSSigner
     /// <summary>
     /// Clear some data.
     /// Every thing except the signer and the HashAlgorithmName!
-    /// After calling 'Decode' and before calling 'Sign' next time you MUST call this method! 'Veryfy...' calls this method internally.
+    /// After calling 'Decode' and before calling 'Sign' next time you MUST call this method! 'Verify...' calls this method internally.
     /// </summary>
     public virtual void Clear()
     {

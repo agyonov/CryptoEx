@@ -76,9 +76,9 @@ public class SignedXmlExt : SignedXml
     /// <param name="document">The document being signed with SignedXML</param>
     /// <param name="idValue">The id value being searched/param>
     /// <returns>The XML element with given searchId value if found</returns>
-    public override XmlElement? GetIdElement(XmlDocument document, string idValue)
+    public override XmlElement? GetIdElement(XmlDocument? document, string idValue)
     {
-        if (string.IsNullOrEmpty(idValue))
+        if (string.IsNullOrEmpty(idValue) || document == null)
             return null;
 
         var xmlElement = base.GetIdElement(document, idValue);

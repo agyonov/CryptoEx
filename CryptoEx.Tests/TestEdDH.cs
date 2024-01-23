@@ -192,7 +192,7 @@ public class TestEdDH
         Assert.True(bobGet == 44);
 
         // Create AES
-        AesGcm aesBob = new(bobsKey[..32]);
+        AesGcm aesBob = new(bobsKey[..32], 16);
 
         // Encrypt
         aesBob.Encrypt(bobsKey[32..], Encoding.UTF8.GetBytes(palinText), cypher, tag);
@@ -202,7 +202,7 @@ public class TestEdDH
         Assert.True(aliceGen == 44);
 
         // Create AES
-        AesGcm aesAlice = new(aliceKey[..32]);
+        AesGcm aesAlice = new(aliceKey[..32], 16);
 
         // Decrypt
         aesAlice.Decrypt(aliceKey[32..], cypher, tag, decryptResult);
@@ -280,7 +280,7 @@ public class TestEdDH
         Assert.True(bobGet == 44);
 
         // Create AES
-        AesGcm aesBob = new(bobsKey[..32]);
+        AesGcm aesBob = new(bobsKey[..32], 16);
 
         // Encrypt
         aesBob.Encrypt(bobsKey[32..], Encoding.UTF8.GetBytes(palinText), cypher, tag);
@@ -290,7 +290,7 @@ public class TestEdDH
         Assert.True(aliceGen == 44);
 
         // Create AES
-        AesGcm aesAlice = new(aliceKey[..32]);
+        AesGcm aesAlice = new(aliceKey[..32], 16);
 
         // Decrypt
         aesAlice.Decrypt(aliceKey[32..], cypher, tag, decryptResult);

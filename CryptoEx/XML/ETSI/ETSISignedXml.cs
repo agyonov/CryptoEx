@@ -1,4 +1,5 @@
 ﻿using CryptoEx.Utils;
+using System.Collections;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -147,7 +148,9 @@ public class ETSISignedXml
         // Create a SignedXml object & provide GetIdElement method
         SignedXmlExt signedXml = new SignedXmlExt(payload, GetIdElement);
         signedXml.Signature.Id = IdSignature;
-        signedXml.SignedInfo.SignatureMethod = _algorithmNameSignatureXML;
+        if (signedXml.SignedInfo != null) {
+            signedXml.SignedInfo.SignatureMethod = _algorithmNameSignatureXML;
+        }
 
         // Create a reference to be able to sign everything into the message.
         Reference reference = new()
@@ -178,8 +181,10 @@ public class ETSISignedXml
         signedXml.AddReference(parametersSignature);
 
         // Set hash algorithm
-        foreach (var r in signedXml.SignedInfo.References) {
-            ((Reference)r).DigestMethod = _algorithmNameDigestXML;
+        if (signedXml.SignedInfo != null && _algorithmNameDigestXML != null) {
+            foreach (var r in signedXml.SignedInfo.References) {
+                ((Reference)r).DigestMethod = _algorithmNameDigestXML;
+            }
         }
 
         // Compute the signature
@@ -205,7 +210,9 @@ public class ETSISignedXml
         // Create a SignedXml object 
         SignedXmlExt signedXml = new(GetIdElement);
         signedXml.Signature.Id = IdSignature;
-        signedXml.SignedInfo.SignatureMethod = _algorithmNameSignatureXML;
+        if (signedXml.SignedInfo != null) {
+            signedXml.SignedInfo.SignatureMethod = _algorithmNameSignatureXML;
+        }
 
         // Create a DataObject to hold the data to be signed.
         DataObject dataObject = new()
@@ -244,8 +251,10 @@ public class ETSISignedXml
         signedXml.AddReference(parametersSignature);
 
         // Set hash algorithm
-        foreach (var r in signedXml.SignedInfo.References) {
-            ((Reference)r).DigestMethod = _algorithmNameDigestXML;
+        if (signedXml.SignedInfo != null && _algorithmNameDigestXML != null) {
+            foreach (var r in signedXml.SignedInfo.References) {
+                ((Reference)r).DigestMethod = _algorithmNameDigestXML;
+            }
         }
 
         // Compute the signature
@@ -274,7 +283,9 @@ public class ETSISignedXml
         // Create a SignedXml object & provide GetIdElement method
         SignedXmlExt signedXml = payload == null ? new SignedXmlExt(GetIdElement) : new SignedXmlExt(payload, GetIdElement);
         signedXml.Signature.Id = IdSignature;
-        signedXml.SignedInfo.SignatureMethod = _algorithmNameSignatureXML;
+        if (signedXml.SignedInfo != null) {
+            signedXml.SignedInfo.SignatureMethod = _algorithmNameSignatureXML;
+        }
 
         // Create a reference to be able to sign hash of the attachement.
         Reference reference = new(attachement);
@@ -312,8 +323,10 @@ public class ETSISignedXml
         signedXml.AddReference(parametersSignature);
 
         // Set hash algorithm
-        foreach (var r in signedXml.SignedInfo.References) {
-            ((Reference)r).DigestMethod = _algorithmNameDigestXML;
+        if (signedXml.SignedInfo != null && _algorithmNameDigestXML != null) {
+            foreach (var r in signedXml.SignedInfo.References) {
+                ((Reference)r).DigestMethod = _algorithmNameDigestXML;
+            }
         }
 
         // Compute the signature
@@ -353,10 +366,11 @@ public class ETSISignedXml
         }
         foreach (var ki in signedXml.KeyInfo) {
             if (ki is KeyInfoX509Data) {
-                if (((KeyInfoX509Data)ki).Certificates.Count < 0) {
+                ArrayList? lCerts = ((KeyInfoX509Data)ki).Certificates;
+                if (lCerts == null || lCerts.Count < 0) {
                     continue;
                 }
-                cInfo.SigningCertificate = ((KeyInfoX509Data)ki).Certificates[0] as X509Certificate2;
+                cInfo.SigningCertificate = lCerts[0] as X509Certificate2;
                 if (cInfo.SigningCertificate != null) {
                     break;
                 } else {
@@ -417,10 +431,11 @@ public class ETSISignedXml
         }
         foreach (var ki in signedXml.KeyInfo) {
             if (ki is KeyInfoX509Data) {
-                if (((KeyInfoX509Data)ki).Certificates.Count < 0) {
+                ArrayList? lCerts = ((KeyInfoX509Data)ki).Certificates;
+                if (lCerts == null || lCerts.Count < 0) {
                     continue;
                 }
-                cInfo.SigningCertificate = ((KeyInfoX509Data)ki).Certificates[0] as X509Certificate2;
+                cInfo.SigningCertificate = lCerts[0] as X509Certificate2;
                 if (cInfo.SigningCertificate != null) {
                     break;
                 } else {
@@ -438,18 +453,20 @@ public class ETSISignedXml
         ExtractQualifyingProperties(sigantureNode, cInfo);
 
         // cycle
-        for (int loop = 0; loop < signedXml.SignedInfo.References.Count; loop++) {
-            // Get the reference
-            Reference? r = signedXml.SignedInfo.References[loop] as Reference;
+        if (signedXml.SignedInfo != null) {
+            for (int loop = 0; loop < signedXml.SignedInfo.References.Count; loop++) {
+                // Get the reference
+                Reference? r = signedXml.SignedInfo.References[loop] as Reference;
 
-            // Find the reference for the attachement
-            if (r != null && (r.Uri == null || r.TransformChain.Count < 1)) {
-                // Remove the reference
-                signedXml.SignedInfo.References.Remove(r);
+                // Find the reference for the attachement
+                if (r != null && (r.Uri == null || r.TransformChain.Count < 1)) {
+                    // Remove the reference
+                    signedXml.SignedInfo.References.Remove(r);
 
-                // Check hash
-                if (!CheckDigest(attachement, r)) {
-                    return false;
+                    // Check hash
+                    if (!CheckDigest(attachement, r)) {
+                        return false;
+                    }
                 }
             }
         }
@@ -660,13 +677,13 @@ public class ETSISignedXml
             _ => throw new Exception($"Unsuported digest method {r.DigestMethod}")
         }) {
             // Original hash
-            byte[] origHash = r.DigestValue;
+            byte[]? origHash = r.DigestValue;
 
             // Calc new one
             byte[] computed = hash.ComputeHash(attachement);
 
             // Compare
-            if (!origHash.SequenceEqual(computed)) {
+            if (origHash == null || !origHash.SequenceEqual(computed)) {
                 return false;
             }
         }

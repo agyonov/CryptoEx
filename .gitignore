@@ -361,4 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/TestSystemXML/TestSystemXML.csproj
+
+# Some local test projects
+/TestSystemXML/

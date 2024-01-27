@@ -1,46 +1,52 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
-    <PackageReadmeFile>readme_nuget.md</PackageReadmeFile>
-    <Title>Extended and Examples Difital signatures in .NET</Title>
-    <Authors>CryptoEx's developers</Authors>
-    <Description>An extension of and example how to use the standard .NET libraries to sign / verify signatures of XMLs and JSONs, especially in regards to  XAdES, JAdES</Description>
-    <Copyright>CryptoEx's developers</Copyright>
-    <PackageProjectUrl>https://github.com/agyonov/CryptoEx</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/agyonov/CryptoEx</RepositoryUrl>
-    <PackageTags>digital;signing;rsa;ecdsa;jws;xades;xmldsig;jades;verifing;</PackageTags>
-    <PackageIcon>logo_lib.png</PackageIcon>
-    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-    <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>1. Added suport for b64 header - both in JWS and jAdES
-2. Support some other common header properties of JWS
-3. Some minor optimizations</PackageReleaseNotes>
-    <Version>2.0.0</Version>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+		<PackageReadmeFile>readme_nuget.md</PackageReadmeFile>
+		<Title>Extended and Examples Difital signatures in .NET</Title>
+		<Authors>CryptoEx's developers</Authors>
+		<Description>An extension of and example how to use the standard .NET libraries to sign / verify signatures of XMLs and JSONs, especially in regards to  XAdES, JAdES</Description>
+		<Copyright>CryptoEx's developers</Copyright>
+		<PackageProjectUrl>https://github.com/agyonov/CryptoEx</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/agyonov/CryptoEx</RepositoryUrl>
+		<PackageTags>digital;signing;rsa;ecdsa;jws;xades;xmldsig;jades;verifing;</PackageTags>
+		<PackageIcon>logo_lib.png</PackageIcon>
+		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+		<RepositoryType>git</RepositoryType>
+		<PackageReleaseNotes>
+			1. Added suport for b64 header - both in JWS and jAdES
+			2. Support some other common header properties of JWS
+			3. Some minor optimizations
+		</PackageReleaseNotes>
+		<Version>2.0.0</Version>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Include="..\LICENSE.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\logo_lib.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\readme_nuget.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+	<PropertyGroup>
+		<IsTrimmable>true</IsTrimmable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.0" />
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="..\LICENSE.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\logo_lib.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\readme_nuget.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.0" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.0" />
+	</ItemGroup>
 
 </Project>

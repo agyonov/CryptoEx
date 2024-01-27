@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using CryptoEx.JWS;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace CryptoEx.JWK;
@@ -15,19 +17,19 @@ public class JwkConverter : JsonConverter<Jwk>
         // What we have
         switch (value) {
             case JwkRSA rsa:
-                JsonSerializer.Serialize(writer, rsa, options);
+                JsonSerializer.Serialize(writer, rsa, JWSSourceGenerationContext.Default.JwkRSA);
                 break;
             case JwkEc ec:
-                JsonSerializer.Serialize(writer, ec, options);
+                JsonSerializer.Serialize(writer, ec, JWSSourceGenerationContext.Default.JwkEc);
                 break;
             case JwkEd ed:
-                JsonSerializer.Serialize(writer, ed, options);
+                JsonSerializer.Serialize(writer, ed, JWSSourceGenerationContext.Default.JwkEd);
                 break;
             case JwkSymmetric hmac:
-                JsonSerializer.Serialize(writer, hmac, options);
+                JsonSerializer.Serialize(writer, hmac, JWSSourceGenerationContext.Default.JwkSymmetric);
                 break;
             default:
-                JsonSerializer.Serialize(writer, value, options);
+                JsonSerializer.Serialize(writer, value, JWSSourceGenerationContext.Default.Jwk);
                 break;
         }
     }
@@ -82,10 +84,10 @@ public class JwkConverter : JsonConverter<Jwk>
         // parse it
         Jwk? baseClass = discValue switch
         {
-            JwkConstants.EC => JsonSerializer.Deserialize<JwkEc>(ref reader, options),
-            JwkConstants.RSA => JsonSerializer.Deserialize<JwkRSA>(ref reader, options),
-            JwkConstants.OCT => JsonSerializer.Deserialize<JwkSymmetric>(ref reader, options),
-            JwkConstants.OKP => JsonSerializer.Deserialize<JwkEd>(ref reader, options),
+            JwkConstants.EC => JsonSerializer.Deserialize(ref reader, JWSSourceGenerationContext.Default.JwkEc),
+            JwkConstants.RSA => JsonSerializer.Deserialize(ref reader, JWSSourceGenerationContext.Default.JwkRSA),
+            JwkConstants.OCT => JsonSerializer.Deserialize(ref reader, JWSSourceGenerationContext.Default.JwkSymmetric),
+            JwkConstants.OKP => JsonSerializer.Deserialize(ref reader, JWSSourceGenerationContext.Default.JwkEd),
             _ => null
         };
 

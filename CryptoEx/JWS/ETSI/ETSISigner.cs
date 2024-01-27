@@ -1,5 +1,6 @@
 ﻿using CryptoEx.Utils;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO.Pipes;
 using System.Security.Cryptography;
@@ -73,6 +74,8 @@ public class ETSISigner : JWSSigner
     /// <param name="funcAsync">Async function that calls Timestamping server, with input data and returns 
     /// response from the server
     /// </param>
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The type 'ETSISignatureTimestamp' is source generated and attached to JSONOptions")]
     public async Task AddTimestampAsync(Func<byte[], CancellationToken, Task<byte[]>> funcAsync, CancellationToken ct = default)
     {
         byte[] prepSign = Encoding.ASCII.GetBytes(Base64UrlEncoder.Encode(_signatures.FirstOrDefault() ?? Array.Empty<byte>()));
@@ -88,11 +91,11 @@ public class ETSISigner : JWSSigner
         {
             SigTst = new ETSITimestampContainer
             {
-                TstTokens = new ETSITimestampToken[] {
+                TstTokens = [
                          new ETSITimestampToken {
                           Val = Convert.ToBase64String(tStamp)
                          }
-                      }
+                      ]
             }
         };
 
@@ -300,6 +303,8 @@ public class ETSISigner : JWSSigner
     /// <param name="cInfo">returns the context info about the signature</param>
     /// <returns>True signature is valid. False - no it is invalid</returns>
     /// <exception cref="NotSupportedException">Some more advanced ETSI detached signatures, that are not yet implemented</exception>
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The type 'ETSIHeader' is source generated and attached to JSONOptions")]
     public bool Verify(ReadOnlySpan<char> signature, out byte[] payload, out ETSIContextInfo cInfo)
     {
         // locals
@@ -342,6 +347,8 @@ public class ETSISigner : JWSSigner
     /// <param name="cInfo">Etsi headers returnd by Decode method</param>
     /// <returns>True / false = valid / invalid signature check</returns>
     /// <exception cref="NotSupportedException">Some more advanced ETSI detached signatures, that are not yet implemented</exception>
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The type 'ETSIHeader' is source generated and attached to JSONOptions")]
     public bool VerifyDetached(Stream attachement, ReadOnlySpan<char> signature, out byte[] payload, out ETSIContextInfo cInfo)
     {
         // locals
@@ -390,6 +397,8 @@ public class ETSISigner : JWSSigner
     /// <param name="cInfo">Etsi headers returnd by Decode method</param>
     /// <returns>True / false = valid / invalid signature check</returns>
     /// <exception cref="NotSupportedException">Some more advanced ETSI detached signatures, that are not yet implemented</exception>
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The type 'ETSIHeader' is source generated and attached to JSONOptions")]
     public async Task<bool> VerifyDetachedAsync(Stream attachement, string signature)
     {
         // Decode
@@ -419,6 +428,8 @@ public class ETSISigner : JWSSigner
     /// <param name="signature">The signature</param>
     /// <param name="payload">The payload</param>
     /// <returns>The ETSI context info</returns>
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The type 'ETSIHeader' is source generated and attached to JSONOptions")]
     public ETSIContextInfo ExtractContextInfo(string signature, out byte[] payload)
     {
         // locals
@@ -438,6 +449,8 @@ public class ETSISigner : JWSSigner
     }
 
     // Prepare header values
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The type 'ETSIHeader' is source generated and attached to JSONOptions")]
     protected override void PrepareHeader(string? mimeType = null)
     {
         // check
@@ -640,7 +653,10 @@ public class ETSISigner : JWSSigner
         cInfo.PayloadContentType = eTSIHeader.Cty;
     }
 
+
     // Verify detached ETSI signature
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The type 'ETSIHeader' is source generated and attached to JSONOptions")]
     private bool VerifyDetached(Stream attachement, IReadOnlyList<AsymmetricAlgorithm> publicKeys, ReadOnlyCollection<ETSIHeader> etsiHeaders)
     {
         if (etsiHeaders.Count != publicKeys.Count) {
@@ -720,6 +736,8 @@ public class ETSISigner : JWSSigner
     }
 
     // Verify detached ETSI signature - aync version
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The type 'ETSIHeader' is source generated and attached to JSONOptions")]
     private async Task<bool> VerifyDetachedAsync(Stream attachement, IReadOnlyList<AsymmetricAlgorithm> publicKeys, ReadOnlyCollection<ETSIHeader> etsiHeaders)
     {
         if (etsiHeaders.Count != publicKeys.Count) {

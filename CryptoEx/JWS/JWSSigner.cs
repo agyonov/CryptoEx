@@ -1,6 +1,7 @@
 ﻿using CryptoEx.JWK;
 using CryptoEx.Utils;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -304,6 +305,7 @@ public class JWSSigner
     /// </param>
     /// <returns>True / false = valid / invalid signature check</returns>
     /// <exception cref="ArgumentException">Some issues exists with the arguments and/or keys provided to this method</exception>
+    [RequiresUnreferencedCode("There is not guarantee that the 'T' class is source generated, so Json.Deserialize may not work")]
     public bool Verify<T>(IReadOnlyList<object> keys, Func<T, bool>? resolutor = null) where T : JWSHeader
     {
         // Declare result
@@ -367,6 +369,8 @@ public class JWSSigner
     /// NB. If there is more than 1 (one) signature, the result is always FULL!</param>
     /// <returns>The encoded JWS</returns>
     /// <exception cref="ArgumentException">Unknow enoding type</exception>
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The types 'JWSFlattened' and 'JWS' are source generated and attached to JSONOptions")]
     public string Encode(JWSEncodeTypeEnum type = JWSEncodeTypeEnum.Compact)
     {
         // Check it
@@ -418,6 +422,7 @@ public class JWSSigner
     /// <param name="payload">The payload in JWS</param>
     /// <returns>A collection of JWS headers. Generally will be one, unless JWS is signed by multiple signer.
     /// If signed by multiple signers will return more then one header - for each signer</returns>
+    [RequiresUnreferencedCode("There is not guarantee that the 'T' class is source generated, so Json.Deserialize may not work")]
     public ReadOnlyCollection<T> Decode<T>(ReadOnlySpan<char> signature, out byte[] payload) where T : JWSHeader
     {
         // Clear
@@ -483,6 +488,8 @@ public class JWSSigner
     }
 
     // Prepare header values
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The type 'JWSHeader' is source generated and attached to JSONOptions")]
     protected virtual void PrepareHeader(string? mimeType = null)
     {
         // Set as empty
@@ -581,6 +588,8 @@ public class JWSSigner
     }
 
     // Decode flattened or full encoded signature
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The types 'JWSFlattened' and 'JWS' are source generated and attached to JSONOptions")]
     private void DecodeFull(ReadOnlySpan<char> signature)
     {
         // Firts check if we have "flattened" encoded signature

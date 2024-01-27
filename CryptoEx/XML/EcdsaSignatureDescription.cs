@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 
 namespace CryptoEx.XML;
 
@@ -12,14 +13,17 @@ public class EcdsaSha256SignatureDescription : SignatureDescription
         KeyAlgorithm = typeof(ECDsa).AssemblyQualifiedName;
     }
 
+    [RequiresUnreferencedCode("Base method requires unreferenced code")]
     public override HashAlgorithm CreateDigest() => SHA256.Create();
 
+    [RequiresUnreferencedCode("Base method requires unreferenced code")]
     public override AsymmetricSignatureFormatter CreateFormatter(AsymmetricAlgorithm key)
     {
         if (!(key is ECDsa ecdsa) || ecdsa.KeySize != 256) throw new InvalidOperationException("Requires EC key over P-256");
         return new EcdsaSignatureFormatter(ecdsa);
     }
 
+    [RequiresUnreferencedCode("Base method requires unreferenced code")]
     public override AsymmetricSignatureDeformatter CreateDeformatter(AsymmetricAlgorithm key)
     {
         if (!(key is ECDsa ecdsa) || ecdsa.KeySize != 256) throw new InvalidOperationException("Requires EC key  over P-384");
@@ -37,14 +41,17 @@ public class EcdsaSha384SignatureDescription : SignatureDescription
         KeyAlgorithm = typeof(ECDsa).AssemblyQualifiedName;
     }
 
+    [RequiresUnreferencedCode("Base method requires unreferenced code")]
     public override HashAlgorithm CreateDigest() => SHA384.Create();
 
+    [RequiresUnreferencedCode("Base method requires unreferenced code")]
     public override AsymmetricSignatureFormatter CreateFormatter(AsymmetricAlgorithm key)
     {
         if (!(key is ECDsa ecdsa) || ecdsa.KeySize != 384) throw new InvalidOperationException("Requires EC key over P-384");
         return new EcdsaSignatureFormatter(ecdsa);
     }
 
+    [RequiresUnreferencedCode("Base method requires unreferenced code")]
     public override AsymmetricSignatureDeformatter CreateDeformatter(AsymmetricAlgorithm key)
     {
         if (!(key is ECDsa ecdsa) || ecdsa.KeySize != 384) throw new InvalidOperationException("Requires EC key over P-384");
@@ -62,14 +69,17 @@ public class EcdsaSha512SignatureDescription : SignatureDescription
         KeyAlgorithm = typeof(ECDsa).AssemblyQualifiedName;
     }
 
+    [RequiresUnreferencedCode("Base method requires unreferenced code")]
     public override HashAlgorithm CreateDigest() => SHA512.Create();
 
+    [RequiresUnreferencedCode("Base method requires unreferenced code")]
     public override AsymmetricSignatureFormatter CreateFormatter(AsymmetricAlgorithm key)
     {
         if (!(key is ECDsa ecdsa) || ecdsa.KeySize != 521) throw new InvalidOperationException("Requires EC key over P-521");
         return new EcdsaSignatureFormatter(ecdsa);
     }
 
+    [RequiresUnreferencedCode("Base method requires unreferenced code")]
     public override AsymmetricSignatureDeformatter CreateDeformatter(AsymmetricAlgorithm key)
     {
         if (!(key is ECDsa ecdsa) || ecdsa.KeySize != 521) throw new InvalidOperationException("Requires EC key over P-521");

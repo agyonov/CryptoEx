@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 using System.Security.Cryptography.Xml;
 using System.Xml;
 
@@ -45,6 +46,7 @@ public class SignedXmlExt : SignedXml
     /// Call parent constructor
     /// </summary>
     /// <param name="seekIdDelegate">Optional delegate to use for extended ID lookup</param>
+    [RequiresUnreferencedCode("Base method requires unreferenced code")]
     public SignedXmlExt(GetIdElementDelegate? seekIdDelegate = null) : base()
     {
         _seekIdDelegate = seekIdDelegate;
@@ -54,6 +56,7 @@ public class SignedXmlExt : SignedXml
     /// Call parent constructor
     /// </summary>
     /// <param name="seekIdDelegate">Optional delegate to use for extended ID lookup</param>
+    [RequiresUnreferencedCode("Base method requires unreferenced code")]
     public SignedXmlExt(XmlDocument xml, GetIdElementDelegate? seekIdDelegate = null) : base(xml)
     {
         _seekIdDelegate = seekIdDelegate;
@@ -63,6 +66,7 @@ public class SignedXmlExt : SignedXml
     /// Call parent constructor
     /// </summary>
     /// <param name="seekIdDelegate">Optional delegate to use for extended ID lookup</param>
+    [RequiresUnreferencedCode("Base method requires unreferenced code")]
     public SignedXmlExt(XmlElement xmlElement, GetIdElementDelegate? seekIdDelegate = null)
         : base(xmlElement)
     {

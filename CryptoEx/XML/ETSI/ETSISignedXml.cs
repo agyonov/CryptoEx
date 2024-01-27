@@ -1,5 +1,6 @@
 ﻿using CryptoEx.Utils;
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -138,6 +139,7 @@ public class ETSISignedXml
     /// <param name="payload">The payload - original XML file</param>
     /// <param name="cert">The certificate. ONLY Public part is used! The PrivateKey is proided in constructor!</param>
     /// <returns>The Xml Signature element</returns>
+    [RequiresUnreferencedCode("Base method of SignedXmlExt requires unreferenced code")]
     public XmlElement Sign(XmlDocument payload, X509Certificate2 cert)
     {
         // Check
@@ -146,7 +148,7 @@ public class ETSISignedXml
         }
 
         // Create a SignedXml object & provide GetIdElement method
-        SignedXmlExt signedXml = new SignedXmlExt(payload, GetIdElement);
+        SignedXmlExt signedXml = new (payload, GetIdElement);
         signedXml.Signature.Id = IdSignature;
         if (signedXml.SignedInfo != null) {
             signedXml.SignedInfo.SignatureMethod = _algorithmNameSignatureXML;
@@ -200,6 +202,7 @@ public class ETSISignedXml
     /// <param name="payload">The payload - original XML file</param>
     /// <param name="cert">The certificate. ONLY Public part is used! The PrivateKey is proided in constructor!</param>
     /// <returns>The Xml Signature element</returns>
+    [RequiresUnreferencedCode("Base method of SignedXmlExt requires unreferenced code")]
     public XmlElement SignEnveloping(XmlDocument payload, X509Certificate2 cert)
     {
         // Check
@@ -273,6 +276,7 @@ public class ETSISignedXml
     /// <param name="cert">The certificate. ONLY Public part is used! The PrivateKey is proided in constructor!</param>
     /// <param name="payload">OPTIONAL payload - XML file</param>
     /// <returns>The Xml Signature element</returns>
+    [RequiresUnreferencedCode("Base method of SignedXmlExt requires unreferenced code")]
     public XmlElement SignDetached(Stream attachement, X509Certificate2 cert, XmlDocument? payload = null)
     {
         // Check
@@ -342,6 +346,7 @@ public class ETSISignedXml
     /// <param name="payload">The XML signature document</param>
     /// <param name="cInfo">returns the context info about the signature</param>
     /// <returns>True signature is valid. False - no it is invalid</returns>
+    [RequiresUnreferencedCode("Base method of SignedXmlExt requires unreferenced code")]
     public bool Verify(XmlDocument payload, out ETSIContextInfo cInfo)
     {
         // set initially
@@ -407,6 +412,7 @@ public class ETSISignedXml
     /// <param name="payload">The XML signature document</param>
     /// <param name="cert">returns the signing certificate</param>
     /// <returns>True signature is valid. False - no it is invalid</returns>
+    [RequiresUnreferencedCode("Base method of SignedXmlExt requires unreferenced code")]
     public bool VerifyDetached(Stream attachement, XmlDocument payload, out ETSIContextInfo cInfo)
     {
         // set initially

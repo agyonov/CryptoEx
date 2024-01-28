@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO.Pipes;
 using System.Security.Cryptography;
+using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
@@ -92,8 +93,9 @@ public class ETSISigner : JWSSigner
             SigTst = new ETSITimestampContainer
             {
                 TstTokens = [
-                         new ETSITimestampToken {
-                          Val = Convert.ToBase64String(tStamp)
+                         new ETSITimestampToken
+                         {
+                             Val = Convert.ToBase64String(tStamp)
                          }
                       ]
             }
@@ -483,7 +485,7 @@ public class ETSISigner : JWSSigner
 
         // Prepare header - add signing certificate(s)
         if (_additionalCertificates == null || _additionalCertificates.Count < 1) {
-            etsHeader.X5c = new string[] { Convert.ToBase64String(_certificate.RawData) };
+            etsHeader.X5c = [Convert.ToBase64String(_certificate.RawData)];
         } else {
             string[] strX5c = new string[_additionalCertificates.Count + 1];
             strX5c[0] = Convert.ToBase64String(_certificate.RawData);
@@ -651,8 +653,45 @@ public class ETSISigner : JWSSigner
         }
         // Try to set content info
         cInfo.PayloadContentType = eTSIHeader.Cty;
-    }
 
+        // Try some time stamping info gathering
+        if (_unprotectedHeader != null && _unprotectedHeader is JsonElement) {
+            try {
+                // try find sigTst
+                JsonElement etsiU = ((JsonElement)_unprotectedHeader).GetProperty("etsiU");
+                // Cycle through
+                foreach (JsonElement elem in etsiU.EnumerateArray()) {
+                    try {
+                        // Try to deserialize
+                        string wrkHeader = Encoding.UTF8.GetString(Base64UrlEncoder.Decode(elem.GetString()));
+                        ETSISignatureTimestamp? sigT = JsonSerializer.Deserialize(wrkHeader, JWSSourceGenerationContext.Default.ETSISignatureTimestamp);
+
+                        //Check
+                        if (sigT != null) {
+                            // Get the timestamp token
+                            ETSITimestampToken? tToken = sigT.SigTst?.TstTokens.FirstOrDefault();
+                            if (tToken != null) {
+                                byte[] theToken = Convert.FromBase64String(tToken.Val);
+
+                                // Try to decode
+                                if (Rfc3161TimestampToken.TryDecode(theToken, out Rfc3161TimestampToken? rfcToken, out int bytesRead)) {
+                                    // 
+                                    if (rfcToken != null) {
+                                        cInfo.TimestampInfo = rfcToken.TokenInfo;
+                                        SignedCms signedInfo = rfcToken.AsSignedCms();
+                                        cInfo.TimeStampCertificates = signedInfo.Certificates;
+                                    }
+                                }
+                            }
+                        }
+
+                        // get out
+                        break;
+                    } catch { }
+                }
+            } catch { }
+        }
+    }
 
     // Verify detached ETSI signature
     [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",

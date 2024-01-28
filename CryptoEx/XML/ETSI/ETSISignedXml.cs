@@ -3,6 +3,7 @@ using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Cryptography;
+using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
 using System.Xml;
@@ -148,7 +149,7 @@ public class ETSISignedXml
         }
 
         // Create a SignedXml object & provide GetIdElement method
-        SignedXmlExt signedXml = new (payload, GetIdElement);
+        SignedXmlExt signedXml = new(payload, GetIdElement);
         signedXml.Signature.Id = IdSignature;
         if (signedXml.SignedInfo != null) {
             signedXml.SignedInfo.SignatureMethod = _algorithmNameSignatureXML;
@@ -757,6 +758,31 @@ public class ETSISignedXml
                 SignedXml.XmlDsigSHA512Url => HashAlgorithmName.SHA512,
                 _ => null
             };
+        }
+
+        // Get unsigned properties
+        XElement? unsigProps = (from seg in qProps.Descendants(xades + "UnsignedProperties")
+                                select seg).FirstOrDefault();
+        if (unsigProps != null) {
+            // Try get timestamp
+            string? tStamp = (from seg in unsigProps.Descendants(xades + "EncapsulatedTimeStamp")
+                              select seg.Value).FirstOrDefault();
+            if (tStamp != null) {
+                try {
+                    byte[] theToken = Convert.FromBase64String(tStamp);
+
+                    // Try to decode
+                    if (Rfc3161TimestampToken.TryDecode(theToken, out Rfc3161TimestampToken? rfcToken, out int bytesRead)) {
+                        // 
+                        if (rfcToken != null) {
+                            info.TimestampInfo = rfcToken.TokenInfo;
+                            SignedCms signedInfo = rfcToken.AsSignedCms();
+                            info.TimeStampCertificates = signedInfo.Certificates;
+                        }
+                    }
+
+                } catch { }
+            }
         }
     }
 }

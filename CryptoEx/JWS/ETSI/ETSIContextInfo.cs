@@ -1,4 +1,6 @@
-﻿using System.Security.Cryptography;
+﻿using System.Diagnostics.Contracts;
+using System.Security.Cryptography;
+using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 
 namespace CryptoEx.JWS.ETSI;
@@ -36,6 +38,17 @@ public class ETSIContextInfo : IDisposable
     /// Digest method of the signing certificate
     /// </summary>
     public HashAlgorithmName? SigningCertificateDagestMethod { get; set; } = null;
+
+    /// <summary>
+    /// The RFC 3161 timestamp token info - if available
+    /// The signature is timestamped if this property is not null. Here is basic info about the timestamp token.
+    /// </summary>
+    public Rfc3161TimestampTokenInfo? TimestampInfo { get; set; } = null;
+
+    /// <summary>
+    /// The RFC 3161 timestamp certificate authority certificate - if available
+    /// </summary>
+    public X509Certificate2Collection? TimeStampCertificates { get; set; } = null;
 
     /// <summary>
     /// Check if the signing certificate digest is valid

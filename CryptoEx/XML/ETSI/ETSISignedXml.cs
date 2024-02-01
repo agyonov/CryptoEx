@@ -767,20 +767,21 @@ public class ETSISignedXml
             // Try get timestamp
             string? tStamp = (from seg in unsigProps.Descendants(xades + "EncapsulatedTimeStamp")
                               select seg.Value).FirstOrDefault();
+
+            // Try decode timestamp
             if (tStamp != null) {
                 try {
                     byte[] theToken = Convert.FromBase64String(tStamp);
 
                     // Try to decode
                     if (Rfc3161TimestampToken.TryDecode(theToken, out Rfc3161TimestampToken? rfcToken, out int bytesRead)) {
-                        // 
+                        // Check
                         if (rfcToken != null) {
                             info.TimestampInfo = rfcToken.TokenInfo;
                             SignedCms signedInfo = rfcToken.AsSignedCms();
                             info.TimeStampCertificates = signedInfo.Certificates;
                         }
                     }
-
                 } catch { }
             }
         }

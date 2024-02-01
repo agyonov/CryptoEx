@@ -2,6 +2,7 @@
 using CryptoEx.JWK;
 using CryptoEx.JWS;
 using CryptoEx.JWS.ETSI;
+using Org.BouncyCastle.Crypto;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
@@ -181,10 +182,14 @@ public class TestETSI
     public async Task Test_ETSI_RSA_Timestamp_Enveloped()
     {
         // Try get certificate
-        X509Certificate2? cert = GetCertificate(CertType.RSA);
+        X509Certificate2? cert = GetCertificate(CertType.RSA); 
         if (cert == null) {
             Assert.Fail("NO RSA certificate available");
         }
+
+        // Get some more certificates
+        X509Certificate2[] issuers = GetCertificatesIssuer();
+        X509Certificate2[] timeStampCerts = GetCertificatesTimeStamp();
 
         // Get RSA private key
         RSA? rsaKey = cert.GetRSAPrivateKey();
@@ -193,9 +198,10 @@ public class TestETSI
             ETSISigner signer = new ETSISigner(rsaKey, HashAlgorithmName.SHA512);
 
             // Get payload 
-            signer.AttachSignersCertificate(cert);
+            signer.AttachSignersCertificate(cert, issuers);
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json", JWSConstants.JOSE_JSON);
             await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
+            signer.AddValidatingMaterial(timeStampCerts);
 
             // Encode - produce JWS
             var jSign = signer.Encode(JWSEncodeTypeEnum.Full);
@@ -506,15 +512,15 @@ public class TestETSI
             // "http://timestamp.sectigo.com/qualified"
             // "http://tsa.esign.bg"
             // "http://timestamp.digicert.com"
-            var res = await client.PostAsync("http://timestamp.sectigo.com/qualified", content, ct);
 
+            var res = await client.PostAsync("http://timestamp.sectigo.com/qualified", content, ct);
 
             return (await res.Content.ReadAsByteArrayAsync(ct))[9..]; // 9 // 27 // 9
         }
     }
 
     // Get some certificate from Windows store for testing
-    private static X509Certificate2? GetCertificateOnWindows(CertType certType)
+    private static X509Certificate2? GetCertificateOnWindows(CertType certType, out X509Certificate2[] issuers)
     {
         var now = DateTime.Now;
         using (X509Store store = new X509Store(StoreLocation.CurrentUser)) {
@@ -537,13 +543,13 @@ public class TestETSI
                         c.Dispose();
                     }
 
-                    for (int i = 0; i < chain.ChainElements.Count; i++) {
+                    for (int i = 1; i < chain.ChainElements.Count; i++) {
                         chain.ChainElements[i].Certificate.Dispose();
                     }
                 }
             }
 
-            return valColl.Where(c =>
+            X509Certificate2? cert = valColl.Where(c =>
             {
                 string frName = certType switch
                 {
@@ -554,6 +560,27 @@ public class TestETSI
                 return c.PublicKey.Oid.FriendlyName == frName;
             })
             .FirstOrDefault();
+
+            // Set issuers - noone
+            issuers = Array.Empty<X509Certificate2>();
+
+            // Get issuers
+            if (cert != null) {
+                // Some 
+                using (var chain = new X509Chain()) {
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                    chain.ChainPolicy.DisableCertificateDownloads = true;
+                    if (chain.Build(cert)) {
+                        issuers = new X509Certificate2[chain.ChainElements.Count - 1];
+                        for (int i = 1; i < chain.ChainElements.Count; i++) {
+                            issuers[i - 1] = chain.ChainElements[i].Certificate;
+                        }
+                    }
+                }
+            }
+
+            // return
+            return cert;
         }
     }
 
@@ -578,5 +605,17 @@ public class TestETSI
             default:
                 return null;
         }
+    }
+
+    private static X509Certificate2[] GetCertificatesIssuer()
+    {
+        // Check what we need
+        return [new X509Certificate2(@"source\issuer_root.crt")];
+    }
+
+    private static X509Certificate2[] GetCertificatesTimeStamp()
+    {
+        // Check what we need
+        return [new X509Certificate2(@"source\SectigoQualifiedTimeStampingRootR45.crt")];
     }
 }

@@ -23,6 +23,8 @@
     <None Remove="source\cert448.pfx" />
     <None Remove="source\cert448.pub" />
     <None Remove="source\issuer_root.crt" />
+    <None Remove="source\SectigoQualifiedTimeStampingRootR45.crt" />
+    <None Remove="source\testCRL.crl" />
     <None Remove="source\x25519.crt" />
     <None Remove="source\x25519.key" />
     <None Remove="source\x25519.pem" />
@@ -73,6 +75,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="source\issuer_root.crt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="source\SectigoQualifiedTimeStampingRootR45.crt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="source\x25519.crt">

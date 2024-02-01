@@ -102,10 +102,72 @@ public class ETSISigner : JWSSigner
         };
 
         // Construct unprotected header
-        _unprotectedHeader = new ETSIUnprotectedHeader
+        if (_unprotectedHeader == null) {
+            _unprotectedHeader = new ETSIUnprotectedHeader
+            {
+                EtsiU = new string[] { Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JWSConstants.jsonOptions))) }
+            };
+        } else {
+            ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU = ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU.Append(Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JWSConstants.jsonOptions)))).ToArray();
+        }
+    }
+
+    /// <summary>
+    /// Add some additional data objects for validation
+    /// </summary>
+    /// <param name="additionalCerts">Additional certificates, not included up until now</param>
+    /// <param name="rVals">Some revocation status values</param>
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The types 'ETSIxVals' and  'ETSIxValItem' are source generated and attached to JSONOptions")]
+    public void AddValidatingMaterial(X509Certificate2[] additionalCerts, ETSIrVals? rVals = null)
+    {
+        // Convert to ETSI format
+        ETSIxVals eTSIxVals = new ETSIxVals
         {
-            EtsiU = new string[] { Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JWSConstants.jsonOptions))) }
+            XVals = additionalCerts
+                .Select(x => new ETSIxValItem
+                {
+                    X509Cert = new ETSIPkiOb { Val = Convert.ToBase64String(x.RawData) }
+                })
+                .ToArray()
         };
+
+        // Construct unprotected header
+        if (_unprotectedHeader == null) {
+            // If no rVals
+            if (rVals == null) {
+                _unprotectedHeader = new ETSIUnprotectedHeader
+                {
+                    EtsiU = new string[] {
+                    Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(eTSIxVals, JWSConstants.jsonOptions)))
+
+                }
+                };
+            } else { // If we have rVals
+                _unprotectedHeader = new ETSIUnprotectedHeader
+                {
+                    EtsiU = new string[]
+                    {
+                    Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(eTSIxVals, JWSConstants.jsonOptions))),
+                    Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(rVals, JWSConstants.jsonOptions)))
+                }
+                };
+            }
+        } else {
+            // If no rVals
+            if (rVals == null) {
+                ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU =
+                ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU
+                                                            .Append(Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(eTSIxVals, JWSConstants.jsonOptions))))
+                                                            .ToArray();
+            } else {
+                ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU =
+                ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU
+                                                            .Append(Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(eTSIxVals, JWSConstants.jsonOptions))))
+                                                            .Append(Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(rVals, JWSConstants.jsonOptions))))
+                                                            .ToArray();
+            }
+        }
     }
 
     /// <summary>

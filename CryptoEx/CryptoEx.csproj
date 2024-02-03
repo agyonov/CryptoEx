@@ -17,11 +17,13 @@
 		<PackageIcon>logo_lib.png</PackageIcon>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<RepositoryType>git</RepositoryType>
-		<PackageReleaseNotes>
-			1. Added suport for b64 header - both in JWS and jAdES
-			2. Support some other common header properties of JWS
-			3. Some minor optimizations
-		</PackageReleaseNotes>
+		<PackageReleaseNotes>Updated the package to target .NET 8.0
+  - Added support for 'Trimming'
+  - Make use of trimming
+
+New features
+  - Upgrade the 'ETSIContextInfo' for jAdES and xAdES, to display Timestamp information - if such exists, upon verification of the signature
+  - Added two more methods to ('AddValidatingMaterial' to ETSISigner and to ETSISignedXml) to allow creation of Baseline LT signature 		</PackageReleaseNotes>
 		<Version>2.0.0</Version>
 	</PropertyGroup>
 

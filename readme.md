@@ -13,6 +13,21 @@ As the name ***CryptoEx*** suggests, it can be think of both as *Extension of* a
 - Advanced Electronic Signatures and Infrastructures standardized by the European Union,
   so called ***jAdES*** & ***xAdES*** 
 
+## Installation
+
+CryptoEx and CryptoEx.Ed may be installed from NuGet:
+- [CryptoEx](https://www.nuget.org/packages/CryptoEx/)
+- [CryptoEx.Ed](https://www.nuget.org/packages/CryptoEx.Ed/)
+
+Just write:
+
+```cmd
+dotnet add package CryptoEx
+dotnet add package CryptoEx.Ed
+```
+
+or use your package manager in Visual Studio.
+
 ## Important disclaimer
 
 This project **does not** have an intention to be a full-featured library that fully implements

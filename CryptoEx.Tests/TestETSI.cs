@@ -518,7 +518,7 @@ public class TestETSI
             signer.Sign(Encoding.UTF8.GetBytes(message), "text/json", JWSConstants.JOSE_JSON);
             await signer.AddTimestampAsync(CreateRfc3161RequestAsync);
 
-            // UP TO HERE WE HAVE BALINE T !!!
+            // UP TO HERE WE HAVE BASELINE T !!!
 
             // Get OCSPs for the signer
             List<byte[]> ocsps = GetOCSPs(cert, issuers);
@@ -571,7 +571,7 @@ public class TestETSI
             // and in the response of the timestamp server and in the timestamp itself
             signer.AddValidatingMaterial(timeStampCerts, eTSIrVals);
 
-            // UP TO HERE WE HAVE BALINE LT !!!
+            // UP TO HERE WE HAVE BASELINE LT !!!
 
             // Encode - produce JWS
             var jSign = signer.Encode(JWSEncodeTypeEnum.Full);

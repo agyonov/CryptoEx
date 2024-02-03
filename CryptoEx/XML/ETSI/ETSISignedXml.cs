@@ -494,7 +494,7 @@ public class ETSISignedXml
     }
 
     /// <summary>
-    /// Add timestamping
+    /// Add timestamping. Mainly to produce the XADES BASELINE-T signature
     /// </summary>
     /// <param name="funcAsync">Async function that calls Timestamping server, with input data and returns 
     /// response from the server
@@ -577,10 +577,10 @@ public class ETSISignedXml
     }
 
     /// <summary>
-    /// Add some additional data objects for validation
+    /// Add some additional data objects for validation. Mainly to produce the XADES BASELINE-LT signature
     /// </summary>
     /// <param name="additionalCerts">Additional certificates, not included up until now</param>
-    /// <param name="ocspVals">Some revocation status values. Raw RFC 6960 response</param>
+    /// <param name="ocspVals">Revocation status values, for all certificates (signer and chain, timestamp and chain). Raw RFC 6960 responses</param>
     /// <param name="signedDoc">The signed document</param>
     public void AddValidatingMaterial(XmlDocument signedDoc, X509Certificate2[] additionalCerts, List<byte[]>? ocspVals = null)
     {

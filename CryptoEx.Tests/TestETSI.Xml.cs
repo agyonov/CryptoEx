@@ -527,7 +527,7 @@ public class TestETSIXml
             // Add timestamp
             await signer.AddTimestampAsync(CreateRfc3161RequestAsync, doc);
 
-            // UP TO HERE WE HAVE BALINE T !!!
+            // UP TO HERE WE HAVE BASELINE T !!!
 
             // Get OCSPs for the signer
             List<byte[]> ocsps = GetOCSPs(cert, issuers);
@@ -554,10 +554,10 @@ public class TestETSIXml
             ocsps.AddRange(ts_ocsp);
 
             // Add validating material - chain certificates and timestamp root and OCSPs
-            // NB! In the response of the timestamp server and in the timestamp itself
+            // NB! In the response of the timestamp server there shall be also a certificate chain
             signer.AddValidatingMaterial(doc, all, ocsps);
 
-            // UP TO HERE WE HAVE BALINE LT !!!
+            // UP TO HERE WE HAVE BASELINE LT !!!
 
             // Verify signature
             Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo)

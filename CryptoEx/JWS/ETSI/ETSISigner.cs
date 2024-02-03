@@ -70,7 +70,7 @@ public class ETSISigner : JWSSigner
     }
 
     /// <summary>
-    /// Add timestamping
+    /// Add timestamping. Mainly to produce the XADES BASELINE-T signature
     /// </summary>
     /// <param name="funcAsync">Async function that calls Timestamping server, with input data and returns 
     /// response from the server
@@ -116,10 +116,10 @@ public class ETSISigner : JWSSigner
     }
 
     /// <summary>
-    /// Add some additional data objects for validation
+    /// Add some additional data objects for validation. Mainly to produce the XADES BASELINE-LT signature
     /// </summary>
     /// <param name="additionalCerts">Additional certificates, not included up until now</param>
-    /// <param name="rVals">Some revocation status values</param>
+    /// <param name="rVals">Revocation status values, for all certificates (signer and chain, timestamp and chain)</param>
     [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
             Justification = "The types 'ETSIxVals' and  'ETSIxValItem' are source generated and attached to JSONOptions")]
     public void AddValidatingMaterial(X509Certificate2[] additionalCerts, ETSIrVals? rVals = null)

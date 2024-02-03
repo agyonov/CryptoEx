@@ -1,4 +1,5 @@
-﻿using CryptoEx.Utils;
+﻿using CryptoEx.JWS.ETSI;
+using CryptoEx.Utils;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -507,6 +508,7 @@ public class ETSISignedXml
         XNamespace ds = SignedXml.XmlDsigNamespaceUrl;
 
         var qProperties = signedDoc.DocumentElement?.GetElementsByTagName("QualifyingProperties", XadesNamespaceUri);
+        var unsignedSignatureProperties = signedDoc.DocumentElement?.GetElementsByTagName("UnsignedSignatureProperties", XadesNamespaceUri);
         var sigValue = signedDoc.DocumentElement?.GetElementsByTagName("SignatureValue", SignedXml.XmlDsigNamespaceUrl);
 
         // Check
@@ -552,14 +554,114 @@ public class ETSISignedXml
                 )
             );
 
-        // Extract the unsigned properties
-        var unsProps = obj.ToXmlElement()?.GetElementsByTagName("UnsignedProperties", XadesNamespaceUri)[0];
-        if (unsProps == null) {
+        // No other unsigned properties
+        if (unsignedSignatureProperties == null || unsignedSignatureProperties.Count == 0) {
+            // Extract the unsigned properties
+            var unsProps = obj.ToXmlElement()?.GetElementsByTagName("UnsignedProperties", XadesNamespaceUri)[0];
+            if (unsProps == null) {
+                return;
+            }
+
+            // Append
+            qProperties[0]!.AppendChild(signedDoc.ImportNode(unsProps, true));
+        } else {
+            // Extract the unsigned properties
+            var sigTimestamp = obj.ToXmlElement()?.GetElementsByTagName("SignatureTimeStamp", XadesNamespaceUri)[0];
+            if (sigTimestamp == null) {
+                return;
+            }
+
+            // Append
+            unsignedSignatureProperties[0]!.AppendChild(signedDoc.ImportNode(sigTimestamp, true));
+        }
+    }
+
+    /// <summary>
+    /// Add some additional data objects for validation
+    /// </summary>
+    /// <param name="additionalCerts">Additional certificates, not included up until now</param>
+    /// <param name="ocspVals">Some revocation status values. Raw RFC 6960 response</param>
+    /// <param name="signedDoc">The signed document</param>
+    public void AddValidatingMaterial(XmlDocument signedDoc, X509Certificate2[] additionalCerts, List<byte[]>? ocspVals = null)
+    {
+        // locals
+        XNamespace xades = XadesNamespaceUri;
+        XNamespace ds = SignedXml.XmlDsigNamespaceUrl;
+
+        var qProperties = signedDoc.DocumentElement?.GetElementsByTagName("QualifyingProperties", XadesNamespaceUri);
+        var unsignedSignatureProperties = signedDoc.DocumentElement?.GetElementsByTagName("UnsignedSignatureProperties", XadesNamespaceUri);
+
+        // Check
+        if (qProperties == null || qProperties.Count < 1) {
             return;
         }
 
-        // Append
-        qProperties[0]!.AppendChild(signedDoc.ImportNode(unsProps, true));
+        // Build the XML
+        XElement? obj = null;
+        if (ocspVals == null) {
+            obj =
+               new XElement(ds + "Object",
+                   new XAttribute("xmlns", SignedXml.XmlDsigNamespaceUrl),
+                   new XElement(xades + "QualifyingProperties",
+                        new XAttribute(XNamespace.Xmlns + XadesNamespaceName, XadesNamespaceUri),
+                        new XAttribute("Target", $"#{IdSignature}"),
+                        new XElement(xades + "UnsignedProperties",
+                            new XElement(xades + "UnsignedSignatureProperties",
+                                new XElement(xades + "CertificateValues",
+                                    (from ac in additionalCerts
+                                     select new XElement(xades + "EncapsulatedX509Certificate", Convert.ToBase64String(ac.RawData))).ToArray()
+                                )
+                            )
+                        )
+                    )
+                );
+        } else {
+            obj =
+               new XElement(ds + "Object",
+                   new XAttribute("xmlns", SignedXml.XmlDsigNamespaceUrl),
+                   new XElement(xades + "QualifyingProperties",
+                        new XAttribute(XNamespace.Xmlns + XadesNamespaceName, XadesNamespaceUri),
+                        new XAttribute("Target", $"#{IdSignature}"),
+                        new XElement(xades + "UnsignedProperties",
+                            new XElement(xades + "UnsignedSignatureProperties",
+                                new XElement(xades + "CertificateValues",
+                                    (from ac in additionalCerts
+                                     select new XElement(xades + "EncapsulatedX509Certificate", Convert.ToBase64String(ac.RawData))).ToArray()
+                                ),
+                                new XElement(xades + "RevocationValues",
+                                    new XElement(xades + "OCSPValues",
+                                        (from ocsp in ocspVals
+                                         select new XElement(xades + "EncapsulatedOCSPValue", Convert.ToBase64String(ocsp))).ToArray()
+                                    )
+                               )
+                            )
+                        )
+                    )
+                );
+        }
+
+        // No other unsigned properties
+        if (unsignedSignatureProperties == null || unsignedSignatureProperties.Count == 0) {
+            // Extract the unsigned properties
+            var unsProps = obj.ToXmlElement()?.GetElementsByTagName("UnsignedProperties", XadesNamespaceUri)[0];
+            if (unsProps == null) {
+                return;
+            }
+            // Append
+            qProperties[0]!.AppendChild(signedDoc.ImportNode(unsProps, true));
+        } else {
+            // Extract the unsigned properties
+            var certsXML = obj.ToXmlElement()?.GetElementsByTagName("CertificateValues", XadesNamespaceUri)[0];
+            var ocspXML = obj.ToXmlElement()?.GetElementsByTagName("RevocationValues", XadesNamespaceUri)[0];
+            if (certsXML != null) {
+                // Append
+                unsignedSignatureProperties[0]!.AppendChild(signedDoc.ImportNode(certsXML, true));
+            }
+            if (ocspXML != null) {
+                // Append
+                unsignedSignatureProperties[0]!.AppendChild(signedDoc.ImportNode(ocspXML, true));
+            }
+        }
     }
 
     /// <summary>

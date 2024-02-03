@@ -105,10 +105,13 @@ public class ETSISigner : JWSSigner
         if (_unprotectedHeader == null) {
             _unprotectedHeader = new ETSIUnprotectedHeader
             {
-                EtsiU = new string[] { Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JWSConstants.jsonOptions))) }
+                EtsiU = [Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JWSConstants.jsonOptions)))]
             };
         } else {
-            ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU = ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU.Append(Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JWSConstants.jsonOptions)))).ToArray();
+            ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU = 
+                ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU
+                                                           .Append(Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JWSConstants.jsonOptions))))
+                                                           .ToArray();
         }
     }
 

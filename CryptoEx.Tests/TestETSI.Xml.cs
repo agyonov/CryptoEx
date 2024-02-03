@@ -1,5 +1,6 @@
 ﻿using CryptoEx.Ed;
 using CryptoEx.XML.ETSI;
+using SysadminsLV.PKI.OcspClient;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
@@ -495,8 +496,108 @@ public class TestETSIXml
         }
     }
 
+    [Fact(DisplayName = "Test XML RSA with enveloped data and TimeStamp LT")]
+    public async Task Test_XML_RSA_Enveloped_Timestamped_LT()
+    {
+        // Try get certificate
+        X509Certificate2? cert = GetCertificateOnWindows(CertType.RSA, out X509Certificate2[] issuers);
+        if (cert == null) {
+            Assert.Fail("NO RSA certificate available");
+        }
+
+        // Get some more certificates
+        X509Certificate2[] timeStampCerts = GetCertificatesTimeStamp();
+
+        // Get RSA private key
+        RSA? rsaKey = cert.GetRSAPrivateKey();
+        if (rsaKey != null) {
+            // Get payload 
+            var doc = new XmlDocument();
+            doc.LoadXml(message.Trim());
+
+            // Create signer 
+            ETSISignedXml signer = new ETSISignedXml(rsaKey, HashAlgorithmName.SHA512);
+
+            // Sign payload
+            XmlElement signature = signer.Sign(doc, cert);
+
+            // Prepare enveloped data
+            doc.DocumentElement!.AppendChild(doc.ImportNode(signature, true));
+
+            // Add timestamp
+            await signer.AddTimestampAsync(CreateRfc3161RequestAsync, doc);
+
+            // UP TO HERE WE HAVE BALINE T !!!
+
+            // Get OCSPs for the signer
+            List<byte[]> ocsps = GetOCSPs(cert, issuers);
+
+            // Get OCSPs for the timestamp
+            List<byte[]> ts_ocsp = [];
+            if (_TS_x509Certificate2s != null) {
+                var ls_ts = _TS_x509Certificate2s.ToList();
+                ls_ts.AddRange(timeStampCerts);
+                X509Certificate2[] tsCerts = ls_ts.ToArray();
+                if (tsCerts.Length > 1) {
+                    ts_ocsp = GetOCSPs(tsCerts[0], tsCerts[1..]);
+                } else if (tsCerts.Length > 0) {
+                    ts_ocsp = GetOCSPs(tsCerts[0], Array.Empty<X509Certificate2>());
+                }
+            }
+
+            // add all certs in one place
+            X509Certificate2[] all = new X509Certificate2[issuers.Length + timeStampCerts.Length];
+            issuers.CopyTo(all, 0);
+            timeStampCerts.CopyTo(all, issuers.Length);
+
+            // add all OCSPs in one place
+            ocsps.AddRange(ts_ocsp);
+
+            // Add validating material - chain certificates and timestamp root and OCSPs
+            // NB! In the response of the timestamp server and in the timestamp itself
+            signer.AddValidatingMaterial(doc, all, ocsps);
+
+            // UP TO HERE WE HAVE BALINE LT !!!
+
+            // Verify signature
+            Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo)
+                        && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)
+                        && (cInfo.IsSigningCertDigestValid.HasValue && cInfo.IsSigningCertDigestValid.Value));
+        } else {
+            Assert.Fail("NO RSA certificate available");
+        }
+    }
+
+    private static List<byte[]> GetOCSPs(X509Certificate2 cert, X509Certificate2[] issuers)
+    {
+        // Locals
+        List<byte[]> res = new List<byte[]>();
+
+
+        OCSPRequest req = new(cert);
+        OCSPResponse? resp = req.SendRequest("POST");
+        if (resp != null) {
+            res.Add(resp.RawData);
+        }
+
+        foreach (var i in issuers) {
+            try {
+                OCSPRequest req2 = new(i);
+                OCSPResponse? resp2 = req2.SendRequest("POST");
+                if (resp2 != null) {
+                    res.Add(resp2.RawData);
+                }
+            } catch (Exception) {
+                // Ignore
+            }
+        }
+
+        // return 
+        return res;
+    }
+
     // Get some certificate from Windows store for testing
-    private static X509Certificate2? GetCertificateOnWindows(CertType certType)
+    private static X509Certificate2? GetCertificateOnWindows(CertType certType, out X509Certificate2[] issuers)
     {
         var now = DateTime.Now;
         using (X509Store store = new X509Store(StoreLocation.CurrentUser)) {
@@ -519,13 +620,13 @@ public class TestETSIXml
                         c.Dispose();
                     }
 
-                    for (int i = 0; i < chain.ChainElements.Count; i++) {
+                    for (int i = 1; i < chain.ChainElements.Count; i++) {
                         chain.ChainElements[i].Certificate.Dispose();
                     }
                 }
             }
 
-            return valColl.Where(c =>
+            X509Certificate2? cert = valColl.Where(c =>
             {
                 string frName = certType switch
                 {
@@ -536,6 +637,27 @@ public class TestETSIXml
                 return c.PublicKey.Oid.FriendlyName == frName;
             })
             .FirstOrDefault();
+
+            // Set issuers - noone
+            issuers = Array.Empty<X509Certificate2>();
+
+            // Get issuers
+            if (cert != null) {
+                // Some 
+                using (var chain = new X509Chain()) {
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                    chain.ChainPolicy.DisableCertificateDownloads = true;
+                    if (chain.Build(cert)) {
+                        issuers = new X509Certificate2[chain.ChainElements.Count - 1];
+                        for (int i = 1; i < chain.ChainElements.Count; i++) {
+                            issuers[i - 1] = chain.ChainElements[i].Certificate;
+                        }
+                    }
+                }
+            }
+
+            // return
+            return cert;
         }
     }
 
@@ -579,8 +701,32 @@ public class TestETSIXml
             // "http://timestamp.digicert.com"
             var res = await client.PostAsync("http://timestamp.sectigo.com/qualified", content, ct);
 
+            // Get the response
+            byte[] tsRes = (await res.Content.ReadAsByteArrayAsync(ct))[9..]; // 9 // 27 // 9
 
-            return (await res.Content.ReadAsByteArrayAsync(ct))[9..]; // 9 // 27 // 9
+            // Try to decode
+            if (Rfc3161TimestampToken.TryDecode(tsRes, out Rfc3161TimestampToken? rfcToken, out int bytesRead)) {
+                // 
+                if (rfcToken != null) {
+                    SignedCms signedInfo = rfcToken.AsSignedCms();
+                    _TS_x509Certificate2s = signedInfo.Certificates;
+                }
+            }
+
+            return tsRes;
         }
+    }
+    private static X509Certificate2Collection? _TS_x509Certificate2s;
+
+    private static X509Certificate2[] GetCertificatesIssuer()
+    {
+        // Check what we need
+        return [new X509Certificate2(@"source\issuer_root.crt")];
+    }
+
+    private static X509Certificate2[] GetCertificatesTimeStamp()
+    {
+        // Check what we need
+        return [new X509Certificate2(@"source\SectigoQualifiedTimeStampingRootR45.crt")];
     }
 }

@@ -212,7 +212,7 @@ public class ETSISigner : JWSSigner
             } catch { }
         }
 
-        // Timestamp call
+        // Timestamp prepare
         byte[] prepSign = Array.Empty<byte>();
         // Check if no payload, but attachement 
         if (string.IsNullOrEmpty(_payload) && attachement != null) {
@@ -235,6 +235,8 @@ public class ETSISigner : JWSSigner
             // Add general data
             prepSign = Encoding.ASCII.GetBytes(sb.ToString());
         }
+
+        // call the timestamping server
         byte[] tStamp = await funcAsync(prepSign, ct);
 
         // If canceled

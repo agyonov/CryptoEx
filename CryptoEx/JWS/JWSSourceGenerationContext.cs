@@ -20,6 +20,7 @@ namespace CryptoEx.JWS;
 [JsonSerializable(typeof(ETSIxVals))]
 [JsonSerializable(typeof(ETSIrVal))]
 [JsonSerializable(typeof(ETSIrVals))]
+[JsonSerializable(typeof(ETSIArchiveTimestamp))]
 [JsonSerializable(typeof(JWK.OtherPrimeInfo))]
 [JsonSerializable(typeof(JWK.Jwk))]
 [JsonSerializable(typeof(JWK.JwkSet))]

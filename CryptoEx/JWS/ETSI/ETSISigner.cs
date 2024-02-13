@@ -70,7 +70,7 @@ public class ETSISigner : JWSSigner
     }
 
     /// <summary>
-    /// Add timestamping. Mainly to produce the XADES BASELINE-T signature
+    /// Add signature timestamping. Mainly to produce the JADES BASELINE-T signature
     /// </summary>
     /// <param name="funcAsync">Async function that calls Timestamping server, with input data and returns 
     /// response from the server
@@ -108,7 +108,7 @@ public class ETSISigner : JWSSigner
                 EtsiU = [Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JWSConstants.jsonOptions)))]
             };
         } else {
-            ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU = 
+            ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU =
                 ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU
                                                            .Append(Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JWSConstants.jsonOptions))))
                                                            .ToArray();
@@ -116,7 +116,7 @@ public class ETSISigner : JWSSigner
     }
 
     /// <summary>
-    /// Add some additional data objects for validation. Mainly to produce the XADES BASELINE-LT signature
+    /// Add some additional data objects for validation. Mainly to produce the JADES BASELINE-LT signature
     /// </summary>
     /// <param name="additionalCerts">Additional certificates, not included up until now</param>
     /// <param name="rVals">Revocation status values, for all certificates (signer and chain, timestamp and chain)</param>
@@ -141,19 +141,18 @@ public class ETSISigner : JWSSigner
             if (rVals == null) {
                 _unprotectedHeader = new ETSIUnprotectedHeader
                 {
-                    EtsiU = new string[] {
-                    Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(eTSIxVals, JWSConstants.jsonOptions)))
-
-                }
+                    EtsiU = [
+                        Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(eTSIxVals, JWSConstants.jsonOptions)))
+                    ]
                 };
             } else { // If we have rVals
                 _unprotectedHeader = new ETSIUnprotectedHeader
                 {
-                    EtsiU = new string[]
-                    {
-                    Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(eTSIxVals, JWSConstants.jsonOptions))),
-                    Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(rVals, JWSConstants.jsonOptions)))
-                }
+                    EtsiU =
+                    [
+                        Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(eTSIxVals, JWSConstants.jsonOptions))),
+                        Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(rVals, JWSConstants.jsonOptions)))
+                    ]
                 };
             }
         } else {
@@ -170,6 +169,104 @@ public class ETSISigner : JWSSigner
                                                             .Append(Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(rVals, JWSConstants.jsonOptions))))
                                                             .ToArray();
             }
+        }
+    }
+
+    /// <summary>
+    /// Add archive timestamping. Mainly to produce the JADES BASELINE-LTA signature
+    /// </summary>
+    /// <param name="funcAsync">Async function that calls Timestamping server, with input data and returns 
+    /// response from the server</param>
+    /// <param name="attachement">In case of detached signature, with no payload option, provide the attachment, to be used as payload</param>
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The type 'ETSIArchiveTimestamp' is source generated and attached to JSONOptions")]
+    public async Task AddArchiveTimestampAsync(Func<byte[], CancellationToken, Task<byte[]>> funcAsync, byte[]? attachement = null, CancellationToken ct = default)
+    {
+        // Locals
+        StringBuilder sb = new();
+
+        if (!string.IsNullOrEmpty(_payload)) {
+            sb.Append(_payload);
+            sb.Append(".");
+        } else if (attachement != null) {
+            sb.Append(".");
+        }
+        if (_protecteds.Count > 0) {
+            sb.Append(_protecteds.First());
+            sb.Append(".");
+        }
+        if (_signatures.Count > 0) {
+            sb.Append(Base64UrlEncoder.Encode(_signatures.First()));
+            sb.Append(".");
+        }
+
+        // Try some time stamping info gathering
+        if (_unprotectedHeader != null && _unprotectedHeader is ETSIUnprotectedHeader) {
+            try {
+                // try find sigTst
+                ETSIUnprotectedHeader etsiU = (ETSIUnprotectedHeader)_unprotectedHeader;
+                // Cycle through
+                foreach (string elem in etsiU.EtsiU) {
+                    sb.Append(elem);
+                }
+            } catch { }
+        }
+
+        // Timestamp call
+        byte[] prepSign = Array.Empty<byte>();
+        // Check if no payload, but attachement 
+        if (string.IsNullOrEmpty(_payload) && attachement != null) {
+
+            // Check if b64
+            byte[] lPayload = Array.Empty<byte>();
+            if (_b64 == null || _b64.Value) {
+                lPayload = Encoding.ASCII.GetBytes(Base64UrlEncoder.Encode(attachement));
+            } else {
+                lPayload = attachement;
+            }
+            // Get the rest of the data
+            byte[] lPayloadTwo = Encoding.ASCII.GetBytes(sb.ToString());
+
+            // Prepare the payload
+            prepSign = new byte[lPayload.Length + lPayloadTwo.Length];
+            lPayload.CopyTo(prepSign, 0);
+            lPayloadTwo.CopyTo(prepSign, lPayload.Length);
+        } else {
+            // Add general data
+            prepSign = Encoding.ASCII.GetBytes(sb.ToString());
+        }
+        byte[] tStamp = await funcAsync(prepSign, ct);
+
+        // If canceled
+        if (ct.IsCancellationRequested) {
+            return;
+        }
+
+        // Create the timestamp
+        ETSIArchiveTimestamp theTimeStamp = new ETSIArchiveTimestamp
+        {
+            ArcTst = new ETSITimestampContainer
+            {
+                TstTokens = [
+                         new ETSITimestampToken
+                         {
+                             Val = Convert.ToBase64String(tStamp)
+                         }
+                      ]
+            }
+        };
+
+        // Construct unprotected header
+        if (_unprotectedHeader == null) {
+            _unprotectedHeader = new ETSIUnprotectedHeader
+            {
+                EtsiU = [Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JWSConstants.jsonOptions)))]
+            };
+        } else {
+            ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU =
+                ((ETSIUnprotectedHeader)_unprotectedHeader).EtsiU
+                                                           .Append(Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(theTimeStamp, JWSConstants.jsonOptions))))
+                                                           .ToArray();
         }
     }
 

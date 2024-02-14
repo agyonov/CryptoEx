@@ -691,6 +691,7 @@ public class ETSISignedXml
             XmlNodeList kInfoValue = signedDoc.GetElementsByTagName("KeyInfo", SignedXml.XmlDsigNamespaceUrl);
             XmlNodeList nodeList = signedDoc.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
             XmlNodeList unsignedSignatureProperties = signedDoc.GetElementsByTagName("UnsignedSignatureProperties", XadesNamespaceUri);
+            XmlNodeList objectsValue = signedDoc.GetElementsByTagName("Object", SignedXml.XmlDsigNamespaceUrl);
             XmlElement? sigantureNode = nodeList[0] as XmlElement;
             if (sigantureNode == null) {
                 return;
@@ -830,6 +831,35 @@ public class ETSISignedXml
                     XmlDsigExcC14NTransform hlpCanTransform = new();
                     XmlDocument hlpDoc = new();
                     hlpDoc.LoadXml(node.OuterXml);
+                    hlpCanTransform.LoadInput(hlpDoc);
+                    object strOut = hlpCanTransform.GetOutput(typeof(Stream));
+                    try {
+                        if (strOut is Stream) {
+                            ((Stream)strOut).CopyTo(tsPayload);
+                        }
+                    } finally {
+                        if (strOut is Stream) {
+                            ((Stream)strOut).Dispose();
+                        }
+                    }
+                }
+            }
+
+            // Add objects (data objects)
+            if (objectsValue.Count > 0) {
+                // Cycle
+                foreach (XmlNode node in objectsValue) {
+                    // Make XML
+                    XmlDocument hlpDoc = new();
+                    hlpDoc.LoadXml(node.OuterXml);
+
+                    // check if the object has qualifying properties
+                    if(hlpDoc.GetElementsByTagName("QualifyingProperties", XadesNamespaceUri).Count > 0) {
+                        continue;
+                    }
+
+                    // Add the object
+                    XmlDsigExcC14NTransform hlpCanTransform = new();
                     hlpCanTransform.LoadInput(hlpDoc);
                     object strOut = hlpCanTransform.GetOutput(typeof(Stream));
                     try {

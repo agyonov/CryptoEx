@@ -233,7 +233,7 @@ public class ETSISigner : JWSSigner
             lPayloadTwo.CopyTo(prepSign, lPayload.Length);
         } else {
             // Add general data
-            prepSign = Encoding.ASCII.GetBytes(sb.ToString());
+            prepSign = Encoding.UTF8.GetBytes(sb.ToString());
         }
 
         // call the timestamping server
@@ -683,6 +683,10 @@ public class ETSISigner : JWSSigner
         if (_b64 != null) {
             // Set b64 value
             etsHeader.B64 = _b64.Value;
+            // Append it, if not exists
+            if (!etsHeader.Crit.Contains("b64")) {
+                etsHeader.Crit = etsHeader.Crit.Append("b64").ToArray();
+            }
         }
 
         // Serialize header

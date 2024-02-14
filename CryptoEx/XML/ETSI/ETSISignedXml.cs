@@ -888,7 +888,6 @@ public class ETSISignedXml
         } finally {
             tsPayload.Dispose();
         }
-
     }
 
     /// <summary>

@@ -772,7 +772,9 @@ public class ETSISignedXml
             // Add Signed Info
             if (sInfoValue.Count > 0) {
                 XmlDsigExcC14NTransform hlpCanTransform = new();
-                hlpCanTransform.LoadInput(sInfoValue);
+                XmlDocument hlpDoc = new XmlDocument();
+                hlpDoc.LoadXml(sInfoValue[0]!.OuterXml);
+                hlpCanTransform.LoadInput(hlpDoc);
                 object strOut = hlpCanTransform.GetOutput(typeof(Stream));
                 try {
                     if (strOut is Stream) {
@@ -788,7 +790,9 @@ public class ETSISignedXml
             // Add Signature Value
             if (sigValue.Count > 0) {
                 XmlDsigExcC14NTransform hlpCanTransform = new();
-                hlpCanTransform.LoadInput(sigValue);
+                XmlDocument hlpDoc = new XmlDocument();
+                hlpDoc.LoadXml(sigValue[0]!.OuterXml);
+                hlpCanTransform.LoadInput(hlpDoc);
                 object strOut = hlpCanTransform.GetOutput(typeof(Stream));
                 try {
                     if (strOut is Stream) {
@@ -804,7 +808,9 @@ public class ETSISignedXml
             // Add KeyInfo 
             if (kInfoValue.Count > 0) {
                 XmlDsigExcC14NTransform hlpCanTransform = new();
-                hlpCanTransform.LoadInput(kInfoValue);
+                XmlDocument hlpDoc = new XmlDocument();
+                hlpDoc.LoadXml(kInfoValue[0]!.OuterXml);
+                hlpCanTransform.LoadInput(hlpDoc);
                 object strOut = hlpCanTransform.GetOutput(typeof(Stream));
                 try {
                     if (strOut is Stream) {

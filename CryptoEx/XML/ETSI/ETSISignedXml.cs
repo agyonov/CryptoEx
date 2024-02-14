@@ -17,6 +17,8 @@ public class ETSISignedXml
     protected const string XadesNamespaceUri = "http://uri.etsi.org/01903/v1.3.2#";
     protected const string XadesNamespaceName = "xades";
     protected const string ETSISignedPropertiesType = "http://uri.etsi.org/01903#SignedProperties";
+    protected const string XadesArcTsNamespaceUri = "http://uri.etsi.org/01903/v1.4.1#";
+    protected const string XadesArcTsNamespaceName = "xades141";
 
     // Some constants on signed XML
     private const string IdSignature = "id-sig-etsi-signed-xml";
@@ -494,7 +496,7 @@ public class ETSISignedXml
     }
 
     /// <summary>
-    /// Add timestamping. Mainly to produce the XADES BASELINE-T signature
+    /// Add signature timestamping. Mainly to produce the XADES BASELINE-T signature
     /// </summary>
     /// <param name="funcAsync">Async function that calls Timestamping server, with input data and returns 
     /// response from the server
@@ -662,6 +664,231 @@ public class ETSISignedXml
                 unsignedSignatureProperties[0]!.AppendChild(signedDoc.ImportNode(ocspXML, true));
             }
         }
+    }
+
+    /// <summary>
+    /// Add archive timestamping. Mainly to produce XADES BASELINE-LTA signature
+    /// </summary>
+    /// <param name="funcAsync">Async function that calls Timestamping server, with input data and returns 
+    /// response from the server</param>
+    /// <param name="signedDoc">The signed document</param>
+    [RequiresUnreferencedCode("Base method of SignedXmlExt requires unreferenced code")]
+    public async Task AddArchiveTimestampAsync(Func<byte[], CancellationToken, Task<byte[]>> funcAsync, XmlDocument signedDoc, CancellationToken ct = default)
+    {
+        // locals
+        MemoryStream tsPayload = new();
+        byte[] timeStamp;
+
+        XNamespace xades = XadesNamespaceUri;
+        XNamespace ds = SignedXml.XmlDsigNamespaceUrl;
+        XNamespace xadesArcTs = XadesArcTsNamespaceUri;
+
+        try {
+            // Load the signature node
+            XmlNodeList qProperties = signedDoc.GetElementsByTagName("QualifyingProperties", XadesNamespaceUri);
+            XmlNodeList sInfoValue = signedDoc.GetElementsByTagName("SignedInfo", SignedXml.XmlDsigNamespaceUrl);
+            XmlNodeList sigValue = signedDoc.GetElementsByTagName("SignatureValue", SignedXml.XmlDsigNamespaceUrl);
+            XmlNodeList kInfoValue = signedDoc.GetElementsByTagName("KeyInfo", SignedXml.XmlDsigNamespaceUrl);
+            XmlNodeList nodeList = signedDoc.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
+            XmlNodeList unsignedSignatureProperties = signedDoc.GetElementsByTagName("UnsignedSignatureProperties", XadesNamespaceUri);
+            XmlElement? sigantureNode = nodeList[0] as XmlElement;
+            if (sigantureNode == null) {
+                return;
+            }
+
+            // Create a SignedXml object & provide GetIdElement method
+            SignedXmlExt signedXml = new SignedXmlExt(signedDoc);
+            // Load the signature
+            signedXml.LoadXml(sigantureNode);
+
+            // Cycle through the references
+            ArrayList? al = signedXml.SignedInfo?.References;
+            if (al != null) {
+                for (int loop = 0; loop < al.Count; loop++) {
+                    // Get the reference
+                    Reference? r = al[loop] as Reference;
+                    if (r == null) {
+                        continue;
+                    }
+
+                    // Get the data object as XmlDocument
+                    object? dataObj = null;
+                    if (string.IsNullOrEmpty(r.Uri)) {
+                        // Transform to XmlDocument
+                        XmlDocument hlpDoc = new XmlDocument();
+                        hlpDoc.LoadXml(signedDoc.OuterXml);
+                        dataObj = hlpDoc;
+                    } else {
+                        // Get the data object by Id as Xmlelement
+                        dataObj = signedXml.GetIdElement(signedDoc, r.Uri.Substring(1));
+                        if (dataObj == null) {
+                            continue;
+                        }
+                        // Transform to XmlDocument
+                        XmlDocument hlpDoc = new XmlDocument();
+                        hlpDoc.LoadXml(((XmlElement)dataObj).OuterXml);
+                        dataObj = hlpDoc;
+                    }
+
+                    // Transform to stream
+                    foreach (Transform tr in r.TransformChain) {
+                        // load the input
+                        tr.LoadInput(dataObj);
+
+                        // Check if the transform is a stream enabled
+                        if (tr.OutputTypes.Contains(typeof(Stream))) {
+                            object strOut = tr.GetOutput(typeof(Stream));
+                            try {
+                                if (strOut is Stream) {
+                                    ((Stream)strOut).CopyTo(tsPayload);
+                                }
+                            } finally {
+                                if (strOut is Stream) {
+                                    ((Stream)strOut).Dispose();
+                                }
+                            }
+                        } else if (tr.OutputTypes.Contains(typeof(XmlDocument))) {
+                            object xmlOut = tr.GetOutput(typeof(XmlDocument));
+
+                            XmlDsigExcC14NTransform hlpCanTransform = new();
+                            hlpCanTransform.LoadInput((XmlDocument)xmlOut);
+                            object strOut = hlpCanTransform.GetOutput(typeof(Stream));
+                            try {
+                                if (strOut is Stream) {
+                                    ((Stream)strOut).CopyTo(tsPayload);
+                                }
+                            } finally {
+                                if (strOut is Stream) {
+                                    ((Stream)strOut).Dispose();
+                                }
+                            }
+                        } else {
+                            throw new NotSupportedException($"Unsupported transform: {tr.GetType()}. Call project owner for update");
+                        }
+                    }
+                }
+            }
+
+            // Add Signed Info
+            if (sInfoValue.Count > 0) {
+                XmlDsigExcC14NTransform hlpCanTransform = new();
+                hlpCanTransform.LoadInput(sInfoValue);
+                object strOut = hlpCanTransform.GetOutput(typeof(Stream));
+                try {
+                    if (strOut is Stream) {
+                        ((Stream)strOut).CopyTo(tsPayload);
+                    }
+                } finally {
+                    if (strOut is Stream) {
+                        ((Stream)strOut).Dispose();
+                    }
+                }
+            }
+
+            // Add Signature Value
+            if (sigValue.Count > 0) {
+                XmlDsigExcC14NTransform hlpCanTransform = new();
+                hlpCanTransform.LoadInput(sigValue);
+                object strOut = hlpCanTransform.GetOutput(typeof(Stream));
+                try {
+                    if (strOut is Stream) {
+                        ((Stream)strOut).CopyTo(tsPayload);
+                    }
+                } finally {
+                    if (strOut is Stream) {
+                        ((Stream)strOut).Dispose();
+                    }
+                }
+            }
+
+            // Add KeyInfo 
+            if (kInfoValue.Count > 0) {
+                XmlDsigExcC14NTransform hlpCanTransform = new();
+                hlpCanTransform.LoadInput(kInfoValue);
+                object strOut = hlpCanTransform.GetOutput(typeof(Stream));
+                try {
+                    if (strOut is Stream) {
+                        ((Stream)strOut).CopyTo(tsPayload);
+                    }
+                } finally {
+                    if (strOut is Stream) {
+                        ((Stream)strOut).Dispose();
+                    }
+                }
+            }
+
+            // Add UnsignedSignatureProperties
+            if (unsignedSignatureProperties.Count > 0) {
+                XmlNodeList XmlNodeList = unsignedSignatureProperties.Item(0)!.ChildNodes;
+                foreach (XmlNode node in XmlNodeList) {
+                    XmlDsigExcC14NTransform hlpCanTransform = new();
+                    XmlDocument hlpDoc = new();
+                    hlpDoc.LoadXml(node.OuterXml);
+                    hlpCanTransform.LoadInput(hlpDoc);
+                    object strOut = hlpCanTransform.GetOutput(typeof(Stream));
+                    try {
+                        if (strOut is Stream) {
+                            ((Stream)strOut).CopyTo(tsPayload);
+                        }
+                    } finally {
+                        if (strOut is Stream) {
+                            ((Stream)strOut).Dispose();
+                        }
+                    }
+                }
+            }
+
+            // Get the timestamp
+            timeStamp = await funcAsync(tsPayload.ToArray(), ct);
+            if (ct.IsCancellationRequested) {
+                return;
+            }
+
+            // Build the timestamp XML
+            XElement obj =
+               new XElement(ds + "Object",
+               new XAttribute("xmlns", SignedXml.XmlDsigNamespaceUrl),
+               new XElement(xades + "QualifyingProperties",
+                    new XAttribute(XNamespace.Xmlns + XadesNamespaceName, XadesNamespaceUri),
+                    new XAttribute("Target", $"#{IdSignature}"),
+                    new XElement(xades + "UnsignedProperties",
+                        new XElement(xades + "UnsignedSignatureProperties",
+                            new XElement(xadesArcTs + "ArchiveTimeStamp",
+                                new XAttribute(XNamespace.Xmlns + XadesArcTsNamespaceName, XadesArcTsNamespaceUri),
+                                new XElement(ds + "CanonicalizationMethod", new XAttribute("Algorithm", SignedXml.XmlDsigExcC14NTransformUrl)),
+                                new XElement(xades + "EncapsulatedTimeStamp", Convert.ToBase64String(timeStamp))
+                            )
+                        )
+                    )
+                )
+            );
+
+            // No other unsigned properties
+            if (unsignedSignatureProperties == null || unsignedSignatureProperties.Count == 0) {
+                // Extract the unsigned properties
+                var unsProps = obj.ToXmlElement()?.GetElementsByTagName("UnsignedProperties", XadesNamespaceUri)[0];
+                if (unsProps == null) {
+                    return;
+                }
+
+                // Append
+                qProperties[0]!.AppendChild(signedDoc.ImportNode(unsProps, true));
+            } else {
+                // Extract the unsigned properties
+                var arcTimestamp = obj.ToXmlElement()?.GetElementsByTagName("ArchiveTimeStamp", XadesArcTsNamespaceUri)[0];
+                if (arcTimestamp == null) {
+                    return;
+                }
+
+                // Append
+                unsignedSignatureProperties[0]!.AppendChild(signedDoc.ImportNode(arcTimestamp, true));
+            }
+        } catch {
+            throw;
+        } finally {
+            tsPayload.Dispose();
+        }
+
     }
 
     /// <summary>

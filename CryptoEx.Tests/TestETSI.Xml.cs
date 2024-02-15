@@ -559,6 +559,11 @@ public class TestETSIXml
 
             // UP TO HERE WE HAVE BASELINE LT !!!
 
+            // Add archive timestamp
+            await signer.AddArchiveTimestampAsync(CreateRfc3161RequestAsync, doc);
+
+            // UP TO HERE WE HAVE BASELINE LTA !!!
+
             // Verify signature
             Assert.True(signer.Verify(doc, out ETSIContextInfo cInfo)
                         && (cInfo.IsSigningTimeInValidityPeriod.HasValue && cInfo.IsSigningTimeInValidityPeriod.Value)

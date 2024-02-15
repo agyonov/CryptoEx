@@ -672,8 +672,11 @@ public class ETSISignedXml
     /// <param name="funcAsync">Async function that calls Timestamping server, with input data and returns 
     /// response from the server</param>
     /// <param name="signedDoc">The signed document</param>
+    /// <param name="attachement">In case of detached signature, with no payload option, provide the attachment, to be used as payload</param>
+    /// <remarks>NB. This implementation only supports 1 (one) Transformation per Reference XML Element. For more complex scenarious,
+    ///  with more tham one Transfromations per Reference, you shall extend the ETSISignedXml class and override the current method.</remarks>
     [RequiresUnreferencedCode("Base method of SignedXmlExt requires unreferenced code")]
-    public async Task AddArchiveTimestampAsync(Func<byte[], CancellationToken, Task<byte[]>> funcAsync, XmlDocument signedDoc, CancellationToken ct = default)
+    public virtual async Task AddArchiveTimestampAsync(Func<byte[], CancellationToken, Task<byte[]>> funcAsync, XmlDocument signedDoc, byte[]? attachement = null, CancellationToken ct = default)
     {
         // locals
         MemoryStream tsPayload = new();
@@ -714,12 +717,19 @@ public class ETSISignedXml
 
                     // Get the data object as XmlDocument
                     object? dataObj = null;
-                    if (string.IsNullOrEmpty(r.Uri)) {
+                    if (r.Uri == null) {   // Detached
+                        // Check if the attachement is present
+                        if (attachement == null) { 
+                            throw new InvalidOperationException("No attachement provided for detached signature");
+                        }
+                        dataObj = attachement;
+                        tsPayload.Write(attachement, 0, attachement.Length);
+                    } else if (string.Compare(r.Uri, string.Empty) == 0) { // Enveloped
                         // Transform to XmlDocument
                         XmlDocument hlpDoc = new XmlDocument();
                         hlpDoc.LoadXml(signedDoc.OuterXml);
                         dataObj = hlpDoc;
-                    } else {
+                    } else { // Local URI
                         // Get the data object by Id as Xmlelement
                         dataObj = signedXml.GetIdElement(signedDoc, r.Uri.Substring(1));
                         if (dataObj == null) {

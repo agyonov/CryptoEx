@@ -10,6 +10,7 @@ As the name ***CryptoEx*** suggests, it can be think of both as *Extension of* a
 - JSON digital signatures - [JSON Web Signature (JWS)](https://www.rfc-editor.org/rfc/rfc7515)
 - Advanced Electronic Signatures and Infrastructures standardized by the European Union,
   so called ***jAdES*** & ***xAdES*** 
+  - All levels - Baseline-B, Baseline-T, Baseline-LT & Baseline-LTA  
 
 ## Important disclaimer
 

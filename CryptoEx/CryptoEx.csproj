@@ -17,14 +17,9 @@
 		<PackageIcon>logo_lib.png</PackageIcon>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<RepositoryType>git</RepositoryType>
-		<PackageReleaseNotes>Updated the package to target .NET 8.0
-  - Added support for 'Trimming'
-  - Make use of trimming
-
-New features
-  - Upgrade the 'ETSIContextInfo' for jAdES and xAdES, to display Timestamp information - if such exists, upon verification of the signature
-  - Added two more methods to ('AddValidatingMaterial' to ETSISigner and to ETSISignedXml) to allow creation of Baseline LT signature 		</PackageReleaseNotes>
-		<Version>2.0.0</Version>
+		<PackageReleaseNotes>New features
+  - Added one more method to ('AddArchiveTimestampAsync' to ETSISigner and to ETSISignedXml) to allow creation of Baseline LTA signature 		</PackageReleaseNotes>
+		<Version>2.0.1</Version>
 	</PropertyGroup>
 
 	<PropertyGroup>

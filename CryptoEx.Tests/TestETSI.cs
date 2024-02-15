@@ -495,8 +495,8 @@ public class TestETSI
         }
     }
 
-    [Fact(DisplayName = "Test ETSI RSA Timestamp LT with enveloped data")]
-    public async Task Test_ETSI_RSA_Timestamp_LT_Enveloped()
+    [Fact(DisplayName = "Test ETSI RSA Timestamp LTA with enveloped data")]
+    public async Task Test_ETSI_RSA_Timestamp_LTA_Enveloped()
     {
         // Try get certificate
         X509Certificate2? cert = GetCertificateOnWindows(CertType.RSA, out X509Certificate2[] issuers); 
@@ -572,6 +572,11 @@ public class TestETSI
             signer.AddValidatingMaterial(timeStampCerts, eTSIrVals);
 
             // UP TO HERE WE HAVE BASELINE LT !!!
+
+            // Add archive timestamp
+            await signer.AddArchiveTimestampAsync(CreateRfc3161RequestAsync);
+
+            // UP TO HERE WE HAVE BASELINE LTA !!!
 
             // Encode - produce JWS
             var jSign = signer.Encode(JWSEncodeTypeEnum.Full);

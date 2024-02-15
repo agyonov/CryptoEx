@@ -20,13 +20,9 @@
 		<PackageReadmeFile>readme_nuget_ed.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<RepositoryType>git</RepositoryType>
-		<PackageReleaseNotes>Updated the package to target .NET 8.0
-  - Added support for 'Trimming'
-  - Make use of trimming
-
-Updated dependency to CryptoEx v. 2.0
+		<PackageReleaseNotes>Updated dependency to CryptoEx v. 2.0.1
 		</PackageReleaseNotes>
-		<Version>2.0.0</Version>
+		<Version>2.0.1</Version>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -49,7 +45,7 @@ Updated dependency to CryptoEx v. 2.0
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
+		<PackageReference Include="BouncyCastle.Cryptography" Version="2.3.0" />
 	</ItemGroup>
 
 	<ItemGroup>

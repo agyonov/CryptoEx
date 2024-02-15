@@ -184,6 +184,7 @@ public class ETSISigner : JWSSigner
     {
         // Locals
         StringBuilder sb = new();
+        byte[] prepSign;
 
         if (!string.IsNullOrEmpty(_payload)) {
             sb.Append(_payload);
@@ -212,28 +213,27 @@ public class ETSISigner : JWSSigner
             } catch { }
         }
 
-        // Timestamp prepare
-        byte[] prepSign = Array.Empty<byte>();
+        // Get as string
+        string atPayload = sb.ToString();
+        
         // Check if no payload, but attachement 
         if (string.IsNullOrEmpty(_payload) && attachement != null) {
-
             // Check if b64
-            byte[] lPayload = Array.Empty<byte>();
             if (_b64 == null || _b64.Value) {
-                lPayload = Encoding.ASCII.GetBytes(Base64UrlEncoder.Encode(attachement));
+                string b64Enc = Base64UrlEncoder.Encode(attachement);
+                int b64EncLen = Encoding.ASCII.GetByteCount(b64Enc);
+                int atPayloadLen = Encoding.ASCII.GetByteCount(atPayload);
+                prepSign = new byte[b64EncLen + atPayloadLen];
+                Encoding.ASCII.GetBytes(b64Enc, prepSign.AsSpan(0..b64EncLen));
+                Encoding.ASCII.GetBytes(atPayload, prepSign.AsSpan(b64EncLen..));
             } else {
-                lPayload = attachement;
+                prepSign = new byte[attachement.Length + Encoding.ASCII.GetByteCount(atPayload)];
+                attachement.CopyTo(prepSign, 0);
+                Encoding.ASCII.GetBytes(atPayload, prepSign.AsSpan(attachement.Length..));
             }
-            // Get the rest of the data
-            byte[] lPayloadTwo = Encoding.ASCII.GetBytes(sb.ToString());
-
-            // Prepare the payload
-            prepSign = new byte[lPayload.Length + lPayloadTwo.Length];
-            lPayload.CopyTo(prepSign, 0);
-            lPayloadTwo.CopyTo(prepSign, lPayload.Length);
         } else {
             // Add general data
-            prepSign = Encoding.UTF8.GetBytes(sb.ToString());
+            prepSign = Encoding.UTF8.GetBytes(atPayload);
         }
 
         // call the timestamping server

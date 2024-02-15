@@ -496,8 +496,8 @@ public class TestETSIXml
         }
     }
 
-    [Fact(DisplayName = "Test XML RSA with enveloped data and TimeStamp LT")]
-    public async Task Test_XML_RSA_Enveloped_Timestamped_LT()
+    [Fact(DisplayName = "Test XML RSA with enveloped data and TimeStamp LTA")]
+    public async Task Test_XML_RSA_Enveloped_Timestamped_LTA()
     {
         // Try get certificate
         X509Certificate2? cert = GetCertificateOnWindows(CertType.RSA, out X509Certificate2[] issuers);

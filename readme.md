@@ -12,6 +12,7 @@ As the name ***CryptoEx*** suggests, it can be think of both as *Extension of* a
 - EdDiffieHellman (X25519 and X448)
 - Advanced Electronic Signatures and Infrastructures standardized by the European Union,
   so called ***jAdES*** & ***xAdES*** 
+  - All levels - Baseline-B, Baseline-T, Baseline-LT & Baseline-LTA   
 
 ## Installation
 

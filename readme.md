@@ -68,7 +68,7 @@ Web Signatures) or they are limited in application for [JAdES](https://www.etsi.
 
 In the current project you can find an implementation of the [RFC 7515 (JSON Web Signatures)](https://www.rfc-editor.org/rfc/rfc7515.html)
 specification and practical implementation for the European Union's *Advanced digital signatures* for JSON data specification
-([jAdES](https://www.etsi.org/deliver/etsi_ts/119100_119199/11918201/01.01.01_60/ts_11918201v010101p.pdf)), 
+([JAdES](https://www.etsi.org/deliver/etsi_ts/119100_119199/11918201/01.01.01_60/ts_11918201v010101p.pdf)), 
 that builds on top of [RFC 7515 (JSON Web Signatures)](https://www.rfc-editor.org/rfc/rfc7515.html).
 
 Please, check the code and the corresponding [Wiki Pages](https://github.com/agyonov/CryptoEx/wiki).

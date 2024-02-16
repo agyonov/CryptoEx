@@ -92,7 +92,7 @@ The individual .NET projects are:
 
 The main project / library of the repository, with core program logic. Here you can find
 and if needed extend the logic for main areas - advanced XML signing, JSON web signatures
-and applications of the above in EU's xAdES and jAdES.
+and applications of the above in EU's XAdES and JAdES.
 
 ### CryptoEx.Test
 
@@ -114,12 +114,12 @@ Also for other micro-benchmarking for example for Base64Url encoding and decodin
 Extension of the logic in the core library (CryptoEx) to support Ed25519 & Ed448
 cryptographic algorithms for digital signatures and X25519 & X448 algorithms
 for Diffie-Hellman key agreement. The project also implements JWSs (JSON Web signatures)
-and jAdES (Advanced JSON Web Signatures) with EdDSA algorithm.
+and JAdES (Advanced JSON Web Signatures) with EdDSA algorithm.
 
 
 I have decided to put these on a different project (different from CryptoEx),
 mainly because Ed25519, Ed448, X25519 & X448 are still not implemented in
-main-stream .NET. So, It need to rely on third-party libraries, such as:
+main-stream .NET. So, I need to rely on third-party libraries, such as:
 
 - Bouncy Castle
 - *libsodium* based wrappers
@@ -134,7 +134,7 @@ as EC (Elliptic curves) are being used.
 
 As a practical example of the usage of the Ed classes in the library,
 I have also extended the classes for JWSs (JSON Web Signatures) and for the
-jAdES (Advanced JSON Web Signatures) from the core library to implement EdDSA
+JAdES (Advanced JSON Web Signatures) from the core library to implement EdDSA
 algorithm for them.
 
 You can check the code and some documentation pages in the

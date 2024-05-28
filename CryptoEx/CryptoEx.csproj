@@ -17,9 +17,8 @@
 		<PackageIcon>logo_lib.png</PackageIcon>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<RepositoryType>git</RepositoryType>
-		<PackageReleaseNotes>New features
-  - Added one more method to ('AddArchiveTimestampAsync' to ETSISigner and to ETSISignedXml) to allow creation of Baseline LTA signature 		</PackageReleaseNotes>
-		<Version>2.0.1</Version>
+		<PackageReleaseNotes>Updated other dependecies, to apply security and bug fixes</PackageReleaseNotes>
+		<Version>2.0.2</Version>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -43,7 +42,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.0" />
-		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.0" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.1" />
 	</ItemGroup>
 
 </Project>

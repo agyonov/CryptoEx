@@ -20,9 +20,10 @@
 		<PackageReadmeFile>readme_nuget_ed.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<RepositoryType>git</RepositoryType>
-		<PackageReleaseNotes>Updated dependency to CryptoEx v. 2.0.1
+		<PackageReleaseNotes>- Updated dependency to CryptoEx v. 2.0.2
+- Updated other dependecies, to apply security and bug fixes 
 		</PackageReleaseNotes>
-		<Version>2.0.1</Version>
+		<Version>2.0.2</Version>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -45,7 +46,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BouncyCastle.Cryptography" Version="2.3.0" />
+		<PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
 	</ItemGroup>
 
 	<ItemGroup>

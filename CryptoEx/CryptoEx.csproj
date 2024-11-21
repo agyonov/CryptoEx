@@ -18,7 +18,7 @@
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<RepositoryType>git</RepositoryType>
 		<PackageReleaseNotes>Updated other dependecies, to apply security and bug fixes</PackageReleaseNotes>
-		<Version>2.0.2</Version>
+		<Version>2.0.3</Version>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -41,8 +41,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.0" />
-		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.1" />
+		<PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
+		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.2" />
 	</ItemGroup>
 
 </Project>

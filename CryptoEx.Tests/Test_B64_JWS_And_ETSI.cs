@@ -284,7 +284,7 @@ public class Test_B64_JWS_And_ETSI
                     CertType.EC => "ECC",
                     _ => "Ed"
                 };
-                return c.PublicKey.Oid.FriendlyName == frName;
+                return c.PublicKey.Oid.FriendlyName == frName && !c.Issuer.Contains("localhost");
             })
             .FirstOrDefault();
         }

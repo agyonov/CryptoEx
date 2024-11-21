@@ -639,7 +639,7 @@ public class TestETSIXml
                     CertType.EC => "ECC",
                     _ => "Ed"
                 };
-                return c.PublicKey.Oid.FriendlyName == frName;
+                return c.PublicKey.Oid.FriendlyName == frName && !c.Issuer.Contains("localhost");
             })
             .FirstOrDefault();
 

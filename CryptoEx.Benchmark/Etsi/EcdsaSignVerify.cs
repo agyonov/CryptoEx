@@ -240,9 +240,9 @@ public class EcdsaSignVerify
         // Check what we need
         switch (certType) {
             case CertType.RSA:
-                return new X509Certificate2(@"source\cerRSA.pfx", "pass.123");
+                return X509CertificateLoader.LoadPkcs12FromFile(@"source\cerRSA.pfx", "pass.123");
             case CertType.EC:
-                return new X509Certificate2(@"source\cerECC.pfx", "pass.123");
+                return X509CertificateLoader.LoadPkcs12FromFile(@"source\cerECC.pfx", "pass.123");
             case CertType.Ed:
                 using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     X509Certificate2Ed[] arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");

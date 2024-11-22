@@ -23,7 +23,7 @@ public static class EdExtentions
                 // Get certificate
                 byte[] data = reader.ReadBytes((int)stream.Length);
                 // Return certificate
-                return new X509Certificate2(data);
+                return X509CertificateLoader.LoadCertificate(data);
             }
         } catch {
             // Ignore
@@ -55,7 +55,7 @@ public static class EdExtentions
                 // Get certificate and key
                 X509CertificateEntry cert = store.GetCertificate(alias);
                 AsymmetricKeyEntry? key = store.GetKey(alias);
-                X509Certificate2 cert2 = new(cert.Certificate.GetEncoded());
+                X509Certificate2 cert2 = X509CertificateLoader.LoadCertificate(cert.Certificate.GetEncoded());
                 EDAlgorithm? ed = null;
 
                 // Check key

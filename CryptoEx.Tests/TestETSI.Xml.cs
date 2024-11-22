@@ -672,9 +672,9 @@ public class TestETSIXml
         // Check what we need
         switch (certType) {
             case CertType.RSA:
-                return new X509Certificate2(@"source\cerRSA.pfx", "pass.123");
+                return X509CertificateLoader.LoadPkcs12FromFile(@"source\cerRSA.pfx", "pass.123");
             case CertType.EC:
-                return new X509Certificate2(@"source\cerECC.pfx", "pass.123");
+                return X509CertificateLoader.LoadPkcs12FromFile(@"source\cerECC.pfx", "pass.123");
             case CertType.Ed:
                 using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     X509Certificate2Ed[] arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");
@@ -726,12 +726,12 @@ public class TestETSIXml
     private static X509Certificate2[] GetCertificatesIssuer()
     {
         // Check what we need
-        return [new X509Certificate2(@"source\issuer_root.crt")];
+        return [X509CertificateLoader.LoadCertificateFromFile(@"source\issuer_root.crt")];
     }
 
     private static X509Certificate2[] GetCertificatesTimeStamp()
     {
         // Check what we need
-        return [new X509Certificate2(@"source\SectigoQualifiedTimeStampingRootR45.crt")];
+        return [X509CertificateLoader.LoadCertificateFromFile(@"source\SectigoQualifiedTimeStampingRootR45.crt")];
     }
 }

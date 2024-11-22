@@ -1,57 +1,53 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
-	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<Title>Leveraging Ed25519, X25519, Ed448 and Ed448 in .NET. JWSs with EdDSA.</Title>
-		<Authors>CryptoEx's developers</Authors>
-		<Company>CryptoEx's developers</Company>
-		<Copyright>CryptoEx's developers</Copyright>
-		<PackageProjectUrl>https://github.com/agyonov/CryptoEx</PackageProjectUrl>
-		<Description>
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Leveraging Ed25519, X25519, Ed448 and Ed448 in .NET. JWSs with EdDSA.</Title>
+    <Authors>CryptoEx's developers</Authors>
+    <Company>CryptoEx's developers</Company>
+    <Copyright>CryptoEx's developers</Copyright>
+    <PackageProjectUrl>https://github.com/agyonov/CryptoEx</PackageProjectUrl>
+    <Description>
 			A .NET library to serve as extension of standard .NET libraries and example how to use Ed25519 and Ed448 to sign / verify signatures of  JSONs, especially in regards to JAdES.
 			Also may be used by parties to exchnage private key material using X25519 and X448.
 		</Description>
-		<PackageIcon>logo_lib.png</PackageIcon>
-		<RepositoryUrl>https://github.com/agyonov/CryptoEx</RepositoryUrl>
-		<PackageTags>digital;signing;eddsa;jws;jades;verifing;key-exchamge;ed Diffie-Hellman(x25519,x448)</PackageTags>
-		<PackageReadmeFile>readme_nuget_ed.md</PackageReadmeFile>
-		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-		<RepositoryType>git</RepositoryType>
-		<PackageReleaseNotes>- Updated dependency to CryptoEx v. 2.0.3
-- Updated other dependecies, to apply security and bug fixes 
-		</PackageReleaseNotes>
-		<Version>2.0.3</Version>
-	</PropertyGroup>
+    <PackageIcon>logo_lib.png</PackageIcon>
+    <RepositoryUrl>https://github.com/agyonov/CryptoEx</RepositoryUrl>
+    <PackageTags>digital;signing;eddsa;jws;jades;verifing;key-exchamge;ed Diffie-Hellman(x25519,x448)</PackageTags>
+    <PackageReadmeFile>readme_nuget_ed.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>Updated the package to target .NET 9.0
 
-	<PropertyGroup>
-		<IsTrimmable>true</IsTrimmable>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<None Include="..\LICENSE.md">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-		<None Include="..\logo_lib.png">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-		<None Include="..\readme_nuget_ed.md">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
-		<PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\CryptoEx\CryptoEx.csproj" />
-	</ItemGroup>
-
+Updated dependency to CryptoEx v. 3.0</PackageReleaseNotes>
+    <Version>3.0.0</Version>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IsTrimmable>true</IsTrimmable>
+    <AssemblyVersion>3.0.0</AssemblyVersion>
+    <FileVersion>3.0.0</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\logo_lib.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\readme_nuget_ed.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="BouncyCastle.Cryptography" />
+    <PackageReference Include="System.Formats.Asn1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CryptoEx\CryptoEx.csproj" />
+  </ItemGroup>
 </Project>

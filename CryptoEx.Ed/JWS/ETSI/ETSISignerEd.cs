@@ -38,7 +38,7 @@ public class ETSISignerEd : ETSISigner
         if (x5c != null) {
             // Get the public key
             try {
-                X509Certificate2 cert = new(Convert.FromBase64String(x5c));
+                X509Certificate2 cert = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(x5c));
                 EdDsa.EdDsa? edDsa = cert.GetEdDsaPublicKey();
                 if (edDsa != null) {
                     return edDsa;

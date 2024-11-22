@@ -76,7 +76,7 @@ public class TestETSI
             Assert.False(headers.Count != 1);
             var pubCertEnc = headers[0].X5c?.FirstOrDefault();
             Assert.False(string.IsNullOrEmpty(pubCertEnc));
-            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
+            var pubCert = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(pubCertEnc));
             Assert.NotNull(pubCert.GetRSAPublicKey());
             Assert.True(signer.Verify<JWSHeader>(new AsymmetricAlgorithm[] { pubCert.GetRSAPublicKey()! }, null));
         } else {
@@ -111,7 +111,7 @@ public class TestETSI
             Assert.False(headers.Count != 1);
             var pubCertEnc = headers[0].X5c?.FirstOrDefault();
             Assert.False(string.IsNullOrEmpty(pubCertEnc));
-            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
+            var pubCert = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(pubCertEnc));
             Assert.NotNull(pubCert.GetRSAPublicKey());
             Assert.True(signer.Verify<JWSHeader>(new AsymmetricAlgorithm[] { pubCert.GetRSAPublicKey()! }, null));
         } else {
@@ -272,7 +272,7 @@ public class TestETSI
             Assert.False(headers.Count != 1);
             var pubCertEnc = headers[0].X5c?.FirstOrDefault();
             Assert.False(string.IsNullOrEmpty(pubCertEnc));
-            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
+            var pubCert = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(pubCertEnc));
             Assert.NotNull(pubCert.GetECDsaPublicKey());
             Assert.True(signer.Verify<JWSHeader>(new AsymmetricAlgorithm[] { pubCert.GetECDsaPublicKey()! }, null));
         } else {
@@ -722,9 +722,9 @@ public class TestETSI
         // Check what we need
         switch (certType) {
             case CertType.RSA:
-                return new X509Certificate2(@"source\cerRSA.pfx", "pass.123");
+                return X509CertificateLoader.LoadPkcs12FromFile(@"source\cerRSA.pfx", "pass.123");
             case CertType.EC:
-                return new X509Certificate2(@"source\cerECC.pfx", "pass.123");
+                return X509CertificateLoader.LoadPkcs12FromFile(@"source\cerECC.pfx", "pass.123");
             case CertType.Ed:
                 using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     X509Certificate2Ed[] arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");
@@ -742,12 +742,12 @@ public class TestETSI
     private static X509Certificate2[] GetCertificatesIssuer()
     {
         // Check what we need
-        return [new X509Certificate2(@"source\issuer_root.crt")];
+        return [X509CertificateLoader.LoadCertificateFromFile(@"source\issuer_root.crt")];
     }
 
     private static X509Certificate2[] GetCertificatesTimeStamp()
     {
         // Check what we need
-        return [new X509Certificate2(@"source\SectigoQualifiedTimeStampingRootR45.crt")];
+        return [X509CertificateLoader.LoadCertificateFromFile(@"source\SectigoQualifiedTimeStampingRootR45.crt")];
     }
 }

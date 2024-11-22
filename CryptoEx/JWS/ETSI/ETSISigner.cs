@@ -706,7 +706,7 @@ public class ETSISigner : JWSSigner
         if (x5c != null) {
             // Get the public key
             try {
-                X509Certificate2 cert = new(Convert.FromBase64String(x5c));
+                X509Certificate2 cert = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(x5c));
                 RSA? rsa = cert.GetRSAPublicKey();
                 if (rsa != null) {
                     return rsa;
@@ -803,13 +803,13 @@ public class ETSISigner : JWSSigner
         // Try to extract the signing certificate
         if (eTSIHeader.X5c != null && eTSIHeader.X5c.Length > 0) {
             try {
-                cInfo.SigningCertificate = new X509Certificate2(Convert.FromBase64String(eTSIHeader.X5c[0]));
+                cInfo.SigningCertificate = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(eTSIHeader.X5c[0]));
             } catch { }
             if (eTSIHeader.X5c.Length > 1) {
                 cInfo.x509Certificate2s = new X509Certificate2Collection();
                 for (int loop = 1; loop < eTSIHeader.X5c.Length; loop++) {
                     try {
-                        cInfo.x509Certificate2s.Add(new X509Certificate2(Convert.FromBase64String(eTSIHeader.X5c[loop])));
+                        cInfo.x509Certificate2s.Add(X509CertificateLoader.LoadCertificate(Convert.FromBase64String(eTSIHeader.X5c[loop])));
                     } catch { }
                 }
             }

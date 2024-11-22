@@ -57,7 +57,7 @@ public class Test_B64_JWS_And_ETSI
             Assert.False(headers.Count != 1);
             var pubCertEnc = headers[0].X5c?.FirstOrDefault();
             Assert.False(string.IsNullOrEmpty(pubCertEnc));
-            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
+            var pubCert = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(pubCertEnc));
             Assert.NotNull(pubCert.GetRSAPublicKey());
             Assert.True(signer.Verify<JWSHeader>(new AsymmetricAlgorithm[] { pubCert.GetRSAPublicKey()! }, JWSSigner.B64Resolutor));
         } else {
@@ -296,9 +296,9 @@ public class Test_B64_JWS_And_ETSI
         // Check what we need
         switch (certType) {
             case CertType.RSA:
-                return new X509Certificate2(@"source\cerRSA.pfx", "pass.123");
+                return X509CertificateLoader.LoadPkcs12FromFile(@"source\cerRSA.pfx", "pass.123");
             case CertType.EC:
-                return new X509Certificate2(@"source\cerECC.pfx", "pass.123");
+                return X509CertificateLoader.LoadPkcs12FromFile(@"source\cerECC.pfx", "pass.123");
             case CertType.Ed:
                 using (FileStream fs = new(@"source\cert.pfx", FileMode.Open, FileAccess.Read, FileShare.Read)) {
                     X509Certificate2Ed[] arrCerts = fs.LoadEdCertificatesFromPfx("pass.123");

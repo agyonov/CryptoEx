@@ -1,12 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
   <ItemGroup>
     <None Remove="source\cerECC.pfx" />
     <None Remove="source\cerRSA.pfx" />
@@ -14,7 +12,6 @@
     <None Remove="source\cert448.pfx" />
     <None Remove="source\testLarge.zip" />
   </ItemGroup>
-
   <ItemGroup>
     <Content Include="source\cerECC.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -32,15 +29,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
-    <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="System.Formats.Asn1" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\CryptoEx.Ed\CryptoEx.Ed.csproj" />
     <ProjectReference Include="..\CryptoEx\CryptoEx.csproj" />
   </ItemGroup>
-
 </Project>

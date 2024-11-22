@@ -68,7 +68,7 @@ public class TestETSIEdDSA
             Assert.False(headers.Count != 1);
             var pubCertEnc = headers[0].X5c?.FirstOrDefault();
             Assert.False(string.IsNullOrEmpty(pubCertEnc));
-            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
+            var pubCert = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(pubCertEnc));
             Assert.NotNull(pubCert.GetEdDsaPublicKey());
             Assert.True(signer.Verify<JWSHeader>(new AsymmetricAlgorithm[] { pubCert.GetEdDsaPublicKey()! }, null));
         } else {
@@ -235,7 +235,7 @@ public class TestETSIEdDSA
             Assert.False(headers.Count != 1);
             var pubCertEnc = headers[0].X5c?.FirstOrDefault();
             Assert.False(string.IsNullOrEmpty(pubCertEnc));
-            var pubCert = new X509Certificate2(Convert.FromBase64String(pubCertEnc));
+            var pubCert = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(pubCertEnc));
             Assert.NotNull(pubCert.GetEdDsaPublicKey());
             Assert.True(signer.Verify<JWSHeader>(new AsymmetricAlgorithm[] { pubCert.GetEdDsaPublicKey()! }, null));
         } else {

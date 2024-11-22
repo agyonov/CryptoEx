@@ -320,7 +320,7 @@ public static class JwkExtentions
             // convert
             List<X509Certificate2> result = new(jwk.X5C.Count);
             foreach (string elm in jwk.X5C) {
-                X509Certificate2 cert = new X509Certificate2(Convert.FromBase64String(elm));
+                X509Certificate2 cert = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(elm));
                 result.Add(cert);
             }
 

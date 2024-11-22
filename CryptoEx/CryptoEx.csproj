@@ -1,49 +1,46 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
-	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<AllowUnsafeBlocks>False</AllowUnsafeBlocks>
-		<PackageReadmeFile>readme_nuget.md</PackageReadmeFile>
-		<Title>Extended and Examples Difital signatures in .NET</Title>
-		<Authors>CryptoEx's developers</Authors>
-		<Description>An extension of and example how to use the standard .NET libraries to sign / verify signatures of XMLs and JSONs, especially in regards to  XAdES, JAdES</Description>
-		<Copyright>CryptoEx's developers</Copyright>
-		<PackageProjectUrl>https://github.com/agyonov/CryptoEx</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/agyonov/CryptoEx</RepositoryUrl>
-		<PackageTags>digital;signing;rsa;ecdsa;jws;xades;xmldsig;jades;verifing;</PackageTags>
-		<PackageIcon>logo_lib.png</PackageIcon>
-		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-		<RepositoryType>git</RepositoryType>
-		<PackageReleaseNotes>Updated other dependecies, to apply security and bug fixes</PackageReleaseNotes>
-		<Version>2.0.3</Version>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<IsTrimmable>true</IsTrimmable>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<None Include="..\LICENSE.md">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-		<None Include="..\logo_lib.png">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-		<None Include="..\readme_nuget.md">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
-		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
-		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.2" />
-	</ItemGroup>
-
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <PackageReadmeFile>readme_nuget.md</PackageReadmeFile>
+    <Title>Extended and Examples Difital signatures in .NET</Title>
+    <Authors>CryptoEx's developers</Authors>
+    <Description>An extension of and example how to use the standard .NET libraries to sign / verify signatures of XMLs and JSONs, especially in regards to  XAdES, JAdES</Description>
+    <Copyright>CryptoEx's developers</Copyright>
+    <PackageProjectUrl>https://github.com/agyonov/CryptoEx</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/agyonov/CryptoEx</RepositoryUrl>
+    <PackageTags>digital;signing;rsa;ecdsa;jws;xades;xmldsig;jades;verifing;</PackageTags>
+    <PackageIcon>logo_lib.png</PackageIcon>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>Updated the package to target .NET 9.0</PackageReleaseNotes>
+    <Version>3.0.0</Version>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IsTrimmable>true</IsTrimmable>
+    <AssemblyVersion>3.0.0</AssemblyVersion>
+    <FileVersion>3.0.0</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\logo_lib.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\readme_nuget.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Formats.Asn1" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.Security.Cryptography.Xml" />
+  </ItemGroup>
 </Project>

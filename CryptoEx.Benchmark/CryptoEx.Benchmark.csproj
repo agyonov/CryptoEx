@@ -31,7 +31,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />
-    <PackageReference Include="System.Formats.Asn1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CryptoEx.Ed\CryptoEx.Ed.csproj" />

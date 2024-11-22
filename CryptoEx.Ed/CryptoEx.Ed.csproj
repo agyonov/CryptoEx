@@ -45,7 +45,6 @@ Updated dependency to CryptoEx v. 3.0</PackageReleaseNotes>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BouncyCastle.Cryptography" />
-    <PackageReference Include="System.Formats.Asn1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CryptoEx\CryptoEx.csproj" />
